@@ -1,0 +1,36 @@
+<section>
+      <div>
+        <button id="TCS34725_rgb">Add RGB</button>
+        <button id="TCS34725_lum">Add lumenes for the sensor</button>
+        <button id="TCS34725_c">Add clear for the sensor</button>
+
+        <button id="Si7021_temp">Add temperature</button>
+        <button id="Si7021_hum">Add >Humedity</button>
+
+        <button id="CCS811_CO2">Add CO2</button>
+        <button id="CCS811_TVOC">Add TVOC</button>
+
+        <button id="BME280_alt">Add Altitude</button>
+        <button id="BME280_pre">Add Pressur</button>
+        <button id="BME280_temp">Add Temp </button>
+
+        <button id="Analog_photocell1">Add photocell1</button>
+        <button id="Analog_photocell2">Add photocell2 </button>
+        <button id="Analog_humcap">Add HumCap </button>
+        <button id="Analog_humec">Add HumEC </button>
+
+        <input type="date" id="user_date" name="user_date" value="2020-02-25">
+
+        <button id="clearData">Clear Data</button>
+        <button id="updateData">update Data </button>
+        <button id="signup_auth">Cerrar sesion</button>
+      </div>
+      <h1> prueba de visualizacion de datos</h1>
+      <div class="chart-container" style="position: relative; height:30vh; width:60vw">
+        <canvas id="myChart"></canvas>
+        <progress id="animationProgress" max="1" value="0" style="width: 100%"></progress>
+    </div>
+
+    </section>
+
+    <script src="js/chart.js"></script>
