@@ -17,14 +17,14 @@ server.on('clientDisconnected', client => {
 })
 
 server.on('published', async (packet, client) => {
+  console.log(`Received: ${packet.topic}`)
+  console.log(`Payload: `);
+  console.log(packet.payload.toString('utf-8'));
   
   if (packet.topic == "push"){
-    console.log(`Received: ${packet.topic}`)
-    console.log(`Payload: `);
-    console.log(packet.payload);
     
     try {
-      let json_data = JSON.parse(packet.payload);
+      let json_data = JSON.parse(packet.payload.toString('utf-8'));
       if(json_data != null){
         console.log(json_data)
         const newData = new Data(json_data);

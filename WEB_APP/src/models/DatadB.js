@@ -40,7 +40,10 @@ const DataSchema = new Schema({
     ColorTemp : Number,
     Lux : Number,
   },
-  user:{ type: String, required:true},
+  Divece:{
+    User:{ type: String, required:true},
+    Divece: { type: String, required:true}
+  },
   date:{ type: Date, default: Date.now }
 })
 
