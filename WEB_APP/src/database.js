@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-mongoose.connect('mongodb://34.106.214.250/SG-db-app',{
+mongoose.connect('mongodb://localhost/SG-db-app',{
     useCreateIndex: true,
     useNewUrlParser: true,
     useFindAndModify: false,

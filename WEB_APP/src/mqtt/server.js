@@ -21,7 +21,7 @@ server.on('published', async (packet, client) => {
   console.log(`Payload: `);
   console.log(packet.payload.toString('utf-8'));
   
-  if (packet.topic == "push"){
+  if ((packet.topic == "Huerta/Push/Digital")&&(packet.topic == "Huerta/Push/Analog")) {
     
     try {
       let json_data = JSON.parse(packet.payload.toString('utf-8'));

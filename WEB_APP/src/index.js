@@ -34,7 +34,7 @@ app.set('view engine', '.hbs'); // Configuramos el mortor de las plantillas
 io.on('connection', (socket)=>{
     console.log('[Index:Socket] connected'+ socket.id)
 
-    Data.find().sort({date: 'desc'}).then( dataUser =>{
+    Data.find({User: "Usuario1"}).sort({date: 'desc'}).then( dataUser =>{
         socket.emit('chart/getData',
             dataUser
         );
