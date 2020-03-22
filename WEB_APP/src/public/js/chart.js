@@ -198,7 +198,7 @@ function Analog_photocell2() {
     console.log ( "Ya existe esta grafica");
   }else{
     for (const prop in LocalDatabase){
-      if(LocalDatabase[prop].photocell2){
+      if(LocalDatabase[prop].Photocell2){
         newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].Photocell2.RawData});
       }
     }
@@ -218,7 +218,7 @@ function Analog_photocell1() {
     console.log ( "Ya existe esta grafica");
   }else{
     for (const prop in LocalDatabase){
-      if(LocalDatabase[prop].photocell1){
+      if(LocalDatabase[prop].Photocell1){
         newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].Photocell1.RawData});
       }
     }
