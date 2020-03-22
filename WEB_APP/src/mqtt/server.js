@@ -21,12 +21,17 @@ server.on('published', async (packet, client) => {
   console.log(`Payload: `);
   console.log(packet.payload.toString('utf-8'));
   
-  if ((packet.topic == "Huerta/Push/Digital")&&(packet.topic == "Huerta/Push/Analog")) {
+  if ((packet.topic == "Huerta/Push/Digital") || (packet.topic == "Huerta/Push/Analog")) {
     
     try {
       let json_data = JSON.parse(packet.payload.toString('utf-8'));
       if(json_data != null){
-        console.log(json_data)
+        json_data["Date"] = 
+        { Date: (new Date).toISOString().substr(0,10),
+          Time: (new Date).toISOString().substr(11,8)
+        };
+        
+        console.log(json_data);
         const newData = new Data(json_data);
         await newData.save().then(()=>{
           console.log('save');

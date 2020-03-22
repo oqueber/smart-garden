@@ -1,7 +1,12 @@
 "use strict";
 
+// Obtenemos valores de los dias que quiere visualizar los datos
 let user_date = document.getElementById("user_date");
+user_date.valueAsDate = new Date(); //La primera vez que carga la pagina, actualizamos la fecha
+
+// Luego utilizar esta variable con el login del usuario
 let user_name = "Usuario1";
+
 let progress = document.getElementById('animationProgress');
 let config = {
   "type":"line",
@@ -52,28 +57,46 @@ let config = {
       }
   }
 };
-let LocalDatabase = {};
-
+let LocalDatabase = {}; // Almacenamos las metricas temporalmente
+let socket; // Aun no se inicializa el socket.io
 
 // Once the page load is finished and user logs in, the grafics are inialized
 window.onload = function() {
   let ctx = document.getElementById('myChart').getContext('2d');
   window.myLineChart = new Chart(ctx, config);
 
-  let socket = io();
-  socket.on('chart/getData', (Data)=>{
-    console.log(socket.id)
+  socket = io(); //Inicializamos los sockets
+  UpdateDate();  //Peticion de las metricas almacenadas en un dia en especifico
+
+  // Socket que escucha las peticiones de recepcion de datos
+  socket.on('chart/PostData', (Data)=>{
+    console.log(socket.id);
     console.log('Recibido al cliente');
     console.log(Data);
     LocalDatabase= Data;
     updateData();
   });
+
+  // Socket que escucha los posibles errores 
+  socket.on('chart/Err', (Data)=>{
+    console.log(Data);
+    switch(Data.text){
+      case "Sin Datos": console.log(`Para el Usuario ${Data.Data.User} en el dia ${Data.Data.Date}, No hay datos`);
+      break;
+      case "Error dB": console.log(`Error en la base de datos`);console.log(Data.err);
+      break
+      default: console.log(Data);
+    }
+    clearData();
+  });
+  
 };
+
 
 function updateData(){
     config.data.labels = [];
     for (const prop in LocalDatabase){
-      config.data.labels.push(prop);
+      config.data.labels.push(LocalDatabase[prop].Date.Time);
     }
 
     let old_dataset = config.data.datasets;
@@ -114,32 +137,12 @@ function clearData(){
   //config.data.labels =["00:00","01:00","02:00","03:00","04:00","05:00"];
   window.myLineChart.update();
 }
-function UpdateGrafic(){
+function UpdateDate(){
   console.log(`the user: ${user_name} on the day :${user_date.value} `); 
-    
-    database.ref(`/Huerta/Data/${user_name}/${user_date.value}`).once('value')
-    .then(function(snapshot) {
-      if (snapshot.val() === null){
-        LocalDatabase = {};
-        alert(` No data was found for the user: ${user_name} on the day :${user_date.value} `);
-        console.log(` No data was found for the user: ${user_name} on the day :${user_date.value} `); 
-      
-      }else{
-        LocalDatabase = snapshot.val();
-        config.data.labels = [];
-        for (const prop in LocalDatabase){
-          config.data.labels.push(prop);
-        }
-
-        window.myLineChart.update();
-      }
-    })
-    .catch(function(){
-      alert(` No data was found for the user: ${user_name} on the day :${user_date.value} `);
-      console.log(` No data was found for the user: ${user_name} on the day :${user_date.value} `); 
-    });
-
+  socket.emit('chart/getData', {User: user_name, Date: user_date.value });
+  LocalDatabase = {};
 }
+
 // Metrics representation of the analogs sensors
 function Analog_humec() {
   let newDataset = {
@@ -154,7 +157,9 @@ function Analog_humec() {
     console.log ( "Ya existe esta grafica");
   }else{
     for (const prop in LocalDatabase){
-      newDataset.data.push({x:prop , y:LocalDatabase[prop].Analog.HumEC.rawData});
+      if(LocalDatabase[prop].HumCap){
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].HumEC.rawData});
+      }
     }
     config.data.datasets.push(newDataset);
     window.myLineChart.update();
@@ -173,7 +178,9 @@ function Analog_humcap() {
     console.log ( "Ya existe esta grafica");
   }else{
     for (const prop in LocalDatabase){
-      newDataset.data.push({x:prop , y:LocalDatabase[prop].Analog.HumCap.rawData});
+      if(LocalDatabase[prop].HumCap){
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].HumCap.rawData});
+      }
     }
     config.data.datasets.push(newDataset);
     window.myLineChart.update();
@@ -191,7 +198,9 @@ function Analog_photocell2() {
     console.log ( "Ya existe esta grafica");
   }else{
     for (const prop in LocalDatabase){
-      newDataset.data.push({x:prop , y:LocalDatabase[prop].Analog.photocell2.rawData});
+      if(LocalDatabase[prop].photocell2){
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].photocell2.rawData});
+      }
     }
     config.data.datasets.push(newDataset);
     window.myLineChart.update();
@@ -209,7 +218,9 @@ function Analog_photocell1() {
     console.log ( "Ya existe esta grafica");
   }else{
     for (const prop in LocalDatabase){
-      newDataset.data.push({x:prop , y:LocalDatabase[prop].Analog.photocell1.rawData});
+      if(LocalDatabase[prop].photocell1){
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].photocell1.rawData});
+      }
     }
     config.data.datasets.push(newDataset);
     window.myLineChart.update();
@@ -228,7 +239,9 @@ function BME280_alt() {
     console.log ( "Ya existe esta grafica");
   }else{
     for (const prop in LocalDatabase){
-      newDataset.data.push({x:prop , y:LocalDatabase[prop].BME280.Altitude});
+      if(LocalDatabase[prop].BME280){
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].BME280.Altitude});
+      }
     }
     config.data.datasets.push(newDataset);
     window.myLineChart.update();
@@ -246,7 +259,9 @@ function BME280_pre() {
     console.log ( "Ya existe esta grafica");
   }else{
     for (const prop in LocalDatabase){
-      newDataset.data.push({x:prop , y:LocalDatabase[prop].BME280.Pressure});
+      if(LocalDatabase[prop].BME280){
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].BME280.Pressure});
+      }
     }
     config.data.datasets.push(newDataset);
     window.myLineChart.update();
@@ -264,7 +279,9 @@ function BME280_temp() {
     console.log ( "Ya existe esta grafica");
   }else{
     for (const prop in LocalDatabase){
-      newDataset.data.push({x:prop , y:LocalDatabase[prop].BME280.Temp});
+      if(LocalDatabase[prop].BME280){
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].BME280.Temp});
+      }
     }
     config.data.datasets.push(newDataset);
     window.myLineChart.update();
@@ -283,7 +300,9 @@ function CCS811_TVOC() {
     console.log ( "Ya existe esta grafica");
   }else{
     for (const prop in LocalDatabase){
-      newDataset.data.push({x:prop , y:LocalDatabase[prop].CCS811.TVOC});
+      if(LocalDatabase[prop].CCS811){
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].CCS811.TVOC});
+      }
     }
     config.data.datasets.push(newDataset);
     window.myLineChart.update();
@@ -301,7 +320,9 @@ function CCS811_CO2() {
     console.log ( "Ya existe esta grafica");
   }else{
     for (const prop in LocalDatabase){
-      newDataset.data.push({x:prop , y:LocalDatabase[prop].CCS811.CO2});
+      if(LocalDatabase[prop].CCS811){
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].CCS811.CO2});
+      }
     }
     config.data.datasets.push(newDataset);
     window.myLineChart.update();
@@ -320,7 +341,9 @@ function Si7021_hum() {
     console.log ( "Ya existe esta grafica");
   }else{
     for (const prop in LocalDatabase){
-      newDataset.data.push({x:prop , y:LocalDatabase[prop].Si7021.Humi});
+      if(LocalDatabase[prop].Si7021){
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].Si7021.Humi});
+      }
     }
     config.data.datasets.push(newDataset);
     window.myLineChart.update();
@@ -338,7 +361,9 @@ function Si7021_temp() {
     console.log ( "Ya existe esta grafica");
   }else{
     for (const prop in LocalDatabase){
-      newDataset.data.push({x:prop , y:LocalDatabase[prop].Si7021.Temp });
+      if(LocalDatabase[prop].Si7021){
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].Si7021.Temp });
+      }
     }
     config.data.datasets.push(newDataset);
     window.myLineChart.update();
@@ -357,7 +382,9 @@ function TCS34725_c() {
     console.log ( "Ya existe esta grafica");
   }else{
       for (const prop in LocalDatabase){
-        newDataset.data.push({x:prop , y:LocalDatabase[prop].TCS34725.C } );
+        if(LocalDatabase[prop].TCS34725){
+          newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].TCS34725.C } );
+        }
       }
       config.data.datasets.push(newDataset);
     };
@@ -375,7 +402,9 @@ function TCS34725_lum() {
     console.log ( "Ya existe esta grafica");
   }else{
       for (const prop in LocalDatabase){
-        newDataset.data.push({x:prop , y:LocalDatabase[prop].TCS34725.Lux } );
+        if(LocalDatabase[prop].TCS34725){
+          newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].TCS34725.Lux } );
+        }
       }
       config.data.datasets.push(newDataset);
     };
@@ -394,7 +423,9 @@ function TCS34725_r() {
     console.log ( "Ya existe esta grafica");
   }else{
       for (const prop in LocalDatabase){
-        newDataset.data.push({x:prop , y:LocalDatabase[prop].TCS34725.R } );
+        if(LocalDatabase[prop].TCS34725){
+          newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].TCS34725.R } );
+        }
       }
       config.data.datasets.push(newDataset);
     };
@@ -411,7 +442,9 @@ function TCS34725_g() {
         fill: false
       };
       for (const prop in LocalDatabase){
-        newDataset.data.push({x:prop , y:LocalDatabase[prop].TCS34725.G } );
+        if(LocalDatabase[prop].TCS34725){
+          newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].TCS34725.G } );
+        }
       }
       config.data.datasets.push(newDataset);
     };
@@ -428,7 +461,9 @@ function TCS34725_b() {
     console.log ( "Ya existe esta grafica");
   }else{
     for (const prop in LocalDatabase){
-      newDataset.data.push({x:prop , y:LocalDatabase[prop].TCS34725.B });
+      if(LocalDatabase[prop].TCS34725){
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].TCS34725.B });
+      }
     }
     config.data.datasets.push(newDataset);
   };
@@ -463,7 +498,7 @@ document.getElementById('Analog_humcap').addEventListener('click', Analog_humcap
 document.getElementById('Analog_humec').addEventListener('click', Analog_humec );
 
 document.getElementById('clearData').addEventListener('click', clearData );
-document.getElementById('updateData').addEventListener('click', updateData );
+document.getElementById('updateData').addEventListener('click', UpdateDate );
 
 
   

@@ -12,9 +12,12 @@ process.title = 'myApp';
 const app= express();
 const server = http.Server(app);
 const io = new socketio(server);
-require('./database');
+const connectdb = require('./database');
+const modelData = require('./models/DatadB');
+connectdb.then( db => {
+    console.log("Db conectado corretamente");
+})
 require('./mqtt/server');
-const Data = require('./models/DatadB');
 
 //-----------------------------------------
 //------------ Settings  ------------------
@@ -31,19 +34,32 @@ app.engine('.hbs', exphbs({
 }))
 app.set('view engine', '.hbs'); // Configuramos el mortor de las plantillas
 
-io.on('connection', (socket)=>{
+io.on('connection',   (socket)=>{
     console.log('[Index:Socket] connected'+ socket.id)
+    
+    socket.on('chart/getData', (Data)=>{
+        console.log(socket.id);
+        console.log('Recibido al cliente');
+        console.log(Data);
+      
+        modelData.find({ 
+            "Device.User": Data.User,
+            "Date.Date": Data.Date
+        }).then( dataUser =>{
+            if(dataUser.length != 0){
+                socket.emit('chart/PostData', dataUser );  
+            }else{
+                socket.emit('chart/Err', {text: "Sin Datos", Data} ); 
+            }
 
-    Data.find({User: "Usuario1"}).sort({date: 'desc'}).then( dataUser =>{
-        socket.emit('chart/getData',
-            dataUser
-        );
-
-    })
+        }).catch( (error )=>{
+            console.log("Error database mongo:");
+            console.log(error);
+            socket.emit('chart/Err',{text: "Error dB", err: error});
+        });
+    });
     
 });
-
-
 
 
 //-----------------------------------------

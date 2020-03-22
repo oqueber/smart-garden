@@ -1,36 +1,48 @@
-<section>
-      <div>
-        <button id="TCS34725_rgb">Add RGB</button>
-        <button id="TCS34725_lum">Add lumenes for the sensor</button>
-        <button id="TCS34725_c">Add clear for the sensor</button>
+<section class="jumbotron">
+  <h1 class="display-4"> prueba de visualizacion de datos</h1>
+        <p>Añadir Metricas a la graficas:</p>
+      <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+        <div class="btn-group mr-2" role="group" aria-label="group1">
+          <button class="btn btn-primary" id="TCS34725_rgb">RGB</button>
+          <button class="btn btn-primary" id="TCS34725_lum">TCS34725 Lux</button>
+          <button class="btn btn-primary" id="TCS34725_c">Clear</button>
+        </div>
 
-        <button id="Si7021_temp">Add temperature</button>
-        <button id="Si7021_hum">Add >Humedity</button>
+        <div class="btn-group mr-2" role="group" aria-label="group2">
+          <button class="btn btn-primary" id="Si7021_temp">Si7021 Temperature</button>
+          <button class="btn btn-primary" id="Si7021_hum">Humedity</button>
+        </div>
 
-        <button id="CCS811_CO2">Add CO2</button>
-        <button id="CCS811_TVOC">Add TVOC</button>
+        <div class="btn-group mr-2" role="group" aria-label="group3">
+          <button class="btn btn-primary" id="CCS811_CO2">CO2</button>
+          <button class="btn btn-primary" id="CCS811_TVOC">TVOC</button>
+        </div>
 
-        <button id="BME280_alt">Add Altitude</button>
-        <button id="BME280_pre">Add Pressur</button>
-        <button id="BME280_temp">Add Temp </button>
+        <div class="btn-group mr-2" role="group" aria-label="group4">
+          <button class="btn btn-primary" id="BME280_alt">Altitude</button>
+          <button class="btn btn-primary" id="BME280_pre">Pressur</button>
+          <button class="btn btn-primary" id="BME280_temp">BME280 Temperature</button>
+        </div>
 
-        <button id="Analog_photocell1">Add photocell1</button>
-        <button id="Analog_photocell2">Add photocell2 </button>
-        <button id="Analog_humcap">Add HumCap </button>
-        <button id="Analog_humec">Add HumEC </button>
+        <div class="btn-group mr-2" role="group" aria-label="group5">
+          <button class="btn btn-primary" id="Analog_photocell1">Photocell1</button>
+          <button class="btn btn-primary" id="Analog_photocell2">Photocell2 </button>
+          <button class="btn btn-primary" id="Analog_humcap">HumCap </button>
+          <button class="btn btn-primary" id="Analog_humec">HumEC </button>
+        </div>
 
-        <input type="date" id="user_date" name="user_date" value="2020-02-25">
-
-        <button id="clearData">Clear Data</button>
-        <button id="updateData">update Data </button>
-        <button id="signup_auth">Cerrar sesion</button>
       </div>
-      <h1> prueba de visualizacion de datos</h1>
-      <div class="chart-container" style="position: relative; height:30vh; width:60vw">
+
+      <div>  
+        <input type="date" id="user_date" name="user_date">
+        <button class="btn btn-dark" id="clearData">Clear Data</button>
+        <button class="btn btn-dark" id="updateData">update Data </button>
+      </div>
+      
+      <div class="chart-container" >
         <canvas id="myChart"></canvas>
         <progress id="animationProgress" max="1" value="0" style="width: 100%"></progress>
     </div>
 
-    </section>
-
-    <script src="js/chart.js"></script>
+  </section>
+  <script src="js/chart.js"></script>

@@ -3,21 +3,19 @@ const { Schema }= mongoose;
 
 const DataSchema = new Schema({
   
-  Analog : {
-    HumCap : {
-      rawData : Number
-    },
-    HumEC : {
-      rawData : Number
-    },
-    photocell1 : {
-      Res : Number,
-      rawData : Number
-    },
-    photocell2 : {
-      Res : Number,
-      rawData : Number
-    }
+  HumCap : {
+    rawData : Number
+  },
+  HumEC : {
+    rawData : Number
+  },
+  Photocell1 : {
+    Res : Number,
+    rawData : Number
+  },
+  Photocell2 : {
+    Res : Number,
+    rawData : Number
   },
   BME280 : {
     Altitude : Number,
@@ -40,11 +38,15 @@ const DataSchema = new Schema({
     ColorTemp : Number,
     Lux : Number,
   },
-  Divece:{
+  Device:{
     User:{ type: String, required:true},
-    Divece: { type: String, required:true}
+    Device: { type: String, required:true}
   },
-  date:{ type: Date, default: Date.now }
+  Date:{ 
+    Date: {type: String, required:true },
+    Time: {type: String, required:true },
+    timestamps: {type: Date, default: Date.now } 
+   }
 })
 
 module.exports = mongoose.model('Data', DataSchema)
