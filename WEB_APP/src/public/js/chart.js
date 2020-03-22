@@ -199,7 +199,7 @@ function Analog_photocell2() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].photocell2){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].photocell2.RawData});
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].Photocell2.RawData});
       }
     }
     config.data.datasets.push(newDataset);
@@ -219,7 +219,7 @@ function Analog_photocell1() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].photocell1){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].photocell1.RawData});
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].Photocell1.RawData});
       }
     }
     config.data.datasets.push(newDataset);
