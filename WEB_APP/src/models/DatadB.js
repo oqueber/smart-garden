@@ -4,18 +4,18 @@ const { Schema }= mongoose;
 const DataSchema = new Schema({
   
   HumCap : {
-    rawData : Number
+    RawData : Number
   },
   HumEC : {
-    rawData : Number
+    RawData : Number
   },
   Photocell1 : {
     Res : Number,
-    rawData : Number
+    RawData : Number
   },
   Photocell2 : {
     Res : Number,
-    rawData : Number
+    RawData : Number
   },
   BME280 : {
     Altitude : Number,

@@ -158,7 +158,7 @@ function Analog_humec() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].HumCap){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].HumEC.rawData});
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].HumEC.RawData});
       }
     }
     config.data.datasets.push(newDataset);
@@ -179,7 +179,7 @@ function Analog_humcap() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].HumCap){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].HumCap.rawData});
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].HumCap.RawData});
       }
     }
     config.data.datasets.push(newDataset);
@@ -199,7 +199,7 @@ function Analog_photocell2() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].photocell2){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].photocell2.rawData});
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].photocell2.RawData});
       }
     }
     config.data.datasets.push(newDataset);
@@ -219,7 +219,7 @@ function Analog_photocell1() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].photocell1){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].photocell1.rawData});
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].photocell1.RawData});
       }
     }
     config.data.datasets.push(newDataset);
