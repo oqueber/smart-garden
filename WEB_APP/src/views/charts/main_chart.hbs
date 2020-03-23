@@ -1,48 +1,70 @@
-<section class="jumbotron">
-  <h1 class="display-4"> prueba de visualizacion de datos</h1>
-        <p>Añadir Metricas a la graficas:</p>
-      <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
-        <div class="btn-group mr-2" role="group" aria-label="group1">
-          <button class="btn btn-primary" id="TCS34725_rgb">RGB</button>
-          <button class="btn btn-primary" id="TCS34725_lum">TCS34725 Lux</button>
-          <button class="btn btn-primary" id="TCS34725_c">Clear</button>
-        </div>
-
-        <div class="btn-group mr-2" role="group" aria-label="group2">
-          <button class="btn btn-primary" id="Si7021_temp">Si7021 Temperature</button>
-          <button class="btn btn-primary" id="Si7021_hum">Humedity</button>
-        </div>
-
-        <div class="btn-group mr-2" role="group" aria-label="group3">
-          <button class="btn btn-primary" id="CCS811_CO2">CO2</button>
-          <button class="btn btn-primary" id="CCS811_TVOC">TVOC</button>
-        </div>
-
-        <div class="btn-group mr-2" role="group" aria-label="group4">
-          <button class="btn btn-primary" id="BME280_alt">Altitude</button>
-          <button class="btn btn-primary" id="BME280_pre">Pressur</button>
-          <button class="btn btn-primary" id="BME280_temp">BME280 Temperature</button>
-        </div>
-
-        <div class="btn-group mr-2" role="group" aria-label="group5">
-          <button class="btn btn-primary" id="Analog_photocell1">Photocell1</button>
-          <button class="btn btn-primary" id="Analog_photocell2">Photocell2 </button>
-          <button class="btn btn-primary" id="Analog_humcap">HumCap </button>
-          <button class="btn btn-primary" id="Analog_humec">HumEC </button>
-        </div>
-
+<div class="col">
+  <p>Añadir Metricas a la graficas:</p>
+  
+  <div class="btn-group btn-group-sm" role="group" aria-label="Button group with nested dropdown">
+      <input style="width: 150px" type="date" class="form-control" id="user_date" name="user_date">
+    <div class="btn-group mr-2" role="group" aria-label="First group">
+      <button class="btn btn-dark btn-sm" id="updateData">update Data </button>
+    </div> 
+  </div>
+  <hr class="my-4">
+  <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
+    <div class="btn-group btn-group-sm" role="group">
+      <button id="TCS34725" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        TCS34725
+      </button>
+      <div class="dropdown-menu" aria-labelledby="TCS34725">
+        <a class="dropdown-item" id="TCS34725_rgb">RGB</a>
+        <a class="dropdown-item" id="TCS34725_lum">Lux</a>
+        <a class="dropdown-item" id="TCS34725_c">Clear</a>
       </div>
-
-      <div>  
-        <input type="date" id="user_date" name="user_date">
-        <button class="btn btn-dark" id="clearData">Clear Data</button>
-        <button class="btn btn-dark" id="updateData">update Data </button>
-      </div>
-      
-      <div class="chart-container" >
-        <canvas id="myChart"></canvas>
-        <progress id="animationProgress" max="1" value="0" style="width: 100%"></progress>
     </div>
-
-  </section>
+    <div class="btn-group btn-group-sm" role="group">
+      <button id="Si7021" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Si7021
+      </button>
+      <div class="dropdown-menu" aria-labelledby="Si7021">
+        <a class="dropdown-item" id="Si7021_temp">Temperature</a>
+        <a class="dropdown-item" id="Si7021_hum">Humedity</a>
+      </div>
+    </div>
+    <div class="btn-group btn-group-sm" role="group">
+      <button id="CCS811" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        CCS811
+      </button>
+      <div class="dropdown-menu" aria-labelledby="CCS811">
+        <a class="dropdown-item" id="CCS811_CO2">CO2</a>
+        <a class="dropdown-item" id="CCS811_TVOC">TVOC</a>
+      </div>
+    </div>
+  </div>
+  <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
+    <div class="btn-group btn-group-sm" role="group">
+      <button id="BME280" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        BME280
+      </button>
+      <div class="dropdown-menu" aria-labelledby="BME280">
+        <a class="dropdown-item" id="BME280_alt">Altitude</a>
+        <a class="dropdown-item" id="BME280_pre">Pressur</a>
+        <a class="dropdown-item" id="BME280_temp">Temperature</a>
+      </div>
+    </div>
+    <div class="btn-group btn-group-sm" role="group">
+      <button id="Analog" type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Analog
+      </button>
+      <div class="dropdown-menu" aria-labelledby="Analog">
+        <a class="dropdown-item" id="Analog_photocell1">Photocell1</a>
+        <a class="dropdown-item" id="Analog_photocell2">Photocell2</a>
+        <a class="dropdown-item" id="Analog_humcap">HumCap</a>
+        <a class="dropdown-item" id="Analog_humec">HumEC</a>
+      </div>
+      <button class="btn btn-warning btn-sm" id="clearData">Clear Data</button>
+    </div>
+  </div>
+  <div class="col-12">
+    <canvas id="myChart"></canvas>
+    <progress id="animationProgress" max="1" value="0" style="width: 100%"></progress>
+  </div>
+</div>
   <script src="js/chart.js"></script>

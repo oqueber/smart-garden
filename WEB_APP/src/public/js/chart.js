@@ -14,8 +14,10 @@ let config = {
     "labels":["00:00","01:00","02:00","03:00","04:00","05:00"],
     "datasets":[]
   },
-  "options":{
+  options:{
+    events: ['click'],
     responsive: true,
+    legend: {display: true},
     title: {
       display: true,
       text: 'Muestra diarias'
@@ -68,12 +70,26 @@ window.onload = function() {
   socket = io(); //Inicializamos los sockets
   UpdateDate();  //Peticion de las metricas almacenadas en un dia en especifico
 
+  if (document.documentElement.clientWidth < 800){
+    config.options.legend.display = false;
+    config.options.scales.xAxes = false;
+    config.options.scales.yAxes = false;
+  }
+
   // Socket que escucha las peticiones de recepcion de datos
   socket.on('chart/PostData', (Data)=>{
     console.log(socket.id);
     console.log('Recibido al cliente');
     console.log(Data);
     LocalDatabase= Data;
+    updateData();
+  });
+
+  socket.on('chart/NewData', (Data)=>{
+    console.log(socket.id);
+    console.log('Nueva Data disponible al cliente');
+    console.log(Data);
+    LocalDatabase.push(Data);
     updateData();
   });
 
