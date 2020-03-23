@@ -2,6 +2,7 @@
 
 // Obtenemos valores de los dias que quiere visualizar los datos
 let user_date = document.getElementById("user_date");
+let chart_lengend = document.getElementById("chart_lengend");
 user_date.valueAsDate = new Date(); //La primera vez que carga la pagina, actualizamos la fecha
 
 // Luego utilizar esta variable con el login del usuario
@@ -15,6 +16,7 @@ let config = {
     "datasets":[]
   },
   options:{
+    deviceSmall: false,
     events: ['click'],
     responsive: true,
     legend: {display: true},
@@ -59,7 +61,7 @@ let config = {
       }
   }
 };
-let LocalDatabase = {}; // Almacenamos las metricas temporalmente
+let LocalDatabase = []; // Almacenamos las metricas temporalmente
 let socket; // Aun no se inicializa el socket.io
 
 // Once the page load is finished and user logs in, the grafics are inialized
@@ -74,6 +76,7 @@ window.onload = function() {
     config.options.legend.display = false;
     config.options.scales.xAxes = false;
     config.options.scales.yAxes = false;
+    config.deviceSmall = true;
   }
 
   // Socket que escucha las peticiones de recepcion de datos
@@ -117,11 +120,12 @@ function updateData(){
 
     let old_dataset = config.data.datasets;
     config.data.datasets = [];
-    for(const dataset_name in old_dataset){
-      console.log(old_dataset[dataset_name].func());
-    }
 
-    window.myLineChart.update();
+    for(const dataset_name in old_dataset){
+      old_dataset[dataset_name].func();
+    }
+    
+    updateChart();
     
     console.log("actualizada la base de datos local");
     
@@ -147,11 +151,17 @@ function addData_database(){
   });
 }
 
+function updateChart(){
+  if (config.deviceSmall ){
+    chart_lengend.innerHTML = window.myLineChart.generateLegend();
+  }
+  window.myLineChart.update();
+}
 // Delete the data that could user add
 function clearData(){
   config.data.datasets = [];
   //config.data.labels =["00:00","01:00","02:00","03:00","04:00","05:00"];
-  window.myLineChart.update();
+  updateChart()
 }
 function UpdateDate(){
   console.log(`the user: ${user_name} on the day :${user_date.value} `); 
@@ -164,7 +174,7 @@ function Analog_humec() {
   let newDataset = {
     label: 'HumEC',
     func: Analog_humec,
-    backgroundColor: "rgb(12, 1, 90,0.3)",
+    backgroundColor: "rgb(12, 1, 90)",
     borderColor: "rgb(12, 1, 90)",
     data: [],
     fill: false
@@ -178,14 +188,14 @@ function Analog_humec() {
       }
     }
     config.data.datasets.push(newDataset);
-    window.myLineChart.update();
+    updateChart();
   }
 }
 function Analog_humcap() {
   let newDataset = {
     label: 'HumCap',
     func: Analog_humcap,
-    backgroundColor: "rgb(12, 1, 20,0.3)",
+    backgroundColor: "rgb(12, 1, 20)",
     borderColor: "rgb(12, 1, 20)",
     data: [],
     fill: false
@@ -199,13 +209,14 @@ function Analog_humcap() {
       }
     }
     config.data.datasets.push(newDataset);
-    window.myLineChart.update();
+    updateChart();
   }
 }
 function Analog_photocell2() {
   var newDataset = {
     label: 'photocell2',
-    backgroundColor: "rgb(12, 1, 20,0.3)",
+    func: Analog_photocell2,
+    backgroundColor: "rgb(12, 1, 20)",
     borderColor: "rgb(12, 1, 20)",
     data: [],
     fill: false
@@ -219,13 +230,14 @@ function Analog_photocell2() {
       }
     }
     config.data.datasets.push(newDataset);
-    window.myLineChart.update();
+    updateChart();
   }
 }
 function Analog_photocell1() {
   var newDataset = {
     label: 'photocell1',
-    backgroundColor: "rgb(123, 12, 20,0.3)",
+    func:Analog_photocell1,
+    backgroundColor: "rgb(123, 12, 20)",
     borderColor: "rgb(123, 12, 20)",
     data: [],
     fill: false
@@ -239,14 +251,15 @@ function Analog_photocell1() {
       }
     }
     config.data.datasets.push(newDataset);
-    window.myLineChart.update();
+    updateChart();
   }
 }
 // Metrics representation of the BME280 sensor
 function BME280_alt() {
   var newDataset = {
     label: 'Altitude',
-    backgroundColor: "rgb(13, 12, 200,0.3)",
+    func:BME280_alt,
+    backgroundColor: "rgb(13, 12, 200)",
     borderColor: "rgb(13, 12, 200)",
     data: [],
     fill: false
@@ -260,13 +273,14 @@ function BME280_alt() {
       }
     }
     config.data.datasets.push(newDataset);
-    window.myLineChart.update();
+    updateChart();
   }
 }
 function BME280_pre() {
   var newDataset = {
     label: 'Pressure',
-    backgroundColor: "rgb(13, 212, 0,0.3)",
+    func:BME280_pre,
+    backgroundColor: "rgb(13, 212, 0)",
     borderColor: "rgb(13, 212, 0)",
     data: [],
     fill: false
@@ -280,13 +294,14 @@ function BME280_pre() {
       }
     }
     config.data.datasets.push(newDataset);
-    window.myLineChart.update();
+    updateChart();
   }
 }
 function BME280_temp() {
   var newDataset = {
     label: 'Temp_BME',
-    backgroundColor: "rgb(131, 212, 0,0.3)",
+    func: BME280_temp,
+    backgroundColor: "rgb(131, 212, 0)",
     borderColor: "rgb(131, 212, 0)",
     data: [],
     fill: false
@@ -300,14 +315,15 @@ function BME280_temp() {
       }
     }
     config.data.datasets.push(newDataset);
-    window.myLineChart.update();
+    updateChart();
   }
 }
 // Metrics representation of the CCS811 sensor
 function CCS811_TVOC() {
   let newDataset = {
     label: 'TVOC',
-    backgroundColor: "rgb(13, 12, 87,0.3)",
+    func: CCS811_TVOC,
+    backgroundColor: "rgb(13, 12, 87)",
     borderColor: "rgb(13, 12, 87)",
     data: [],
     fill: false
@@ -321,13 +337,14 @@ function CCS811_TVOC() {
       }
     }
     config.data.datasets.push(newDataset);
-    window.myLineChart.update();
+    updateChart();
   }
 }
 function CCS811_CO2() {
   let newDataset = {
     label: 'CO2',
-    backgroundColor: "rgb(43, 152, 87,0.3)",
+    func: CCS811_CO2,
+    backgroundColor: "rgb(43, 152, 87)",
     borderColor: "rgb(43, 152, 87)",
     data: [],
     fill: false
@@ -341,14 +358,15 @@ function CCS811_CO2() {
       }
     }
     config.data.datasets.push(newDataset);
-    window.myLineChart.update();
+    updateChart();
   }
 }
 // Metrics representation of the Si7021 sensor
 function Si7021_hum() {
   var newDataset = {
     label: 'Hum_Si7',
-    backgroundColor: "rgb(13, 152, 87,0.3)",
+    func: Si7021_hum,
+    backgroundColor: "rgb(13, 152, 87)",
     borderColor: "rgb(13, 152, 87)",
     data: [],
     fill: false
@@ -362,13 +380,14 @@ function Si7021_hum() {
       }
     }
     config.data.datasets.push(newDataset);
-    window.myLineChart.update();
+    updateChart();
   }
 }
 function Si7021_temp() {
   var newDataset = {
     label: 'Temp_Si7',
-    backgroundColor: "rgb(138, 152, 87,0.3)",
+    func: Si7021_temp,
+    backgroundColor: "rgb(138, 152, 87)",
     borderColor: "rgb(138, 152, 87)",
     data: [],
     fill: false
@@ -382,14 +401,15 @@ function Si7021_temp() {
       }
     }
     config.data.datasets.push(newDataset);
-    window.myLineChart.update();
+    updateChart();
   }
 }
 // Metrics representation of the TCS34725 sensor
 function TCS34725_c() {
   let newDataset = {
     label: 'Clear_TCS',
-    backgroundColor: "rgb(251, 201, 0,0.3)",
+    func:TCS34725_c,
+    backgroundColor: "rgb(251, 201, 0)",
     borderColor: "rgb(251,201, 0)",
     data: [],
     fill: false
@@ -404,12 +424,13 @@ function TCS34725_c() {
       }
       config.data.datasets.push(newDataset);
     };
-    window.myLineChart.update();
+    updateChart();
 }
 function TCS34725_lum() {
   let newDataset = {
     label: 'Lux_TCS',
-    backgroundColor: "rgb(25, 20, 0,0.3)",
+    func:TCS34725_lum,
+    backgroundColor: "rgb(25, 20, 0)",
     borderColor: "rgb(25,20, 0)",
     data: [],
     fill: false
@@ -424,12 +445,13 @@ function TCS34725_lum() {
       }
       config.data.datasets.push(newDataset);
     };
-    window.myLineChart.update();
+    updateChart();
 }
 function TCS34725_r() {
   let newDataset = {
     label: 'Luz_Roja',
-    backgroundColor: "rgb(255, 0, 0,0.3)",
+    func:TCS34725_r,
+    backgroundColor: "rgb(255, 0, 0)",
     borderColor: "rgb(255, 0, 0)",
     data: [],
     fill: false
@@ -452,7 +474,8 @@ function TCS34725_g() {
   }else{
       var newDataset = {
         label: 'Luz_Verde',
-        backgroundColor: "rgb(0, 255, 0,0.3)",
+        func:TCS34725_g,
+        backgroundColor: "rgb(0, 255, 0)",
         borderColor: "rgb(0, 255, 0)",
         data: [],
         fill: false
@@ -468,7 +491,8 @@ function TCS34725_g() {
 function TCS34725_b() {
   let newDataset = {
     label: 'Luz_Azul',
-    backgroundColor: "rgb(0, 0, 255,0.3)",
+    func:TCS34725_b,
+    backgroundColor: "rgb(0, 0, 255)",
     borderColor: "rgb(0, 0, 255)",
     data: [],
     fill: false
@@ -483,13 +507,12 @@ function TCS34725_b() {
     }
     config.data.datasets.push(newDataset);
   };
-
+  updateChart();
 }
 function TCS34725_rgb() {
   TCS34725_r();
   TCS34725_g();
   TCS34725_b();
-  window.myLineChart.update();
 }
 
 

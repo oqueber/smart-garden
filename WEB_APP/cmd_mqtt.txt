@@ -1,1 +1,5 @@
 mqtt pub -t "push" -h localhost -m '{"Analog":{"HumCap":{"rawData":253},"HumEC":{"rawData":300},"photocell1":{"Res":260.5212,"rawData":998},"photocell2":{"Res":470.3474,"rawData":978}},"BME280":{"Altitude":629.9742,"Pressure":93982.38,"Temp":27.06},"CCS811":{"CO2":0,"TVOC":0},"Si7021":{"Humi":38.30008,"Temp":26.83142},"TCS34725":{"B":15692,"C":37455,"ColorTemp":7764,"G":15670,"Lux":7488,"R":17739},"timestamp":1584106289208,"user":"Oqueber"}'
+
+mqtt pub -t "Huerta/Push/Digital" -h localhost -m '{"TCS34725" : { "R" : 5558, "G" : 4735, "B" : 4889, "C" : 13083, "ColorTemp" : 8475, "Lux" : 2090 }, "Si7021" : { "Temp" : 20.97552, "Humi" : 47.70712 }, "BME280" : { "Temp" : 21.45, "Pressure" : 94042.98, "Altitude" : 624.6133 }, "CCS811" : { "CO2" : 0, "TVOC" : 0 }, "Device" : { "User" : "Usuario1", "Device" : "87:136:119:50:244:44" }}'
+
+mqtt pub -t "Huerta/Push/Analog" -h localhost -m '{"Photocell1":{"RawData":977,"Res":481.0643},"Photocell2":{"RawData":939,"Res":905.2181},"HumEC":{"RawData":446},"HumCap":{"RawData":347},"Device":{"User":"Usuario1","Device":"87:136:119:50:244:44"}}'

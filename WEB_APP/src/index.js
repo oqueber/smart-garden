@@ -17,7 +17,9 @@ const modelData = require('./models/DatadB');
 connectdb.then( db => {
     console.log("Db conectado corretamente");
 })
-require('./mqtt/server');
+const mqtt = require('./mqtt/server');
+const mqttServer = new mqtt(io);
+
 
 //-----------------------------------------
 //------------ Settings  ------------------
@@ -33,34 +35,6 @@ app.engine('.hbs', exphbs({
     extname: '.hbs' //Que extrensiones tendran nuestros archivos
 }))
 app.set('view engine', '.hbs'); // Configuramos el mortor de las plantillas
-
-io.on('connection',   (socket)=>{
-    console.log('[Index:Socket] connected'+ socket.id)
-    
-    socket.on('chart/getData', (Data)=>{
-        console.log(socket.id);
-        console.log('Recibido al cliente');
-        console.log(Data);
-      
-        modelData.find({ 
-            "Device.User": Data.User,
-            "Date.Date": Data.Date
-        }).then( dataUser =>{
-            if(dataUser.length != 0){
-                socket.emit('chart/PostData', dataUser );  
-            }else{
-                socket.emit('chart/Err', {text: "Sin Datos", Data} ); 
-            }
-
-        }).catch( (error )=>{
-            console.log("Error database mongo:");
-            console.log(error);
-            socket.emit('chart/Err',{text: "Error dB", err: error});
-        });
-    });
-    
-});
-
 
 //-----------------------------------------
 //------------ Middlewares  ---------------
@@ -92,5 +66,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 //-----------------------------------------
 server.listen(port, () =>{
     console.log(`[Smart-Garden-Server]: Server on port ${port}`);
+    mqttServer.connectMqttServer();
+    mqttServer.connectSocketio();
 });
 
