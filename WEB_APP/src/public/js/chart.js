@@ -81,6 +81,7 @@ window.onload = function() {
 
   // Socket que escucha las peticiones de recepcion de datos
   socket.on('chart/PostData', (Data)=>{
+    document.getElementById("chart-erro").innerHTML = "";
     console.log(socket.id);
     console.log('Recibido al cliente');
     console.log(Data);
@@ -89,6 +90,7 @@ window.onload = function() {
   });
 
   socket.on('chart/NewData', (Data)=>{
+    document.getElementById("chart-erro").innerHTML = "";
     console.log(socket.id);
     console.log('Nueva Data disponible al cliente');
     console.log(Data);
@@ -98,24 +100,27 @@ window.onload = function() {
 
   // Socket que escucha los posibles errores 
   socket.on('chart/Err', (Data)=>{
-    console.log(Data);
-    switch(Data.text){
-      case "Sin Datos": console.log(`Para el Usuario ${Data.Data.User} en el dia ${Data.Data.Date}, No hay datos`);
-      break;
-      case "Error dB": console.log(`Error en la base de datos`);console.log(Data.err);
-      break
-      default: console.log(Data);
-    }
+
+      document.getElementById("chart-erro").innerHTML = 
+      `<div class="alert alert-danger alert-dismissible fade show" role="alert">
+      Para el Usuario ${Data.Data.User} en el dia ${Data.Data.Date}, ${Data.text}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>`
+
     clearData();
   });
   
 };
 
-
 function updateData(){
     config.data.labels = [];
     for (const prop in LocalDatabase){
-      config.data.labels.push(LocalDatabase[prop].Date.Time);
+      // No representar los segundos formato HH:MM 
+      if( !config.data.labels.find( element => element == LocalDatabase[prop].Date.Time.substr(0,5) )){
+        config.data.labels.push(LocalDatabase[prop].Date.Time.substr(0,5));
+      }
     }
 
     let old_dataset = config.data.datasets;
@@ -184,7 +189,7 @@ function Analog_humec() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].HumCap){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].HumEC.RawData});
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5), y:LocalDatabase[prop].HumEC.RawData});
       }
     }
     config.data.datasets.push(newDataset);
@@ -205,7 +210,7 @@ function Analog_humcap() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].HumCap){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].HumCap.RawData});
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5), y:LocalDatabase[prop].HumCap.RawData});
       }
     }
     config.data.datasets.push(newDataset);
@@ -226,7 +231,7 @@ function Analog_photocell2() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].Photocell2){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].Photocell2.RawData});
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5), y:LocalDatabase[prop].Photocell2.RawData});
       }
     }
     config.data.datasets.push(newDataset);
@@ -247,7 +252,7 @@ function Analog_photocell1() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].Photocell1){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].Photocell1.RawData});
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5), y:LocalDatabase[prop].Photocell1.RawData});
       }
     }
     config.data.datasets.push(newDataset);
@@ -269,7 +274,7 @@ function BME280_alt() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].BME280){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].BME280.Altitude});
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].BME280.Altitude});
       }
     }
     config.data.datasets.push(newDataset);
@@ -290,7 +295,7 @@ function BME280_pre() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].BME280){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].BME280.Pressure});
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].BME280.Pressure});
       }
     }
     config.data.datasets.push(newDataset);
@@ -311,7 +316,7 @@ function BME280_temp() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].BME280){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].BME280.Temp});
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].BME280.Temp});
       }
     }
     config.data.datasets.push(newDataset);
@@ -333,7 +338,7 @@ function CCS811_TVOC() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].CCS811){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].CCS811.TVOC});
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].CCS811.TVOC});
       }
     }
     config.data.datasets.push(newDataset);
@@ -354,7 +359,7 @@ function CCS811_CO2() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].CCS811){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].CCS811.CO2});
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].CCS811.CO2});
       }
     }
     config.data.datasets.push(newDataset);
@@ -376,7 +381,7 @@ function Si7021_hum() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].Si7021){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].Si7021.Humi});
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].Si7021.Humi});
       }
     }
     config.data.datasets.push(newDataset);
@@ -397,7 +402,7 @@ function Si7021_temp() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].Si7021){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].Si7021.Temp });
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].Si7021.Temp });
       }
     }
     config.data.datasets.push(newDataset);
@@ -419,7 +424,7 @@ function TCS34725_c() {
   }else{
       for (const prop in LocalDatabase){
         if(LocalDatabase[prop].TCS34725){
-          newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].TCS34725.C } );
+          newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].TCS34725.C } );
         }
       }
       config.data.datasets.push(newDataset);
@@ -440,7 +445,7 @@ function TCS34725_lum() {
   }else{
       for (const prop in LocalDatabase){
         if(LocalDatabase[prop].TCS34725){
-          newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].TCS34725.Lux } );
+          newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].TCS34725.Lux } );
         }
       }
       config.data.datasets.push(newDataset);
@@ -462,7 +467,7 @@ function TCS34725_r() {
   }else{
       for (const prop in LocalDatabase){
         if(LocalDatabase[prop].TCS34725){
-          newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].TCS34725.R } );
+          newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5), y:LocalDatabase[prop].TCS34725.R } );
         }
       }
       config.data.datasets.push(newDataset);
@@ -482,7 +487,7 @@ function TCS34725_g() {
       };
       for (const prop in LocalDatabase){
         if(LocalDatabase[prop].TCS34725){
-          newDataset.data.push({x:LocalDatabase[prop].Date.Time, y:LocalDatabase[prop].TCS34725.G } );
+          newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5), y:LocalDatabase[prop].TCS34725.G } );
         }
       }
       config.data.datasets.push(newDataset);
@@ -502,7 +507,7 @@ function TCS34725_b() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].TCS34725){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time , y:LocalDatabase[prop].TCS34725.B });
+        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5), y:LocalDatabase[prop].TCS34725.B });
       }
     }
     config.data.datasets.push(newDataset);

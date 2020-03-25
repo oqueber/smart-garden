@@ -7,13 +7,13 @@ const settings = {
 }
 const server = new mosca.Server(settings)
 
-class SmartGardenAgent {
+class SmartGardenMqtt {
 
   constructor(io){
       this._io = io;
   }
 
-  connectMqttServer(){
+  connect(){
     server.on('clientConnected', client => {
       console.log(`Client connected ${client.id}`)
     })
@@ -57,39 +57,8 @@ class SmartGardenAgent {
     
     server.on('error', handleFatalError)
   }
-  connectSocketio(){
-    this._io.on('connection',   (socket)=>{
-      console.log('[Smart-Garden-Socket] connected'+ socket.id)
-      
-      socket.on('chart/getData', (Data)=>{
-          console.log(socket.id);
-          console.log('Recibido al cliente');
-          console.log(Data);
-        
-          DatadB.find({ 
-              "Device.User": Data.User,
-              "Date.Date": Data.Date
-          }).then( dataUser =>{
-              if(dataUser.length != 0){
-                  socket.emit('chart/PostData', dataUser );  
-              }else{
-                  socket.emit('chart/Err', {text: "Sin Datos", Data} ); 
-              }
-  
-          }).catch( (error )=>{
-              console.log("Error database mongo:");
-              console.log(error);
-              socket.emit('chart/Err',{text: "Error dB", err: error});
-          });
-      });  
-    });
-  }
-
-  disconnect(){
-
-  }
 }
-module.exports = SmartGardenAgent
+module.exports = SmartGardenMqtt
 
 
 function handleFatalError (err) {

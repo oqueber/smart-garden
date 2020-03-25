@@ -13,13 +13,14 @@ const app= express();
 const server = http.Server(app);
 const io = new socketio(server);
 const connectdb = require('./database');
-const modelData = require('./models/DatadB');
 connectdb.then( db => {
     console.log("Db conectado corretamente");
 })
-const mqtt = require('./mqtt/server');
-const mqttServer = new mqtt(io);
+const Mqtt = require('./mqtt/server');
+const mqttServer = new Mqtt(io);
 
+const Socket = require('./socketio/server');
+const socketServer = new Socket(io);
 
 //-----------------------------------------
 //------------ Settings  ------------------
@@ -66,7 +67,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 //-----------------------------------------
 server.listen(port, () =>{
     console.log(`[Smart-Garden-Server]: Server on port ${port}`);
-    mqttServer.connectMqttServer();
-    mqttServer.connectSocketio();
+    mqttServer.connect();
+    socketServer.connect();
 });
 
