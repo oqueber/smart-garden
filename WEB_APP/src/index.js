@@ -1,26 +1,19 @@
-const express = require('express');
+const { app, express, server} = require('./utils/socketio.js');
+const connectdb = require('./database');
+const Mqtt = require('./mqtt/server');
+const Socket = require('./socketio/server');
+
 const path = require('path');
 const exphbs = require('express-handlebars');
 const methodOverride= require('method-override');
 const session = require('express-session');
-const socketio = require('socket.io');
-const http = require('http');
+
 
 //Initializations
 process.title = 'myApp';
-
-const app= express();
-const server = http.Server(app);
-const io = new socketio(server);
-const connectdb = require('./database');
 connectdb.then( db => {
-    console.log("Db conectado corretamente");
+    console.log(`[Smart-Garden-dB]: Connected`);
 })
-const Mqtt = require('./mqtt/server');
-const mqttServer = new Mqtt(io);
-
-const Socket = require('./socketio/server');
-const socketServer = new Socket(io);
 
 //-----------------------------------------
 //------------ Settings  ------------------
@@ -67,7 +60,4 @@ app.use(express.static(path.join(__dirname, 'public')));
 //-----------------------------------------
 server.listen(port, () =>{
     console.log(`[Smart-Garden-Server]: Server on port ${port}`);
-    mqttServer.connect();
-    socketServer.connect();
 });
-

@@ -1,61 +1,92 @@
 'use strict'
 const mosca = require('mosca')
 const DatadB = require('../models/DatadB');
+const {io} = require('../utils/socketio.js');
 
 const settings = {
 	port: 1883
 }
 const server = new mosca.Server(settings)
 
-class SmartGardenMqtt {
-
-  constructor(io){
-      this._io = io;
-  }
-
-  connect(){
-    server.on('clientConnected', client => {
-      console.log(`Client connected ${client.id}`)
-    })
-    
-    server.on('clientDisconnected', client => {
-      console.log(`Client Disconnected ${client.id}`)
-    })
-    
-    server.on('published', async (packet, client) => {
-      console.log(`Received: ${packet.topic}`)
-      console.log(`Payload: `);
-      console.log(packet.payload.toString('utf-8'));
-      
-      if ((packet.topic == "Huerta/Push/Digital") || (packet.topic == "Huerta/Push/Analog")) {
-        
-        try {
-          let json_data = JSON.parse(packet.payload.toString('utf-8'));
-          if(json_data != null){
-
-            const newData = new DatadB(json_data);
-            this._io.emit('chart/NewData', newData );
-            
-            console.log(newData);
-            await newData.save().then(()=>{
-              console.log('save');
-            }).catch((err)=>console.log(`ERR`,err));    
-          }
-        }catch(err){
-          console.log('error dee JSON')
-          console.log(err)
-        }
-      }
-    })
-    
-    server.on('ready', async () => {
-      console.log(`[Smart-Garden-mqtt] server is running`)
-    })
-    
-    server.on('error', handleFatalError)
-  }
+let clientAux= {
+  id: "",
+  msg: ""
 }
-module.exports = SmartGardenMqtt
+
+function getClienteAux( ){
+  return clientAux;
+}
+
+function setClientAux( id, msg ){
+  clientAux.id  = id;
+  clientAux.msg = msg;
+}
+function clearClientAux(){
+  clientAux.id  = "";
+  clientAux.msg = "";
+}
+
+server.on('clientConnected', client => {
+  console.log(`Client connected ${client.id}`)
+})
+
+server.on('clientDisconnected', client => {
+  console.log(`Client Disconnected ${client.id}`)
+})
+
+server.on('published', async (packet, client) => {
+  
+  if (packet.topic == "Huerta/Push/Digital"){ 
+    setClientAux(client.id, packet.payload.toString('utf-8') )
+    ;
+    console.log(`Received: ${packet.topic}`) 
+    console.log(`Client: `)
+    console.log(getClienteAux())
+  }
+
+  if (packet.topic == "Huerta/Push/Analog") {
+    let clientBef = getClienteAux();
+
+    console.log(`Client: ${client.id}`)
+    console.log(`before Client: ${clientBef.id}`)
+    console.log(`Received: ${packet.topic}`)
+    console.log(`Payload: `, packet.payload.toString('utf-8'));
+    
+    if( clientBef.id == client.id){
+      try {
+        let analog_json = JSON.parse(packet.payload.toString('utf-8'));
+        let digital_json = JSON.parse(clientBef.msg);
+
+        delete analog_json.timestamps;
+
+        Object.keys(analog_json).forEach(function(key) { digital_json[key] = analog_json[key]; });
+
+
+        if(digital_json != null){
+
+          const newData = new DatadB(digital_json);
+          io.emit('chart/NewData', newData );
+          
+          console.log(newData);
+          await newData.save().then(()=>{
+            console.log('save');
+          }).catch((err)=>console.log(`ERR`,err));    
+        }
+      }catch(err){
+        console.log('error dee JSON')
+        console.log(err)
+      }
+    }
+  }
+})
+
+server.on('ready', async () => {
+  console.log(`[Smart-Garden-mqtt] server is running`)
+})
+
+server.on('error', handleFatalError)
+
+module.exports = server
 
 
 function handleFatalError (err) {
