@@ -6,7 +6,7 @@ let chart_lengend = document.getElementById("chart_lengend");
 user_date.valueAsDate = new Date(); //La primera vez que carga la pagina, actualizamos la fecha
 
 // Luego utilizar esta variable con el login del usuario
-let user_name = "Usuario1";
+let user_device = '87:136:119:50:244:44';
 
 let progress = document.getElementById('animationProgress');
 let config = {
@@ -118,8 +118,8 @@ function updateData(){
     config.data.labels = [];
     for (const prop in LocalDatabase){
       // No representar los segundos formato HH:MM 
-      if( !config.data.labels.find( element => element == LocalDatabase[prop].Date.Time.substr(0,5) )){
-        config.data.labels.push(LocalDatabase[prop].Date.Time.substr(0,5));
+      if( !config.data.labels.find( element => element == LocalDatabase[prop].timestamps.substr(11,5) )){
+        config.data.labels.push( LocalDatabase[prop].timestamps.substr(11,5) );
       }
     }
 
@@ -169,8 +169,8 @@ function clearData(){
   updateChart()
 }
 function UpdateDate(){
-  console.log(`the user: ${user_name} on the day :${user_date.value} `); 
-  socket.emit('chart/getData', {User: user_name, Date: user_date.value });
+  console.log(`the device: ${user_device} on the day :${user_date.value} `); 
+  socket.emit('chart/getData', {Device: user_device, Date: user_date.value });
   LocalDatabase = {};
 }
 
@@ -189,7 +189,7 @@ function Analog_humec() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].HumCap){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5), y:LocalDatabase[prop].HumEC.RawData});
+        newDataset.data.push({x:LocalDatabase[prop].timestamps.substr(11,5), y:LocalDatabase[prop].HumEC.RawData});
       }
     }
     config.data.datasets.push(newDataset);
@@ -210,7 +210,7 @@ function Analog_humcap() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].HumCap){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5), y:LocalDatabase[prop].HumCap.RawData});
+        newDataset.data.push({x:LocalDatabase[prop].timestamps.substr(11,5), y:LocalDatabase[prop].HumCap.RawData});
       }
     }
     config.data.datasets.push(newDataset);
@@ -231,7 +231,7 @@ function Analog_photocell2() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].Photocell2){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5), y:LocalDatabase[prop].Photocell2.RawData});
+        newDataset.data.push({x:LocalDatabase[prop].timestamps.substr(11,5), y:LocalDatabase[prop].Photocell2.RawData});
       }
     }
     config.data.datasets.push(newDataset);
@@ -252,7 +252,7 @@ function Analog_photocell1() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].Photocell1){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5), y:LocalDatabase[prop].Photocell1.RawData});
+        newDataset.data.push({x:LocalDatabase[prop].timestamps.substr(11,5), y:LocalDatabase[prop].Photocell1.RawData});
       }
     }
     config.data.datasets.push(newDataset);
@@ -467,7 +467,7 @@ function TCS34725_r() {
   }else{
       for (const prop in LocalDatabase){
         if(LocalDatabase[prop].TCS34725){
-          newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5), y:LocalDatabase[prop].TCS34725.R } );
+          newDataset.data.push({x:LocalDatabase[prop].timestamps.substr(11,5), y:LocalDatabase[prop].TCS34725.R } );
         }
       }
       config.data.datasets.push(newDataset);
@@ -487,7 +487,7 @@ function TCS34725_g() {
       };
       for (const prop in LocalDatabase){
         if(LocalDatabase[prop].TCS34725){
-          newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5), y:LocalDatabase[prop].TCS34725.G } );
+          newDataset.data.push({x:LocalDatabase[prop].timestamps.substr(11,5), y:LocalDatabase[prop].TCS34725.G } );
         }
       }
       config.data.datasets.push(newDataset);
@@ -507,7 +507,7 @@ function TCS34725_b() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].TCS34725){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5), y:LocalDatabase[prop].TCS34725.B });
+        newDataset.data.push({x:LocalDatabase[prop].timestamps.substr(11,5), y:LocalDatabase[prop].TCS34725.B });
       }
     }
     config.data.datasets.push(newDataset);

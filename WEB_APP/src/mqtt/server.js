@@ -32,14 +32,11 @@ class SmartGardenMqtt {
         try {
           let json_data = JSON.parse(packet.payload.toString('utf-8'));
           if(json_data != null){
-            json_data["Date"] = 
-            { Date: (new Date).toISOString().substr(0,10),
-              Time: (new Date).toISOString().substr(11,8)
-            };
-            
-            console.log(json_data);
+
             const newData = new DatadB(json_data);
             this._io.emit('chart/NewData', newData );
+            
+            console.log(newData);
             await newData.save().then(()=>{
               console.log('save');
             }).catch((err)=>console.log(`ERR`,err));    

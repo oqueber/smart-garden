@@ -38,15 +38,9 @@ const DataSchema = new Schema({
     ColorTemp : Number,
     Lux : Number,
   },
-  Device:{
-    User:{ type: String, required:true},
-    Device: { type: String, required:true}
-  },
-  Date:{ 
-    Date: {type: String, required:true },
-    Time: {type: String, required:true },
-    timestamps: {type: Date, default: Date.now } 
-   }
+  Device: { type: String, required:true},
+  timestamps: {type: Date, default: Date.now } 
+   
 })
 
 module.exports = mongoose.model('Data', DataSchema)
