@@ -274,7 +274,7 @@ function BME280_alt() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].BME280){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].BME280.Altitude});
+        newDataset.data.push({x:LocalDatabase[prop].timestamps.substr(11,5) , y:LocalDatabase[prop].BME280.Altitude});
       }
     }
     config.data.datasets.push(newDataset);
@@ -295,7 +295,7 @@ function BME280_pre() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].BME280){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].BME280.Pressure});
+        newDataset.data.push({x:LocalDatabase[prop].timestamps.substr(11,5) , y:LocalDatabase[prop].BME280.Pressure});
       }
     }
     config.data.datasets.push(newDataset);
@@ -316,7 +316,7 @@ function BME280_temp() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].BME280){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].BME280.Temp});
+        newDataset.data.push({x:LocalDatabase[prop].timestamps.substr(11,5) , y:LocalDatabase[prop].BME280.Temp});
       }
     }
     config.data.datasets.push(newDataset);
@@ -338,7 +338,7 @@ function CCS811_TVOC() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].CCS811){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].CCS811.TVOC});
+        newDataset.data.push({x:LocalDatabase[prop].timestamps.substr(11,5) , y:LocalDatabase[prop].CCS811.TVOC});
       }
     }
     config.data.datasets.push(newDataset);
@@ -359,7 +359,7 @@ function CCS811_CO2() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].CCS811){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].CCS811.CO2});
+        newDataset.data.push({x:LocalDatabase[prop].timestamps.substr(11,5) , y:LocalDatabase[prop].CCS811.CO2});
       }
     }
     config.data.datasets.push(newDataset);
@@ -381,7 +381,7 @@ function Si7021_hum() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].Si7021){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].Si7021.Humi});
+        newDataset.data.push({x:LocalDatabase[prop].timestamps.substr(11,5) , y:LocalDatabase[prop].Si7021.Humi});
       }
     }
     config.data.datasets.push(newDataset);
@@ -402,7 +402,7 @@ function Si7021_temp() {
   }else{
     for (const prop in LocalDatabase){
       if(LocalDatabase[prop].Si7021){
-        newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].Si7021.Temp });
+        newDataset.data.push({x:LocalDatabase[prop].timestamps.substr(11,5) , y:LocalDatabase[prop].Si7021.Temp });
       }
     }
     config.data.datasets.push(newDataset);
@@ -424,7 +424,7 @@ function TCS34725_c() {
   }else{
       for (const prop in LocalDatabase){
         if(LocalDatabase[prop].TCS34725){
-          newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].TCS34725.C } );
+          newDataset.data.push({x:LocalDatabase[prop].timestamps.substr(11,5) , y:LocalDatabase[prop].TCS34725.C } );
         }
       }
       config.data.datasets.push(newDataset);
@@ -445,7 +445,7 @@ function TCS34725_lum() {
   }else{
       for (const prop in LocalDatabase){
         if(LocalDatabase[prop].TCS34725){
-          newDataset.data.push({x:LocalDatabase[prop].Date.Time.substr(0,5) , y:LocalDatabase[prop].TCS34725.Lux } );
+          newDataset.data.push({x:LocalDatabase[prop].timestamps.substr(11,5) , y:LocalDatabase[prop].TCS34725.Lux } );
         }
       }
       config.data.datasets.push(newDataset);
