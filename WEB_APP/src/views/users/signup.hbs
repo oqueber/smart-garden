@@ -1,4 +1,13 @@
-<form class="needs-validation" novalidate>
+{{#each errors}}
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{text}}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+{{/each}}
+
+<form action="/Users/new-user" method="POST" class="needs-validation" novalidate>
   <div class="form-row">
     <div class="col-sm-6">
       <label for="validationCustomUsername">Username</label>
@@ -6,7 +15,7 @@
         <div class="input-group-prepend">
           <span class="input-group-text" id="inputGroupPrepend">@</span>
         </div>
-        <input type="text" class="form-control" id="validationCustomUsername" placeholder="Username" aria-describedby="inputGroupPrepend" required>
+        <input type="text" class="form-control" value="{{Name}}" name="Name" placeholder="Username" aria-describedby="inputGroupPrepend" required>
         <div class="invalid-feedback">
           Please choose a username.
         </div>
@@ -15,7 +24,7 @@
 
    <div class="col-sm-6">
       <label for="inputPassword3" >Password</label>
-        <input type="password" class="form-control" id="inputPassword3" placeholder="Password">
+        <input type="password" class="form-control" name="Password" placeholder="Password">
         <div class="valid-feedback">
             Looks good!
         </div>
@@ -24,14 +33,14 @@
   <div class="form-row">
     <div class="col-sm-6">
       <label for="inputEmail4">Email</label>
-      <input type="email" class="form-control" id="inputEmail3" placeholder="Email"><div class="valid-feedback">
+      <input type="email" class="form-control" value="{{Email}}" name="Email" placeholder="Email"><div class="valid-feedback">
         Looks good!
       </div>
     </div>
 
     <div class="col-sm-6">
       <label for="inputEmail4">Repit Email</label>
-      <input type="email" class="form-control" id="inputEmail4" placeholder="Repit Email"><div class="valid-feedback">
+      <input type="email" class="form-control" value="{{EmailRepeat}}" name="EmailRepeat" placeholder="Repit Email"><div class="valid-feedback">
         Looks good!
       </div>
     </div>
@@ -39,21 +48,21 @@
   <div class="form-row">
     <div class="col-sm-4">
       <label for="validationCustom03">City</label>
-      <input type="text" class="form-control" id="validationCustom03" placeholder="City" required>
+      <input type="text" class="form-control" value="{{City}}" name="City" placeholder="City" required>
       <div class="invalid-feedback">
         Please provide a valid city.
       </div>
     </div>
     <div class="col-sm-4">
       <label for="validationCustom04">State</label>
-      <input type="text" class="form-control" id="validationCustom04" placeholder="State" required>
+      <input type="text" class="form-control" value="{{State}}" name="State" placeholder="State" required>
       <div class="invalid-feedback">
         Please provide a valid state.
       </div>
     </div>
     <div class="col-sm-4">
       <label for="validationCustom05">Zip</label>
-      <input type="text" class="form-control" id="validationCustom05" placeholder="Zip" required>
+      <input type="text" class="form-control" value="{{Zip}}" name="Zip" placeholder="Zip" required>
       <div class="invalid-feedback">
         Please provide a valid zip.
       </div>
@@ -62,27 +71,27 @@
   <div class="form-row">
     <label class="col-sm-12" for="validationCustom05">MAC</label>
     <div class="col input-group">
-      <input class="form-control"type="number" id="validationCustom03" placeholder="MAC" required>
+      <input class="form-control"type="text" maxlength="3" value="{{MAC0}}" name="MAC0" placeholder="MAC" required>
       <p style="padding: 0px 3px;" class="input-group-text">:</p>
     </div>
     <div class="col input-group">
-      <input class="form-control"type="number" id="validationCustom03" placeholder="MAC" required>
+      <input class="form-control"type="text" maxlength="3" value="{{MAC1}}" name="MAC1" placeholder="MAC" required>
       <p style="padding: 0px 3px;" class="input-group-text">:</p>
     </div>
     <div class="col input-group">
-      <input class="form-control"type="number" id="validationCustom03" placeholder="MAC" required>
+      <input class="form-control"type="text" maxlength="3" value="{{MAC2}}" name="MAC2" placeholder="MAC" required>
       <p style="padding: 0px 3px;" class="input-group-text">:</p>
     </div>
     <div class="col input-group">
-      <input class="form-control"type="number" id="validationCustom03" placeholder="MAC" required>
+      <input class="form-control"type="text" maxlength="3" value="{{MAC3}}" name="MAC3" placeholder="MAC" required>
       <p style="padding: 0px 3px;" class="input-group-text">:</p>
     </div>
     <div class="col input-group">
-      <input class="form-control"type="number" id="validationCustom03" placeholder="MAC" required>
+      <input class="form-control"type="text" maxlength="3" value="{{MAC4}}" name="MAC4" placeholder="MAC" required>
       <p style="padding: 0px 3px;" class="input-group-text">:</p>
     </div>
     <div class="col input-group">
-      <input class="form-control"type="number" id="validationCustom03" placeholder="MAC" required>
+      <input class="form-control"type="text" max="3" value="{{MAC5}}" name="MAC5" placeholder="MAC" required>
     </div>
    
     <div class="invalid-feedback">
@@ -92,7 +101,7 @@
   
   <div class="form-group">
     <div class="form-check">
-      <input class="form-check-input" type="checkbox" value="" id="invalidCheck" required>
+      <input class="form-check-input" type="checkbox" id="invalidCheck" required>
       <label class="form-check-label" for="invalidCheck">
         Agree to terms and conditions
       </label>

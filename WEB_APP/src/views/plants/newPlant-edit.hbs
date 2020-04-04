@@ -1,0 +1,30 @@
+<div id="new-plant" class="row text-center">
+        <h2 class="col-sm-12" >Valores recomendados para {{Info.Name}}:</h2>
+        <div class="col-sm-6">
+            
+            <label class="w-100 p-2" >Frecuencia de riego: <span class="font-weight-bold text-primary ml-2 mt-1" id="valueSpanFreq"></span></label>
+            <input id="sliderFreq" Value="{{Siembra.Riego.Frecuencia}}" class="border-0" type="range" min="0" max="24" step="1" />
+        </div>
+        <div class="col-sm-6">
+            
+            <label class="w-100 p-2">Umbral minimo para empezar el riego: <span class="font-weight-bold text-primary ml-2 mt-1" id="valueSpanWater"></span></label>
+            <input id="sliderWater" Value="{{Siembra.Riego.Umbral}}" class="border-0" type="range" min="0" max="3" step="1" />
+        </div>
+        <div class="col-sm-6">
+            <labe class="w-100 p-2">Valor de horas de luz diarios: <span class="font-weight-bold text-primary ml-2 mt-1" id="valueSpanLux"></span></label>
+            <input id="sliderLux" Value="{{Info.Luz}}" class="border-0" type="range" min="0" max="24" step="1" />
+        </div>
+        <div class="col-sm-6">
+            <labe class="w-100 p-2">Umbral minimo para empezar el complemento de luz: <span class="font-weight-bold text-primary ml-2 mt-1" id="valueSpanLuxUmbral"></span></label>
+            <input id="sliderLuxUmbral" Value="{{Info.Luz}}" class="border-0" type="range" min="0" max="3" step="1" />
+        </div>
+
+        <textarea class="form-control" id="message-text">
+            {{Info.Description}}
+        ...............    Recomendacion.............
+            {{Info.Recomendacion}}
+        </textarea>
+
+</div>
+
+<script src="../../js/plant.js"></script>

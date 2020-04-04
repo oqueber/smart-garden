@@ -1,0 +1,93 @@
+{{#each errors}}
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{text}}
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+{{/each}}
+
+<h1>Coleccion de plantas aromaticas</h1>
+<div class="row">
+  {{#each aromaticas}}
+  <div class="col-md-3" >
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title d-flex justify-content-between align-items-center">
+          {{Info.Name}}
+        </h4>
+        {{#if Info.Beginner}}<p>Recomendado para principiantes </p> {{/if}}
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#Aromatica{{@index}}">
+          More
+        </button>
+        <a href="/new-plant/aromatica/{{@index}}">
+          <button type="button" class="btn btn-primary">
+           select 
+          </button>
+        </a>
+        <!-- Modal -->
+        <div class="modal fade" id="Aromatica{{@index}}" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">{{Info.Name}}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+               <p>Description: {{ Info.Description }} </p>
+               <p>Espacio {{ Info.Marco_Plantacion }} </p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {{/each}}
+</div>
+
+<h1>Coleccion de hortalizas</h1>
+<div class="row">
+  {{#each hortalizas}}
+  <div class="col-md-3" onclick="console.log('newHortaliza plant in index: {{@index}}')">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title d-flex justify-content-between align-items-center">
+          {{Name}}
+        </h4>
+        <p>{{ Description}} </p>
+      </div>
+    </div>
+  </div>
+  {{/each}}
+</div>
+
+<a href="/my-plants">Mis plantas</a>
+<div class="col-md-4 mx-auto">
+  <div class="card text-center">
+    <div class="card-header">
+      <h3>New Plant</h3>
+    </div>
+    <div class="card-body">
+      <form action="/my-plants/new-plant" method="POST"></form>
+        <div class="form-group">
+          <input type="text" name="title" class="form-control" placeholder="Title" autofocus/>
+        </div>
+        <div class="form-group">
+          <textarea name="description" class="form-control" placeholder="Description"></textarea>
+        </div>
+        <div class="form-group">
+          <button class="btn btn-primary btn-block" type="submit">
+            Save
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
