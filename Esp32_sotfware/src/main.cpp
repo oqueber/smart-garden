@@ -1,8 +1,9 @@
-#include "Wire.h"
+#include <Arduino.h>
+#include <Wire.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
 
-#include <ESP8266WiFi.h>
 #include <PubSubClient.h>
-
 #include <ArduinoJson.hpp>
 #include <ArduinoJson.h>
 
@@ -10,6 +11,8 @@
 #include <SparkFunCCS811.h> //Click here to get the library: http://librarymanager/All#SparkFun_CCS811
 #include <Adafruit_Si7021.h>
 #include <Adafruit_TCS34725.h>
+
+#define LED_BUILTIN 2
 
 const bool debugging = true;
 const int sleepTimeS = 30*60;
@@ -53,70 +56,53 @@ typedef enum{
     s_wifi
 } Sensors;
 
-
-void setup(){
-
-  if (debugging){
-	  Serial.begin(115200);
-  }
-  pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
-  Wire.begin();
-  // Assigment the addres to slave  
-  delay(100); 
-  getSensor();
-  
-  if (availableSensor[s_wifi]){
-    client.setServer(mqtt_server, mqttPort);
-    client.setCallback(callback);
-  }
-
-  if (debugging){
-    Serial.println();
-    Serial.print("connected by: ");
-    Serial.println(WiFi.localIP());
-    Serial.println("\nWaiting for time");
-    Serial.println("----------------------------------------------------------");
-    Serial.println("--------------------- SETUP END --------------------------");
-    Serial.println("----------------------------------------------------------");
-  }
+String getMac(){
+  byte mac[6];
+  WiFi.macAddress(mac);
+  return (String(mac[5])+':'+String(mac[4])+':'+String(mac[3])+':'+String(mac[2])+':'+String(mac[1])+':'+String(mac[0]));
 }
 
-void loop(){
+void getUser(){
+    if ( (WiFi.status() == WL_CONNECTED) ) { //Check the current connection status
+ 
+      HTTPClient http;
+      String urlUser = (String(mqtt_server)+"/Users/GetData/"+ getMac());
 
-  if (availableSensor[s_TCS34725] &&
-      availableSensor[s_Si7021]&&
-      availableSensor[s_CCS811]&&
-      availableSensor[s_BME280]&&
-      availableSensor[s_wifi])
-  {
-    digitalWrite(LED_BUILTIN, LOW);
-  }
-  
-  if(WiFi.status() == WL_CONNECTED){
-    
-    for( int i = 0; i<=1 ;i++){
-      selecPlant( i ); // Analog sensor data actived
-      delay(1500);
-      askSlave();  // Data length 
+      http.begin(urlUser); //Specify the URL
+      int httpCode = http.GET();                                        //Make the request
+ 
+      if (httpCode > 0) { //Check for the returning code
+        String payload = http.getString();
+        Serial.println(httpCode);
+        Serial.println(payload);
+      }
+      else {
+        Serial.println("Error on HTTP request");
+      }
+      http.end(); //Free the resources
     }
-
-    
-    
-      delay(100);
-      getData();
-      delay(100);
-      
-    sleepSensorAnalog();
-    client.loop();
-    delay(2000);
-    client.disconnect();
-  }  
-
-  delay(1000);
-  ESP.deepSleep(sleepTimeS * 1000000);
-
 }
 
+void reconnect() {
+  uint8_t intentos = 0;
+
+  // Loop until we're reconnected
+  while (!client.connected() && intentos < 10){
+    String clientId = "ESP8266Client-";
+    clientId += String(random(0xffff), HEX);
+    // Attempt to connect
+    if (!client.connect( clientId.c_str(),willTopic, 2, false, willMessage )) {
+      if(debugging){
+        Serial.print("failed, rc=");
+        Serial.print(client.state());
+        Serial.println(" try again in 5 seconds");
+      }
+      // Wait 5 seconds before retrying
+      intentos++;
+      delay(5000);
+    }
+  }
+}
 void send_mqtt(String msg_topic, String msg_payload){
   if (!client.connected()) {
     reconnect();
@@ -126,12 +112,9 @@ void send_mqtt(String msg_topic, String msg_payload){
     DynamicJsonDocument doc(2048);
     auto error = deserializeJson(doc, msg_payload);
 
-    byte mac[6];
-    WiFi.macAddress(mac);
-
     if( error == DeserializationError::Ok ){
       String json = "";
-      doc["Device"] = String(mac[5])+':'+String(mac[4])+':'+String(mac[3])+':'+String(mac[2])+':'+String(mac[1])+':'+String(mac[0]);
+      doc["Device"] = getMac();
       serializeJson(doc, json);
       
       uint8_t intentos = 0;
@@ -161,65 +144,21 @@ void send_mqtt(String msg_topic, String msg_payload){
     Serial.println("----------------------------------------------------------");
   }
 }
-void reconnect() {
-  uint8_t intentos = 0;
 
-  // Loop until we're reconnected
-  while (!client.connected() && intentos < 10){
-    String clientId = "ESP8266Client-";
-    clientId += String(random(0xffff), HEX);
-    // Attempt to connect
-    if (!client.connect( clientId.c_str(),willTopic, 2, false, willMessage )) {
-      if(debugging){
-        Serial.print("failed, rc=");
-        Serial.print(client.state());
-        Serial.println(" try again in 5 seconds");
-      }
-      // Wait 5 seconds before retrying
-      intentos++;
-      delay(5000);
-    }
-  }
+void sleepSensorAnalog(){
+  Wire.beginTransmission(I2C_SLAVE_ADDR);
+  Wire.write( (char)( (B01000000) + 15) );
+  Wire.endTransmission();
 }
-void getSensor( ){
-  delay(100);
-  actSensorAnalog();
-  delay(100);
-  
-  availableSensor[s_TCS34725] = Setup_TCS34725();
-  if (debugging){
-    Serial.println("");
-    Serial.print("Sensor TCS34725 :");
-    Serial.println(availableSensor[s_TCS34725] == true? "found" : "Not found");
-  }
-  
-  availableSensor[s_Si7021] = Setup_Si7021();
-  if (debugging){
-    Serial.println("");
-    Serial.print("Sensor Si7021 :");
-    Serial.println(availableSensor[s_Si7021] == true? "found" : "Not found");
-  }
-  
-  availableSensor[s_CCS811] = Setup_CCS811();
-  if (debugging){
-    Serial.println("");
-    Serial.print("Sensor CCS811 :");
-    Serial.println(availableSensor[s_CCS811] == true? "found" : "Not found");
-  }
-  
-  availableSensor[s_BME280] = Setup_BME280();
-  if (debugging){
-    Serial.println("");
-    Serial.print("Sensor BME280 :");
-    Serial.println(availableSensor[s_BME280] == true? "found" : "Not found");
-  }
-
-  availableSensor[s_wifi] = Setup_wifi();
-  if (debugging){
-    Serial.println("");
-    Serial.print("Sensor wifi :");
-    Serial.println(availableSensor[s_wifi] == true? "found" : "Not found");
-  }
+void selecPlant(int selec){
+  Wire.beginTransmission(I2C_SLAVE_ADDR);
+  Wire.write( (char)( (B01000000) + selec) );
+  Wire.endTransmission();
+}
+void actSensorAnalog(){
+  Wire.beginTransmission(I2C_SLAVE_ADDR);
+  Wire.write(activateSensor);
+  Wire.endTransmission();
 }
 void callback(char* topic, byte* payload, unsigned int length) {
   if (debugging){
@@ -231,7 +170,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     }
     Serial.println();
   }
-
+ /*
   // Switch on the LED if an 1 was received as first character
   if ((char)payload[0] == '1') {
     digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
@@ -240,6 +179,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   } else {
     digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
   }
+  */
 }
 bool Setup_CCS811 (){
   uint8_t reintentos = 0;
@@ -303,6 +243,65 @@ bool Setup_BME280 (){
   }
 
   return (myBME280.beginI2C());
+}
+void printSensorError(){
+  uint8_t error = myCCS811.getErrorRegister();
+
+  if ( error == 0xFF ) //comm error
+  {
+    Serial.println("Failed to get ERROR_ID register.");
+  }
+  else
+  {
+    Serial.print("Error: ");
+    if (error & 1 << 5) Serial.print("HeaterSupply");
+    if (error & 1 << 4) Serial.print("HeaterFault");
+    if (error & 1 << 3) Serial.print("MaxResistance");
+    if (error & 1 << 2) Serial.print("MeasModeInvalid");
+    if (error & 1 << 1) Serial.print("ReadRegInvalid");
+    if (error & 1 << 0) Serial.print("MsgInvalid");
+    Serial.println();
+  }
+}
+void getSensor(){
+  delay(100);
+  actSensorAnalog();
+  delay(100);
+  
+  availableSensor[s_TCS34725] = Setup_TCS34725();
+  if (debugging){
+    Serial.println("");
+    Serial.print("Sensor TCS34725 :");
+    Serial.println(availableSensor[s_TCS34725] == true? "found" : "Not found");
+  }
+  
+  availableSensor[s_Si7021] = Setup_Si7021();
+  if (debugging){
+    Serial.println("");
+    Serial.print("Sensor Si7021 :");
+    Serial.println(availableSensor[s_Si7021] == true? "found" : "Not found");
+  }
+  
+  availableSensor[s_CCS811] = Setup_CCS811();
+  if (debugging){
+    Serial.println("");
+    Serial.print("Sensor CCS811 :");
+    Serial.println(availableSensor[s_CCS811] == true? "found" : "Not found");
+  }
+  
+  availableSensor[s_BME280] = Setup_BME280();
+  if (debugging){
+    Serial.println("");
+    Serial.print("Sensor BME280 :");
+    Serial.println(availableSensor[s_BME280] == true? "found" : "Not found");
+  }
+
+  availableSensor[s_wifi] = Setup_wifi();
+  if (debugging){
+    Serial.println("");
+    Serial.print("Sensor wifi :");
+    Serial.println(availableSensor[s_wifi] == true? "found" : "Not found");
+  }
 }
 void getData(){
   String json = "";
@@ -412,21 +411,7 @@ void getData(){
     Serial.println(json);
   }
 }
-void askSlave(){
-	unsigned int responseLenght = 0;
-  responseLenght = askForLength();
 
-  if(debugging){
-    Serial.println("");
-    Serial.print("lenght: " );
-    Serial.println(responseLenght);
-  }
-
-	if (responseLenght != 0){
-	  askForData(responseLenght);
-  };
-
-}
 unsigned int askForLength(){
 	Wire.beginTransmission(I2C_SLAVE_ADDR);
 	Wire.write(ASK_FOR_LENGTH);
@@ -439,21 +424,7 @@ unsigned int askForLength(){
     } 
 	return (responseLenght.toInt());
 }
-void sleepSensorAnalog(){
-  Wire.beginTransmission(I2C_SLAVE_ADDR);
-  Wire.write( (char)( (B01000000) + 15) );
-  Wire.endTransmission();
-}
-void selecPlant(int selec){
-  Wire.beginTransmission(I2C_SLAVE_ADDR);
-  Wire.write( (char)( (B01000000) + selec) );
-  Wire.endTransmission();
-}
-void actSensorAnalog(){
-  Wire.beginTransmission(I2C_SLAVE_ADDR);
-  Wire.write(activateSensor);
-  Wire.endTransmission();
-}
+
 void askForData(unsigned int responseLenght){
   String response = "";
 	Wire.beginTransmission(I2C_SLAVE_ADDR);
@@ -470,22 +441,82 @@ void askForData(unsigned int responseLenght){
 	}
   send_mqtt("Huerta/Push/Analog" ,response);
 }
-void printSensorError(){
-  uint8_t error = myCCS811.getErrorRegister();
+void askSlave(){
+	unsigned int responseLenght = 0;
+  responseLenght = askForLength();
 
-  if ( error == 0xFF ) //comm error
-  {
-    Serial.println("Failed to get ERROR_ID register.");
+  if(debugging){
+    Serial.println("");
+    Serial.print("lenght: " );
+    Serial.println(responseLenght);
   }
-  else
-  {
-    Serial.print("Error: ");
-    if (error & 1 << 5) Serial.print("HeaterSupply");
-    if (error & 1 << 4) Serial.print("HeaterFault");
-    if (error & 1 << 3) Serial.print("MaxResistance");
-    if (error & 1 << 2) Serial.print("MeasModeInvalid");
-    if (error & 1 << 1) Serial.print("ReadRegInvalid");
-    if (error & 1 << 0) Serial.print("MsgInvalid");
+
+	if (responseLenght != 0){
+	  askForData(responseLenght);
+  };
+
+}
+
+void setup(){
+
+  if (debugging){
+	  Serial.begin(115200);
+  }
+  pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
+  Wire.begin();
+  // Assigment the addres to slave  
+  delay(100); 
+  getSensor();
+  
+  if (availableSensor[s_wifi]){
+    client.setServer(mqtt_server, mqttPort);
+    client.setCallback(callback);
+  }
+
+  if (debugging){
     Serial.println();
+    Serial.print("connected by: ");
+    Serial.println(WiFi.localIP());
+    Serial.print("User: ");
+    Serial.println(getMac());
+    getUser();
+    Serial.println("\nWaiting for time");
+    Serial.println("----------------------------------------------------------");
+    Serial.println("--------------------- SETUP END --------------------------");
+    Serial.println("----------------------------------------------------------");
   }
+}
+
+void loop(){
+
+  if (availableSensor[s_TCS34725] &&
+      availableSensor[s_Si7021]&&
+      availableSensor[s_CCS811]&&
+      availableSensor[s_BME280]&&
+      availableSensor[s_wifi])
+  {
+    digitalWrite(LED_BUILTIN, LOW);
+  }
+  
+  if(WiFi.status() == WL_CONNECTED){
+    
+    for( int i = 0; i<=1 ;i++){
+      selecPlant( i ); // Analog sensor data actived
+      delay(1500);
+      askSlave();  // Data length 
+    }
+
+    delay(100);
+    getData();
+    delay(100);
+      
+    sleepSensorAnalog();
+    client.loop();
+    delay(2000);
+    client.disconnect();
+  }  
+
+  delay(1000);
+  ESP.deepSleep(sleepTimeS * 1000000);
+
 }

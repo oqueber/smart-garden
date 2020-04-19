@@ -4,17 +4,6 @@
 #include <ArduinoJson.hpp>
 #include <ArduinoJson.h>
 
-//Global sensor objects
-#define Photocell1Pin A0
-#define Photocell2Pin A1
-#define HumCapPin A2
-#define HumECPin A3
-
-#define enableLux 13
-#define enableAng1 2
-#define enableAng2 4
-#define enableAng3 6
-#define enableI2C 5
 
 
 // Use pin 2 as wake up pin
@@ -149,7 +138,7 @@ void setup()
   if(debugging){
     Serial.begin(9600);
     delay(100);
-    Serial.begin("Iniciando...");
+    Serial.println("Iniciando...");
   }
   // This will consumes few uA of current.
   pinMode(wakeUpPin, INPUT); 
@@ -203,7 +192,11 @@ void receiveEvent(int bytes)
      request = (char)Wire.read();
    }
 
-
+    if(debugging){
+      Serial.println("");
+      Serial.print("LLega esto por el I2C");
+      Serial.println(request);
+    }
    
    // Codigo llega en formato ascii y nos quedamos con los ultimos 4 bits
    if ( (int)request >= 48  && (int)request <= 63 ){
@@ -211,7 +204,6 @@ void receiveEvent(int bytes)
     availableSensor[PhotoCell2] = ((int)request&0xF)&0x2;
     availableSensor[HumCap]     = ((int)request&0xF)&0x4;
     availableSensor[HumEC]      = ((int)request&0xF)&0x8;
-    request = ' ';
     actData = true;
     digitalWrite(enableI2C, HIGH); 
     if(debugging){
@@ -242,7 +234,7 @@ void receiveEvent(int bytes)
       break;
      }
    }
-
+   request = ' ';
 }
  
 void requestEvent(){
@@ -279,7 +271,5 @@ void requestEvent(){
  
 }
 void loop() {
-  Serial.begin("Iniciando...");
-  delay(1990);
   if(actData){actData = false;     getData();}
 }
