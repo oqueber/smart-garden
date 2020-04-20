@@ -22,27 +22,38 @@ PubSubClient client(espClient);
 
 
 // Return an Object with User settings 
-void getUser(){
-    if ( (WiFi.status() == WL_CONNECTED) ) { //Check the current connection status
- 
-      HTTPClient http;
-      String urlUser = (String(mqtt_server)+"/Users/GetData/"+ getMac());
-      Serial.println("Connected to :");
-      Serial.println(urlUser);
-      http.begin(urlUser); //Specify the URL
-      int httpCode = http.GET();                                        //Make the request
- 
-      if (httpCode > 0) { //Check for the returning code
-        String payload = http.getString();
-        Serial.println("getting..:");
-        Serial.println(httpCode);
-        Serial.println(payload);
+bool getUser(){
+
+  bool UserFinded= false;
+
+  if ( (WiFi.status() == WL_CONNECTED) ) { //Check the current connection status
+    HTTPClient http;
+
+    http.begin( (urlGetUser+getMac()) );
+    int httpCode = http.GET();  // Realizar petición
+  
+    if (httpCode > 0) {
+
+      if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+        DynamicJsonDocument doc(2048);
+        
+        String payload = http.getString();   // Obtener respuesta
+        auto error = deserializeJson(doc, payload);
+
+        if( error == DeserializationError::Ok ){  
+          Serial.println(payload);   // Mostrar respuesta por serial
+
+          UserFinded = true;
+        }
       }
-      else {
-        Serial.println("Error on HTTP request");
-      }
-      http.end(); //Free the resources
     }
+    else {
+      Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+    }
+  
+    http.end();
+  }
+  return UserFinded;  
 }
 
 void Sensors_on_off(int io){

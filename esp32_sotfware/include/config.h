@@ -18,6 +18,8 @@
 //Alternate I2C Address for CCS811
 #define CCS811_ADDR 0x5A 
 
+// API url to Users finding
+const String urlGetUser = "http://35.224.59.94:3000/Users/HW/";
 // Switchs
 #define SW1 23
 

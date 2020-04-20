@@ -29,7 +29,7 @@ router.get('/about', (req,res)=>{
 *        }
 *    }
 */
-router.get("/Users/GetData/:Mac",async (req,res)=>{
+router.get("/Users/HW/:Mac",async (req,res)=>{
     var _mac = req.params.Mac
     var _user = await User.findOne({"MAC":_mac});
     console.log( `Receved ${_mac}`);
