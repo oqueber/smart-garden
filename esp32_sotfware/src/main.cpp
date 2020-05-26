@@ -15,18 +15,23 @@
 
 WiFiClient espClient;
 PubSubClient client(espClient);
+DynamicJsonDocument localUser (2048);
 
 #include "config.h"
 #include "setup_sensors.cpp"
 #include "mqtt.cpp"
 
-
-// Return an Object with User settings 
+/* The getUser() function is used as a flag if a user is found or not.
+* Each device has a unique identification to connect to the internet (MAC)
+* This code is used as a uuid and each measurement reported by this divice
+* has this code as the author of a book
+* --> Measurement by uuid (Device M.A.C)
+*/
 bool getUser(){
 
   bool UserFinded= false;
 
-  if ( (WiFi.status() == WL_CONNECTED) ) { //Check the current connection status
+  if( wifi_status() ){
     HTTPClient http;
 
     http.begin( (urlGetUser+getMac()) );
@@ -35,24 +40,25 @@ bool getUser(){
     if (httpCode > 0) {
 
       if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-        DynamicJsonDocument doc(2048);
+        
         
         String payload = http.getString();   // Obtener respuesta
-        auto error = deserializeJson(doc, payload);
+        auto error = deserializeJson(localUser, payload);
 
         if( error == DeserializationError::Ok ){  
-          Serial.println(payload);   // Mostrar respuesta por serial
-
+          if(debugging){ Serial.println(payload); };   // Mostrar respuesta por serial
           UserFinded = true;
         }
+      }else{
+        sisError (2);
       }
-    }
-    else {
+    }else {
       Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
     }
   
     http.end();
   }
+
   return UserFinded;  
 }
 
@@ -196,67 +202,70 @@ void getDataAnalog(JsonObjectConst User, String plant ){
 
     JsonObject path = analog.createNestedObject(element.key());
     path["RawData"] = (SumaAnalog/samples);
+    path["Pin"] = element.value();
     SumaAnalog = 0;
   }
 
   serializeJson(doc, json);
+  //Serial.println("Enviando a mqtt");
+  //Serial.println(json);
   send_mqtt("Huerta/Push/Analog" ,json);
 }
 
 void setup(){
-
-  if (debugging){
-	  Serial.begin(115200);
-  }
-
   pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
   pinMode(SW1, OUTPUT);
 
   Wire.begin();
   
-  if ( Setup_wifi() ){
+  if ( wifi_status() ){
     client.setServer(mqtt_server, mqttPort);
     client.setCallback(callback);
   }
 
-  getUser();
-  if (debugging){
-    Serial.println();
+  if (debugging || debugging_mqtt){
+    Serial.begin(115200);
+    delay (100);
+    Serial.println("----------------------------------------------------------");
+    Serial.println("--------------------- SETUP END --------------------------");
     Serial.print("connected by: ");
     Serial.println(WiFi.localIP());
     Serial.print("User: ");
     Serial.println(getMac());
-    Serial.println("\nWaiting for time");
-    Serial.println("----------------------------------------------------------");
-    Serial.println("--------------------- SETUP END --------------------------");
     Serial.println("----------------------------------------------------------");
   }
+
 }
 
-void loop(){
 /*
+{"Measurements":"1111",
+"Plants":{
+  "Plant1":{"PhotoCell1":"A0","PhotoCell2":"A1","HumCap":"A2","HumEC":"A3"},
+  "Plant2":{"HumCap":"A4","HumEC":"A5","Photocell1":"A0","Photocell2":"A1"}
+  }
+}
+*/
+void loop(){
   digitalWrite(LED_BUILTIN, LOW);
   
-  if(WiFi.status() == WL_CONNECTED){
-    getUser();
-    
-    for( int i = 0; i<=1 ;i++){
-      selecPlant( i ); // Analog sensor data actived
-      delay(1500);
-      askSlave();  // Data length 
+  if( wifi_status() ){
+    if ( getUser() ){
+      /* Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
+      *  and this is send to database for store it.
+      */
+      for (auto kvp : ( localUser["Plants"].as<JsonObject>() ) ) {
+        getDataAnalog(kvp.value(), kvp.key().c_str() ); 
+      }
+      getDataDig(  localUser["Measurements"] );
+    }else{
+      ESP.deepSleep(sleepTime_reconnect);
     }
 
-    delay(100);
-    getData();
-    delay(100);
-      
-    sleepSensorAnalog();
     client.loop();
     delay(2000);
     client.disconnect();
   }  
 
   delay(1000);
-  ESP.deepSleep(sleepTimeS * 1000000);
-*/
+  ESP.deepSleep(sleepTime);
 }

@@ -2,17 +2,18 @@ const express = require('express');
 const router = express.Router();
 const aromaticas = require('../flowers/Aromaticas');
 const hortalizas = require('../flowers/Hortalizas');
+const { isAuthenticated } = require("../helpers/auth")
 
-router.get('/my-plants', (req,res)=>{
+router.get('/my-plants',isAuthenticated, (req,res)=>{
     res.render('plants/plants');
 });
 
-router.get('/new-plant', (req,res)=>{
+router.get('/new-plant',isAuthenticated, (req,res)=>{
     res.render('plants/newPlant', {aromaticas, hortalizas});
 
 });
 
-router.get('/new-plant/:Type/:index', (req,res)=>{
+router.get('/new-plant/:Type/:index',isAuthenticated, (req,res)=>{
     var index = req.params.index
     var Type = req.params.Type
 
@@ -26,7 +27,7 @@ router.get('/new-plant/:Type/:index', (req,res)=>{
 });
 
 
-router.post('/my-plants/new-plant', async(req,res) =>{
+router.post('/my-plants/new-plant',isAuthenticated, async(req,res) =>{
     /*const {title,description} = req.body;
  
     const errors = [];

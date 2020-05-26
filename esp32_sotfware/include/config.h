@@ -2,8 +2,8 @@
 #define LED_BUILTIN 2
 
 // ADCs on ESP32 
-#define A0 36 //GPIO36
-#define A1 39
+#define gA0 36 //GPIO36
+#define A1 39 //GPIO39
 #define A2 34
 #define A3 35
 #define A4 32
@@ -19,11 +19,10 @@
 #define CCS811_ADDR 0x5A 
 
 // API url to Users finding
-const String urlGetUser = "http://35.224.59.94:3000/Users/HW/";
+const String urlGetUser = "http://35.224.59.94:3000/Users/GetData/";
 // Switchs
 #define SW1 23
 
-const bool debugging_mqtt = true;
 // Wifi setting
 const char* WIFI_SSID = "MIWIFI_2G_jPek";
 const char* WIFI_PASSWORD = "TdvM6Urk";
@@ -34,7 +33,9 @@ const char* willTopic = "PW";
 const char* willMessage = "Offline";
 
 // Debugging flag for printing in monitor serial
-const bool debugging = true;
+const bool debugging = false;
+const bool debugging_mqtt = true;
 // Sleep time while the micro does nothing
-const int sleepTime_reconnect= 60;
-const int sleepTime = 30*60;
+const unsigned int time_1S = 1000000;
+const int sleepTime_reconnect= 60 * time_1S; // 1 Min
+const int sleepTime = 30*60 * time_1S; // 30 Min

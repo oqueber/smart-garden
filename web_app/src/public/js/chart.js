@@ -6,7 +6,7 @@ let chart_lengend = document.getElementById("chart_lengend");
 user_date.valueAsDate = new Date(); //La primera vez que carga la pagina, actualizamos la fecha
 
 // Luego utilizar esta variable con el login del usuario
-let user_device = '87:136:119:50:244:44';
+let user_device = document.getElementById("MAC").textContent;
 
 let progress = document.getElementById('animationProgress');
 let config = {
