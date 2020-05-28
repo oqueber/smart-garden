@@ -29,7 +29,16 @@ app.engine('.hbs', exphbs({
     defaultLayout: 'main', // Pagina principal
     layoutsDir: path.join(app.get('views'),'layouts'),  //Plantilla principal
     partialsDir: path.join(app.get('views'),'partials'),//Pequeñar partes de HTML que se pueden reutilizar
-    extname: '.hbs' //Que extrensiones tendran nuestros archivos
+    extname: '.hbs', //Que extrensiones tendran nuestros archivos
+
+    helpers:{
+        JSON2string: function (object) {
+            return JSON.stringify(object);
+        },
+        isVegetable: function (value) {
+            return value == "vegetable";
+        }
+    }
 }))
 app.set('view engine', '.hbs'); // Configuramos el mortor de las plantillas
 

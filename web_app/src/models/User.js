@@ -10,7 +10,7 @@ const UserSchema = new Schema({
     state: { type: String},
     city: { type: String},
     MAC: { type: String, required:true },
-    data: {},
+    plants: {type: Array},
     date:{ type: Date, default: Date.now }
 })
 
