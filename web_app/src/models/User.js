@@ -10,7 +10,33 @@ const UserSchema = new Schema({
     state: { type: String},
     city: { type: String},
     MAC: { type: String, required:true },
-    plants: {type: Array},
+    plants: [{
+        info: {
+            type: {type: String},
+            index: {type: Number},
+            date: {type: Number}
+        },
+        sowing:{
+            light:{
+                hours: {type: Number},
+                color: {type: String}
+            },
+            water:{
+                frequency:{ type:Number},
+                limit: {type: Number}
+            },
+            temperature:{
+                min:{type: Number}
+            }
+        },
+        pinout:{
+            ADC1: {type: Number},
+            ADC2: {type: Number},
+            ADC3: {type: Number},
+            ADC4: {type: Number}
+        },
+        others:{ type: Array}
+    }],
     date:{ type: Date, default: Date.now }
 })
 
