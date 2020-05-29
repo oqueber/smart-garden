@@ -1,94 +1,74 @@
-<form action="/Users/update-user" method="POST" class="needs-validation" novalidate>
-  <div class="form-row">
-    <div class="col-sm-6">
-      <label for="validationCustomUsername">Username</label>
-      <div class="input-group">
-        <div class="input-group-prepend">
-          <span class="input-group-text" id="inputGroupPrepend">@</span>
+  <div class="row">
+  <div class="section">
+    <form class="col s12" action="/Users/update-user" method="POST">
+      <div class="row">
+        <div class="input-field col s6">
+          <input type="text" class="validate" value='{{name}}' name="name" />
+          <label for="text">User name</label>
         </div>
-        <input type="text" class="form-control" value="{{name}}" name="name" placeholder="Username" aria-describedby="inputGroupPrepend" required>
-        <div class="invalid-feedback">
-          Please choose a username.
+        <div class="input-field col s6">
+          <input type="password" class="validate" name="password"/>
+          <label for="password" >Password</label>
         </div>
       </div>
-    </div>
-
-   <div class="col-sm-6">
-      <label for="inputPassword3" >Password</label>
-        <input type="password" class="form-control" name="password" placeholder="password">
-        <div class="valid-feedback">
-            Looks good!
+      <div class="row">
+        <div class="input-field col s6">
+          <label for="email">Email</label>
+          <input type="email" class="validate" value="{{email}}" name="email" />
         </div>
-    </div>
-  </div>
-  <div class="form-row">
-    <div class="col-sm-6">
-      <label for="inputEmail4">Email</label>
-      <input type="email" class="form-control" value="{{email}}" name="email" placeholder="Email"><div class="valid-feedback">
-        Looks good!
+        <div class="input-field col s6">
+          <label for="repit_email">Repit Email</label>
+          <input type="email" class="validate" value="{{emailRepeat}}" name="emailRepeat" />
+        </div>
       </div>
-    </div>
+      <div class="row">
+        <div class="input-field col s4">
+          <label for="city">City</label>
+          <input type="text" class="validate" value="{{city}}" name="city" />
+        </div>
+        <div class="input-field col s4">
+          <label for="state">State</label>
+          <input type="text" class="validate" value="{{state}}" name="state" />
+        </div>
+        <div class="input-field col s4">
+          <label for="zip">Zip</label>
+          <input onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 13) ? null : event.charCode >= 48 && event.charCode <= 57" type="text" class="validate" value="{{zip}}" name="zip" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s2">
+          <label for="MAC">MAC</label>
+          <input class="validate" type="text" maxlength="3" value="{{MAC0}}" onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 13) ? null : event.charCode >= 48 && event.charCode <= 57" name="MAC0"/>
+        </div>
+        <div class="input-field col s2">
+          <label for="MAC">MAC</label>
+          <input class="validate" type="text" maxlength="3" value="{{MAC1}}" onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 13) ? null : event.charCode >= 48 && event.charCode <= 57" name="MAC1"/>
+        </div>
+        <div class="input-field col s2">
+          <label for="MAC">MAC</label>
+          <input class="validate" type="text" maxlength="3" value="{{MAC2}}" onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 13) ? null : event.charCode >= 48 && event.charCode <= 57" name="MAC2"/>
+        </div>
+        <div class="input-field col s2">
+          <label for="MAC">MAC</label>
+          <input class="validate" type="text" maxlength="3" value="{{MAC3}}" onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 13) ? null : event.charCode >= 48 && event.charCode <= 57" name="MAC3"/>
+        </div>
+        <div class="input-field col s2">
+          <label for="MAC">MAC</label>
+          <input class="validate" type="text" maxlength="3" value="{{MAC4}}" onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 13) ? null : event.charCode >= 48 && event.charCode <= 57" name="MAC4"/>
+        </div>
+        <div class="input-field col s2">
+          <label for="MAC">MAC</label>
+          <input class="validate" type="text" maxlength="3" value="{{MAC5}}" onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 13) ? null : event.charCode >= 48 && event.charCode <= 57" name="MAC5"/>
+        </div>
+      </div>
+            
+        <button class="col s12 btn waves-effect waves-light" type="submit">
+        Save changes 
+          <i class="material-icons">send</i>
+        </button>
 
-    <div class="col-sm-6">
-      <label for="inputEmail4">Repit Email</label>
-      <input type="email" class="form-control" value="{{emailRepeat}}" name="emailRepeat" placeholder="Repit Email"><div class="valid-feedback">
-        Looks good!
       </div>
-    </div>
-  </div>
-  <div class="form-row">
-    <div class="col-sm-4">
-      <label for="validationCustom03">City</label>
-      <input type="text" class="form-control" value="{{city}}" name="city" placeholder="City" required>
-      <div class="invalid-feedback">
-        Please provide a valid city.
-      </div>
-    </div>
-    <div class="col-sm-4">
-      <label for="validationCustom04">State</label>
-      <input type="text" class="form-control" value="{{state}}" name="state" placeholder="State" required>
-      <div class="invalid-feedback">
-        Please provide a valid state.
-      </div>
-    </div>
-    <div class="col-sm-4">
-      <label for="validationCustom05">Zip</label>
-      <input type="text" class="form-control" value="{{zip}}" name="zip" placeholder="Zip" required>
-      <div class="invalid-feedback">
-        Please provide a valid zip.
-      </div>
-    </div>
-  </div>
-  <div class="form-row">
-    <label class="col-sm-12" for="validationCustom05">MAC</label>
-    <div class="col input-group">
-      <input class="form-control"type="text" maxlength="3" value="{{MAC0}}" name="MAC0" placeholder="MAC" required>
-      <p style="padding: 0px 3px;" class="input-group-text">:</p>
-    </div>
-    <div class="col input-group">
-      <input class="form-control"type="text" maxlength="3" value="{{MAC1}}" name="MAC1" placeholder="MAC" required>
-      <p style="padding: 0px 3px;" class="input-group-text">:</p>
-    </div>
-    <div class="col input-group">
-      <input class="form-control"type="text" maxlength="3" value="{{MAC2}}" name="MAC2" placeholder="MAC" required>
-      <p style="padding: 0px 3px;" class="input-group-text">:</p>
-    </div>
-    <div class="col input-group">
-      <input class="form-control"type="text" maxlength="3" value="{{MAC3}}" name="MAC3" placeholder="MAC" required>
-      <p style="padding: 0px 3px;" class="input-group-text">:</p>
-    </div>
-    <div class="col input-group">
-      <input class="form-control"type="text" maxlength="3" value="{{MAC4}}" name="MAC4" placeholder="MAC" required>
-      <p style="padding: 0px 3px;" class="input-group-text">:</p>
-    </div>
-    <div class="col input-group">
-      <input class="form-control"type="text" maxlength="3" value="{{MAC5}}" name="MAC5" placeholder="MAC" required>
-    </div>
-   
-    <div class="invalid-feedback">
-      Please provide a valid city.
-    </div>
-  </div>
 
-  <button class="btn btn-primary" type="submit">Update form</button>
-</form>
+    </form>
+  </div>
+</div>

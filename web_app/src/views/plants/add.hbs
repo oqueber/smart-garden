@@ -1,6 +1,6 @@
 <form action="/new-plant/{{Type}}/{{index}}/save" method="POST" class="needs-validation" novalidate>
     <div id="new-plant" class="row text-center">
-        <h2 class="col-sm-12" >Valores recomendados para {{plant.Info.Name}}:</h2>
+        <h2 class="col-sm-12" >Valores recomendados para {{plant.info.name}}:</h2>
         <div class="col-sm-6">
             
             <label class="w-100 p-2" >Frecuencia de riego: <span class="font-weight-bold text-primary ml-2 mt-1" id="valueSpanFreq"></span></label>
@@ -19,15 +19,14 @@
             <labe class="w-100 p-2">Umbral minimo para empezar el complemento de luz: <span class="font-weight-bold text-primary ml-2 mt-1" id="valueSpanLuxUmbral"></span></label>
             <input id="lightU" name="lightU" class="border-0" type="range" min="0" max="3" step="1" />
         </div>
-         <ul>
-            <li><data name="1" value="21053">Cherry Tomato</data></li>
-            <li><data name="2" value="21054">Beef Tomato</data></li>
-            <li><data name="3" value="21055">Snack Tomato</data></li>
-        </ul> 
+        <div class="col-sm-6">
+            <label for="favcolor">Select your favorite color:</label>
+            <input type="color" name="color" value="{{plant.sowing.light.color}}">
+        </div>
         <textarea class="form-control" id="message-text">
-            {{plant.Info.Description}}
+            {{plant.info.description}}
         ...............    Recomendacion.............
-            {{plant.Info.Recomendacion}}
+            {{plant.info.recomendation}}
         </textarea>
         <button type="submit" class="btn btn-primary">Save</button>
 </form>

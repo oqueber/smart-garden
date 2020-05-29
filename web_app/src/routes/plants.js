@@ -25,11 +25,11 @@ router.get('/my-plants',isAuthenticated, async(req,res)=>{
 
         plants[index] = {info: plant};
     }); 
-    res.render('plants/plants', {plants});
+    res.render('plants/home', {plants});
 });
 
 router.get('/new-plant',isAuthenticated, (req,res)=>{
-    res.render('plants/newPlant', {Aromatics, vegetable});
+    res.render('plants/select', {Aromatics, vegetable});
 });
 
 router.get('/new-plant/:Type/:index',isAuthenticated, (req,res)=>{
@@ -45,9 +45,28 @@ router.get('/new-plant/:Type/:index',isAuthenticated, (req,res)=>{
         res.render('404');
     }
 
-    res.render('plants/newPlant-edit', {plant,index,Type});
+    res.render('plants/add', {plant,index,Type});
 });
 
+router.get('/edit-plant/:index/', async(req,res) =>{
+    
+    const index = parseInt(req.params.index,10);
+    //const user = await User.findOne({email: req.user.email});
+    const user = await User.findOne({email: "luis@gmail.com"});
+    let plant = user.plants[index];
+    let info_copy;
+    
+    if(plant.info.type == "vegetable"){
+        info_copy = (vegetable[ plant.info.index]).info;
+    }else if(plant.info.type == "aromatic"){
+        info_copy = (Aromatics[ plant.info.index]).info;
+    }else{
+        res.render('404');
+    }
+    
+    res.render('plants/edit',{plant, info:info_copy  ,index});
+ });
+ 
 router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
     const _index = parseInt(req.params.index , 10);
     const _type = req.params.type;
@@ -62,7 +81,7 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
         sowing:{
             light:{
                 hours: parseInt(lightH),
-                color: "#23321"
+                color: "5,1,4"
             },
             water:{
                 frequency: parseInt(waterF),
@@ -87,18 +106,15 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
 
 
 router.post('/edit-plant/:index/save',isAuthenticated, async(req,res)=>{
-    const { waterF, waterU, lightH, lightU} = req.body;
+    const { waterF, waterU, lightH, color} = req.body;
     const index = parseInt(req.params.index);
-
     await User.findOne( {_id:req.user.id }).then(doc => {
 
-        console.log(`Element index in plants ${index}`);
         let plant = doc.plants[index];
-        console.log(plant);
-        plant.sowing.light.hours = parseInt(lightH);
-        plant.sowing.light.color = "#1345";
-        plant.sowing.water.frequency = parseInt(waterF);
-        plant.sowing.water.limit = parseInt(waterU);
+        plant.sowing.light.hours = parseInt(lightH,10);
+        plant.sowing.light.color = color;
+        plant.sowing.water.frequency = parseInt(waterF,10);
+        plant.sowing.water.limit = parseInt(waterU,10);
         plant.sowing.temperature.min = parseInt('12');
         plant.pinout.ADC1 = parseInt('9');
         plant.pinout.ADC2 = parseInt('7');
@@ -112,17 +128,11 @@ router.post('/edit-plant/:index/save',isAuthenticated, async(req,res)=>{
         console.log('Oh! Dark')
         res.send(err);
       });
-
+    req.flash("success_msg","Data update succefully");
     res.redirect('/my-plants');
 });
 
-router.get('/edit-plant/:index/',isAuthenticated, async(req,res) =>{
-    const index = req.params.index;
-    const user = await User.findOne({email: req.user.email});
-    const plant = user.plants[index];
 
-    res.render('plants/edit',{plant,index});
- });
 
 module.exports= router;
 

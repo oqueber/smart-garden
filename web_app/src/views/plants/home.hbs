@@ -1,0 +1,33 @@
+
+<div class="row">
+  <div class="fixed-action-btn">
+    <a href="/new-plant" class="btn-floating btn-large red">
+      <i class="large material-icons">add</i>
+    </a>
+  </div>
+  
+  <div class="section">
+    <div class="row">
+      <div class="col s12">
+        <h5>Bienvenido a tu coleccion de plantas {{user.name}} </h5>
+        <a href="/new-plant" >Agregar una nueva planta</a>
+      </div>
+    </div>
+    <div class="row">
+      {{#each plants}}
+        <div class="col s6 m3">
+          <div class="card">
+            <div class="card-image">
+              <img src="/img/sample-1.jpg">
+              <span class="card-title">{{info.name}}</span>
+              <a href="/edit-plant/{{@index}}" class="btn-floating halfway-fab waves-effect waves-light red"><i class="material-icons">mode_edit</i></a>
+            </div>
+            <div class="card-content">
+              <p>{{ info.date }} </p>
+            </div>
+          </div>
+        </div>
+      {{/each}}
+    </div>
+  </div>
+</div>

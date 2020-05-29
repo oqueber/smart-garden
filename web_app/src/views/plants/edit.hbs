@@ -1,80 +1,96 @@
-<form action="/edit-plant/{{index}}/save" method="POST" class="needs-validation" novalidate>
-    <div id="new-plant" class="row text-center">
-        <h2 class="col-sm-12" >Valores recomendados para {{plant.Info.Name}}:</h2>
-        <div class="col-sm-6">
-            
-            <label class="w-100 p-2" >Frecuencia de riego: <span class="font-weight-bold text-primary ml-2 mt-1" id="valueSpanFreq"></span></label>
-            <input id="waterF" name="waterF" class="border-0" type="range" min="0" max="24" step="1" />
-        </div>
-        <div class="col-sm-6">
-            
-            <label class="w-100 p-2">Umbral minimo para empezar el riego: <span class="font-weight-bold text-primary ml-2 mt-1" id="valueSpanWater"></span></label>
-            <input id="waterU" name="waterU" class="border-0" type="range" min="0" max="3" step="1" />
-        </div>
-        <div class="col-sm-6">
-            <labe class="w-100 p-2">Valor de horas de luz diarios: <span class="font-weight-bold text-primary ml-2 mt-1" id="valueSpanLux"></span></label>
-            <input id="lightH" name="lightH" class="border-0" type="range" min="0" max="24" step="1" />
-        </div>
-        <div class="col-sm-6">
-            <labe class="w-100 p-2">Umbral minimo para empezar el complemento de luz: <span class="font-weight-bold text-primary ml-2 mt-1" id="valueSpanLuxUmbral"></span></label>
-            <input id="lightU" name="lightU" class="border-0" type="range" min="0" max="3" step="1" />
-        </div>
 
-        <textarea class="form-control" id="message-text">
-            {{plant.info.description}}
+<div class="row">
+  <div class="section">
+    <form id="form" action="/edit-plant/{{index}}/save" method="POST" class="col s12" >
+      <h4>Valores recomendados para {{info.name}}:</h4>
+      <div class="col m6 s12">
+        <div class="row">
+          <div class="input-field col s12">
+            <label>Frecuencia de riego: <span class="" id="valueSpanFreq"></span></label>
+            <div id="waterF"></div>
+          </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s12">
+                <label >Umbral minimo para empezar el riego: <span class="" id="valueSpanWater"></span></label>
+                <div id="waterU"></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s12">
+              <labe>Valor de horas de luz diarios: <span class="" id="valueSpanLux"></span></label>
+              <div id="lightH"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col m6 s12">
+      <div class="row">
+          <div class="input-field col s12">
+              <div id="colorpicker">
+                <div class="sliders" id="red"></div>
+                <div class="sliders" id="green"></div>
+                <div class="sliders" id="blue"></div>
+                <div id="result"></div>
+              </div> 
+          </div>
+      </div>
+    </div>
+    <div class="row">
+        <textarea class="input-field col s12" id="message-text">
+            {{info.description}}
         ...............    Recomendacion.............
-            {{plant.info.recomendacion}}
+            {{info.recomendation}}
         </textarea>
-        <button type="submit" class="btn btn-primary">Save</button>
-</form>
-
+    </div>
+    <button id="submit" type="submit" class="btn btn-primary">Save</button>
+    </form>
+  </div>
 </div>
+<script src="/js/nouislider.js"></script>
+<script src="/js/tools.js"></script>
+<script src="/js/plantEditForm.js"></script> 
 <script>
-  window.onload = function() {
-    const umbralLux = ["Sin luz", "poca luz", "en sombra", "Luz directa"];
-    const umbralWater = ["Seco", "Poco Humedo", "Humedo", "Encharcado"];
-    const localPlant =  {{{JSON2string plant}}} ;
+  const umbralLux = ["Sin luz", "poca luz", "en sombra", "Luz directa"];
+  const umbralWater = ["Seco", "Poco Humedo", "Humedo", "Encharcado"];
+  const localPlant =  {{{JSON2string plant}}} ;
+
+  $( document ).ready(function() {
+    const color = localPlant.sowing.light.color.split(",");
+    const red = document.getElementById("red");
+    red.noUiSlider.set(parseInt(color[0]) ); 
+    const green = document.getElementById("green");
+    green.noUiSlider.set(parseInt(color[1]) ); 
+    const blue = document.getElementById("blue");
+    blue.noUiSlider.set(parseInt(color[2]) ); 
 
     const valueSliderFreq = document.getElementById("waterF");
-    valueSliderFreq.value = localPlant.sowing.water.frequency;
+    valueSliderFreq.noUiSlider.set(localPlant.sowing.water.frequency); 
+
+    const valueSliderLux = document.getElementById("lightH");
+    valueSliderLux.noUiSlider.set(localPlant.sowing.light.hours);
+
+    const valueSliderWater = document.getElementById("waterU");
+    valueSliderWater.noUiSlider.set(localPlant.sowing.water.limit);
 
     const valueSpanFreq = document.getElementById('valueSpanFreq');
-    valueSpanFreq.textContent = `cada ${valueSliderFreq.value} dias`;
-    
-    const valueSliderWater = document.getElementById("waterU");
-    valueSliderWater.value = localPlant.sowing.water.limit;
+    valueSpanFreq.textContent = `cada ${ localPlant.sowing.water.frequency } dias`;
 
     let valueSpanWater = document.getElementById('valueSpanWater');
-    valueSpanWater.textContent = `${umbralWater[valueSliderWater.value]}`;
-    
-    let valueSliderLux = document.getElementById("lightH");
-    valueSliderLux.value = localPlant.sowing.light.min;
+    valueSpanWater.textContent = `${umbralWater[ localPlant.sowing.water.limit ]}`;
 
     let valueSpanLux = document.getElementById('valueSpanLux');
-    valueSpanLux.textContent = `${valueSliderLux.value} horas diarias`;
+    valueSpanLux.textContent = `${ localPlant.sowing.light.hours } horas diarias`;
 
-    let valueSliderLuxUmbral = document.getElementById("lightU");
-    valueSliderLuxUmbral.value = localPlant.sowing.light.min;
-
-    let valueSpanLuxUmbral = document.getElementById('valueSpanLuxUmbral');
-    valueSpanLuxUmbral.textContent = `${umbralLux[valueSliderLuxUmbral.value]}`;
-    
-    valueSliderLuxUmbral.addEventListener('change', (event) => {
-        valueSpanLuxUmbral.textContent = `${umbralLux[event.target.value]}`;
+    valueSliderFreq.noUiSlider.on('change.one', (values) => {
+        valueSpanFreq.textContent = `cada ${parseInt(values[0],10)} dias`;
     });
 
-    valueSliderFreq.addEventListener('change', (event) => {
-        valueSpanFreq.textContent = `cada ${event.target.value} dias`;
+    valueSliderWater.noUiSlider.on('change.one', (values) => {
+        valueSpanWater.textContent = `${umbralWater[parseInt(values[0],10)]}`;
     });
-    
-    valueSliderWater.addEventListener('change', (event) => {
-        valueSpanWater.textContent = `${umbralWater[event.target.value]}`;
+
+    valueSliderLux.noUiSlider.on('change.one', (values) => {
+        valueSpanLux.textContent = `${parseInt(values[0],10)} horas diarias`;
     });
-    
-    valueSliderLux.addEventListener('change', (event) => {
-        valueSpanLux.textContent = `${event.target.value} horas diarias`;
-    });
-    
-    console.log( localPlant);
-}
+});
 </script>

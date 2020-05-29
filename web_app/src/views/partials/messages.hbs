@@ -1,18 +1,20 @@
 
 {{#if success_msg }}
-  <div class="alert alert-success alert-dismissible fade show" role="alert">
-    {{success_msg}}
-  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-    <span aria-hidden="true">&times;</span>
-  </button>
-</div>
+  <div onclick="notificationDelete(this)" class="alert show showAlert">
+      <span class="fas fa-exclamation-circle"></span>
+      <span class="msg">{{success_msg}}</span>
+      <div  class="close-btn">
+        <i class="material-icons">cancel</i>
+      </div>
+  </div>
 {{/if}}
 
 {{#if error_msg }}
-  <div class="alert alert-danger alert-dismissible fade show" role="alert">
-    {{error_msg}}
-  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-    <span aria-hidden="true">&times;</span>
-  </button>
-</div>
+  <div onclick="notificationDelete(this)" class="alert show showAlert">
+      <span class="fas fa-exclamation-circle"></span>
+      <span class="msg">{{error_msg}}</span>
+      <div  class="close-btn">
+         <i class="material-icons">cancel</i>
+      </div>
+  </div>
 {{/if}}
