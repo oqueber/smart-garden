@@ -48,11 +48,11 @@ router.get('/new-plant/:Type/:index',isAuthenticated, (req,res)=>{
     res.render('plants/add', {plant,index,Type});
 });
 
-router.get('/edit-plant/:index/', async(req,res) =>{
+router.get('/edit-plant/:index/',isAuthenticated, async(req,res) =>{
     
     const index = parseInt(req.params.index,10);
-    //const user = await User.findOne({email: req.user.email});
-    const user = await User.findOne({email: "luis@gmail.com"});
+    const user = await User.findOne({email: req.user.email});
+    //const user = await User.findOne({email: "luis@gmail.com"});
     let plant = user.plants[index];
     let info_copy;
     
