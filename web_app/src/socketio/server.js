@@ -9,17 +9,18 @@ io.on('connection',   (socket)=>{
     console.log('Del Usuario: ', socket.id);
     
     DatadB.find({ 
-          //"Device": Data.Device,
+          "Device": Data.Device,
           "timestamps": {     
             $gte: (new Date(`${Data.Date}T00:00:00.000Z`)),     
             $lt:  (new Date(`${Data.Date}T23:59:59.189Z`))
           }
         }).sort({timestamps: 1})
         .then( dataUser =>{
+          console.log("We find this: ", dataUser.length);
           if(dataUser.length != 0){
               socket.emit('chart/PostData', dataUser );  
           }else{
-              socket.emit('chart/Err', {text: "No hay datos", Data} ); 
+              socket.emit('chart/Err', {text: "empty Data", Data} ); 
           }
         }).catch( (error )=>{
             console.log("Error database mongo:");

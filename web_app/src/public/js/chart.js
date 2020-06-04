@@ -65,7 +65,8 @@ let LocalDatabase = []; // Almacenamos las metricas temporalmente
 let socket; // Aun no se inicializa el socket.io
 
 // Once the page load is finished and user logs in, the grafics are inialized
-window.onload = function() {
+$( document ).ready(function() {
+  console.log("Inicialize settup charts");
   let ctx = document.getElementById('myChart').getContext('2d');
   window.myLineChart = new Chart(ctx, config);
 
@@ -100,19 +101,19 @@ window.onload = function() {
 
   // Socket que escucha los posibles errores 
   socket.on('chart/Err', (Data)=>{
-
-      document.getElementById("chart-erro").innerHTML = 
-      `<div class="alert alert-danger alert-dismissible fade show" role="alert">
-      Para el Usuario ${Data.Data.User} en el dia ${Data.Data.Date}, ${Data.text}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>`
-
+    console.log("error, no hay datos");
+    var element = document.getElementById("div-errors");
+    element.innerHTML += `<div onclick="notificationDelete(this)" class="right alert show showAlert">
+      <span class="fas fa-exclamation-circle"></span>
+      <span class="msg">Para el Usuario ${Data.Data.Device} en el dia ${Data.Data.Date}, ${Data.text}</span>
+      <div  class="close-btn">
+        <i class="material-icons">Close</i>
+      </div>
+    </div>`;
     clearData();
   });
   
-};
+});
 
 function updateData(){
     config.data.labels = [];

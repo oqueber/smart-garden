@@ -45,7 +45,7 @@ router.get('/new-plant/:Type/:index',isAuthenticated, (req,res)=>{
         res.render('404');
     }
 
-    res.render('plants/add', {plant,index,Type});
+    res.render('plants/edit', {plant ,index,Type});
 });
 
 router.get('/edit-plant/:index/',isAuthenticated, async(req,res) =>{
@@ -64,13 +64,13 @@ router.get('/edit-plant/:index/',isAuthenticated, async(req,res) =>{
         res.render('404');
     }
     
-    res.render('plants/edit',{plant, info:info_copy  ,index});
+    res.render('plants/edit',{plant ,info:info_copy  ,index});
  });
  
 router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
     const _index = parseInt(req.params.index , 10);
     const _type = req.params.type;
-    const { waterF, waterU, lightH, lightU} = req.body;
+    const { waterF, waterU, lightH, color ,adc1,adc2,adc3,adc4} = req.body;
     
     let plant = {
         info:{
@@ -81,7 +81,7 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
         sowing:{
             light:{
                 hours: parseInt(lightH),
-                color: "5,1,4"
+                color: color
             },
             water:{
                 frequency: parseInt(waterF),
@@ -92,13 +92,12 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
             }
         },
         pinout:{
-            ADC1: parseInt("1"),
-            ADC2: parseInt("2"),
-            ADC3: parseInt("3"),
-            ADC4: parseInt("4")
+            ADC1: parseInt(adc1),
+            ADC2: parseInt(adc2),
+            ADC3: parseInt(adc3),
+            ADC4: parseInt(adc4)
         }
     };
-    
     await User.findByIdAndUpdate(req.user.id, {'$push': {plants: plant } },{ new: true });
     req.flash("success_msg","Data update succefully");
     res.redirect('/my-plants');
@@ -106,7 +105,7 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
 
 
 router.post('/edit-plant/:index/save',isAuthenticated, async(req,res)=>{
-    const { waterF, waterU, lightH, color} = req.body;
+    const { waterF, waterU, lightH, color ,adc1,adc2,adc3,adc4} = req.body;
     const index = parseInt(req.params.index);
     await User.findOne( {_id:req.user.id }).then(doc => {
 
@@ -116,11 +115,12 @@ router.post('/edit-plant/:index/save',isAuthenticated, async(req,res)=>{
         plant.sowing.water.frequency = parseInt(waterF,10);
         plant.sowing.water.limit = parseInt(waterU,10);
         plant.sowing.temperature.min = parseInt('12');
-        plant.pinout.ADC1 = parseInt('9');
-        plant.pinout.ADC2 = parseInt('7');
-        plant.pinout.ADC3 = parseInt('6');
-        plant.pinout.ADC4 = parseInt('5');
+        plant.pinout.ADC1 = parseInt(adc1,10);
+        plant.pinout.ADC2 = parseInt(adc2,10);
+        plant.pinout.ADC3 = parseInt(adc3,10);
+        plant.pinout.ADC4 = parseInt(adc4,10);
         doc.save();
+    console.log(plant);
       
         //sent respnse to client
       }).catch(err => {

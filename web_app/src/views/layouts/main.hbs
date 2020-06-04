@@ -23,11 +23,12 @@
 </head>
 <body>
 
-  {{>navigation}}
-  
-    <div class="container">
+    {{>navigation}}
+    <div id="div-errors">
         {{> messages}}
         {{> errors}}
+    </div>
+    <div class="container">
         {{{ body }}}
     </div>
     

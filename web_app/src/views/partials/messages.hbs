@@ -1,20 +1,20 @@
 
 {{#if success_msg }}
-  <div onclick="notificationDelete(this)" class="alert show showAlert">
+  <div onclick="notificationDelete(this)" class="right alert show showAlert">
       <span class="fas fa-exclamation-circle"></span>
       <span class="msg">{{success_msg}}</span>
       <div  class="close-btn">
-        <i class="material-icons">cancel</i>
+        <i class="material-icons">Close</i>
       </div>
   </div>
 {{/if}}
 
 {{#if error_msg }}
-  <div onclick="notificationDelete(this)" class="alert show showAlert">
+  <div onclick="notificationDelete(this)" class="right alert show showAlert">
       <span class="fas fa-exclamation-circle"></span>
       <span class="msg">{{error_msg}}</span>
       <div  class="close-btn">
-         <i class="material-icons">cancel</i>
+         <i class="material-icons">Close</i>
       </div>
   </div>
 {{/if}}

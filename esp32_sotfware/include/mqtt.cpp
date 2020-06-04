@@ -58,6 +58,10 @@ void reconnect() {
       delay(5000);
     }
   }
+
+  if( client.connected() ){
+    client.subscribe("esp32/MAC/system");
+  }
 }
 // Try to send the message to the Mqtt server
 void send_mqtt(String msg_topic, String msg_payload){
@@ -104,24 +108,34 @@ void send_mqtt(String msg_topic, String msg_payload){
 
   
 }
+
+
 void callback(char* topic, byte* payload, unsigned int length) {
+  String message = "";
+  for (int i = 0; i < length; i++) {
+    message += (char)payload[i]; 
+  }
+
   if (debugging_mqtt){
-    Serial.print("Message arrived [");
+    Serial.print("Message arrived on topic[");
     Serial.print(topic);
-    Serial.print("] ");
-    for (int i = 0; i < length; i++) {
-      Serial.print((char)payload[i]);
-    }
+    Serial.print("] : ");
+    Serial.print(message);
     Serial.println();
   }
- /*
-  // Switch on the LED if an 1 was received as first character
-  if ((char)payload[0] == '1') {
-    digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
-    // but actually the LED is on; this is because
-    // it is acive low on the ESP-01)
-  } else {
-    digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
+
+  if (String(topic) == "esp32/MAC/system") {
+    
+    if(message == "led/on/plan"){
+      digitalWrite(4, HIGH);
+    }else if(message == "led/off/plan"){
+      digitalWrite(4, LOW);
+    }
+    else if(message == "water/off/plan"){
+      digitalWrite(5, LOW);
+    }
+    else if(message == "water/on/plan"){
+      digitalWrite(5, HIGH);
+    }
   }
-  */
 }

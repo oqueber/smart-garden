@@ -2,7 +2,7 @@
 #define LED_BUILTIN 2
 
 // ADCs on ESP32 
-#define gA0 36 //GPIO36
+#define A0 36 //GPIO36
 #define A1 39 //GPIO39
 #define A2 34
 #define A3 35
@@ -33,7 +33,7 @@ const char* willTopic = "PW";
 const char* willMessage = "Offline";
 
 // Debugging flag for printing in monitor serial
-const bool debugging = false;
+const bool debugging = true;
 const bool debugging_mqtt = true;
 // Sleep time while the micro does nothing
 const unsigned int time_1S = 1000000;

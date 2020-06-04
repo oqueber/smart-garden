@@ -215,6 +215,8 @@ void getDataAnalog(JsonObjectConst User, String plant ){
 void setup(){
   pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
   pinMode(SW1, OUTPUT);
+  pinMode(4, OUTPUT);
+  pinMode(5, OUTPUT);
 
   Wire.begin();
   

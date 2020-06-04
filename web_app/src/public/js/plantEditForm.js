@@ -81,9 +81,9 @@ var fillData = function(event) {
     //event.preventDefault();
     let form = document.getElementById('form');
     let data = {
-        waterU: parseInt( (waterU.noUiSlider.get()),10 ),
-        waterF: parseInt( (waterF.noUiSlider.get()),10),
-        lightH: parseInt( (lightH.noUiSlider.get()),10),
+        waterU: waterU.noUiSlider.get(),
+        waterF: waterF.noUiSlider.get(),
+        lightH: lightH.noUiSlider.get(),
         color: String(colors)
     };
     for (const key in data) {

@@ -14,7 +14,7 @@ const UserSchema = new Schema({
         info: {
             type: {type: String},
             index: {type: Number},
-            date: {type: Number}
+            date: {type: Number}   //Creation Date
         },
         sowing:{
             light:{
@@ -37,7 +37,7 @@ const UserSchema = new Schema({
         },
         others:{ type: Array}
     }],
-    date:{ type: Date, default: Date.now }
+    date:{ type: Date, default: Date.now } //User Creation date
 })
 
 UserSchema.methods.encryptPassword = async (password) => {

@@ -1,7 +1,11 @@
 
 <div class="row">
-  <div class="section">
+  {{#if Type}}
+    <form id="form" action="/new-plant/{{Type}}/{{index}}/save" method="POST" class="col s12">
+  {{else}}  
     <form id="form" action="/edit-plant/{{index}}/save" method="POST" class="col s12" >
+  {{/if}}
+    <div class="section">
       <h4>Valores recomendados para {{info.name}}:</h4>
       <div class="col m6 s12">
         <div class="row">
@@ -42,9 +46,24 @@
             {{info.recomendation}}
         </textarea>
     </div>
-    <button id="submit" type="submit" class="btn btn-primary">Save</button>
-    </form>
   </div>
+  <div class="section">
+    <div class="row">
+      <div class="col s4">
+        <input type="number" name="adc1" id="adc1">
+        <input type="number" name="adc2" id="adc2">
+      </div>
+      <div class="col s4">
+        <img style="width:100%"src="/img/sample-1.jpg" alt="plant" >
+      </div>
+      <div class="col s4">
+        <input type="number" name="adc3" id="adc3">
+        <input type="number" name="adc4" id="adc4">
+      </div>
+    </div>
+  </div>
+  <button id="submit" type="submit" class="btn btn-primary">Save</button>
+  </form>
 </div>
 <script src="/js/nouislider.js"></script>
 <script src="/js/tools.js"></script>
@@ -55,6 +74,11 @@
   const localPlant =  {{{JSON2string plant}}} ;
 
   $( document ).ready(function() {
+    document.getElementById("adc1").value = localPlant.pinout.ADC1;
+    document.getElementById("adc2").value = localPlant.pinout.ADC2;
+    document.getElementById("adc3").value = localPlant.pinout.ADC3;
+    document.getElementById("adc4").value = localPlant.pinout.ADC4;
+
     const color = localPlant.sowing.light.color.split(",");
     const red = document.getElementById("red");
     red.noUiSlider.set(parseInt(color[0]) ); 
