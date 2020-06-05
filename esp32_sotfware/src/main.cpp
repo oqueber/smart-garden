@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>
-
+#include <esp_wifi.h>
+#include <esp_bt.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.hpp>
@@ -17,9 +18,14 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 DynamicJsonDocument localUser (2048);
 
+TaskHandle_t Task0;
+TaskHandle_t Task1;
+
 #include "config.h"
 #include "setup_sensors.cpp"
 #include "mqtt.cpp"
+bool finishedCore1 = false;
+bool finishedCore0 = false;
 
 /* The getUser() function is used as a flag if a user is found or not.
 * Each device has a unique identification to connect to the internet (MAC)
@@ -61,7 +67,6 @@ bool getUser(){
 
   return UserFinded;  
 }
-
 void Sensors_on_off(int io){
   digitalWrite(SW1, io);
   delay(1000);
@@ -176,7 +181,7 @@ void getDataDig(uint8_t select){
   }
 
   serializeJson(doc, json);
-  send_mqtt("Huerta/Push/Digital" ,json);
+  //send_mqtt("Huerta/Push/Digital" ,json);
   
   if (debugging){
     Serial.println("");
@@ -209,35 +214,114 @@ void getDataAnalog(JsonObjectConst User, String plant ){
   serializeJson(doc, json);
   //Serial.println("Enviando a mqtt");
   //Serial.println(json);
-  send_mqtt("Huerta/Push/Analog" ,json);
+  //send_mqtt("Huerta/Push/Analog" ,json);
 }
+void taskCore1( void * pvParameters);
+void taskCore0( void * pvParameters);
 
 void setup(){
+  esp_wifi_start();
+  if (debugging || debugging_mqtt){
+    Serial.begin(115200);
+    delay(100);
+  }
   pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
   pinMode(SW1, OUTPUT);
   pinMode(4, OUTPUT);
   pinMode(5, OUTPUT);
 
   Wire.begin();
-  
+
+  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP);  
+
   if ( wifi_status() ){
     client.setServer(mqtt_server, mqttPort);
     client.setCallback(callback);
   }
 
+  delay(100);
+  
+  xTaskCreatePinnedToCore(taskCore0, "Task0", 10000, NULL, 1, &Task0,  0); 
+  delay(500); 
+  xTaskCreatePinnedToCore(taskCore1, "Task1", 10000, NULL, 1, &Task1,  1); 
+  delay(500); 
+  
+
   if (debugging || debugging_mqtt){
-    Serial.begin(115200);
-    delay (100);
     Serial.println("----------------------------------------------------------");
     Serial.println("--------------------- SETUP END --------------------------");
     Serial.print("connected by: ");
     Serial.println(WiFi.localIP());
     Serial.print("User: ");
     Serial.println(getMac());
+    Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) +" Seconds");
     Serial.println("----------------------------------------------------------");
   }
 
 }
+
+void taskCore1( void * pvParameters){
+  Serial.print("Task of the core 1:");
+  Serial.println(xPortGetCoreID());
+  for(;;){
+    digitalWrite(LED_BUILTIN, LOW);
+    Serial.println("New loop in core 1");
+      if( wifi_status() ){
+        if ( getUser() ){
+          /* Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
+          *  and this is send to database for store it.
+          */
+          for (auto kvp : ( localUser["Plants"].as<JsonObject>() ) ) {
+            getDataAnalog(kvp.value(), kvp.key().c_str() ); 
+          }
+          delay(100);
+          getDataDig(  localUser["Measurements"] );
+        }else{
+          //ESP.deepSleep(sleepTime_reconnect);
+        }
+
+      }  
+      delay(10000);
+      finishedCore1 = true;
+      client.disconnect();
+
+      while ( !finishedCore0 ){
+        delay(1000);
+      }
+      Serial.println("Core 1 finished");
+      Serial.flush();
+      esp_wifi_stop();
+      esp_bt_controller_disable();
+      esp_deep_sleep_start();
+  }
+  
+}
+void taskCore0( void * pvParameters){
+  Serial.print("Task of the core 0:");
+  Serial.println(xPortGetCoreID());
+  for(;;){
+
+    while ( !finishedCore1 )
+    {  
+      Serial.println("New loop in core 0");
+      if (!client.connected())  // Reconnect if connection is lost
+      {
+        reconnect();
+      }
+      client.loop();
+      delay(500);
+    }
+
+    finishedCore0 = true;
+    
+    Serial.println("Core 0 finished");
+    while (true) { delay(1000);}
+    
+
+  }
+  
+}
+
 
 /*
 {"Measurements":"1111",
@@ -248,26 +332,5 @@ void setup(){
 }
 */
 void loop(){
-  digitalWrite(LED_BUILTIN, LOW);
-  Serial.println("New loop");
-  if( wifi_status() ){
-    if ( getUser() ){
-      /* Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
-      *  and this is send to database for store it.
-      */
-      for (auto kvp : ( localUser["Plants"].as<JsonObject>() ) ) {
-        getDataAnalog(kvp.value(), kvp.key().c_str() ); 
-      }
-      getDataDig(  localUser["Measurements"] );
-    }else{
-      ESP.deepSleep(sleepTime_reconnect);
-    }
-
-    client.loop();
-    delay(2000);
-    client.disconnect();
-  }  
-
-  delay(100000);
-  //ESP.deepSleep(sleepTime);
+  
 }

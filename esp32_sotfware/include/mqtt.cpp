@@ -26,6 +26,7 @@ bool wifi_status (){
     uint8_t reintentos = 0;
     while ((reintentos <= 10) && (WiFi.status() != WL_CONNECTED)) {
       delay(1500);
+      reintentos++;
     }
   }
 
@@ -41,27 +42,27 @@ String getMac(){
 // Try connecting to the Mqtt server
 void reconnect() {
   uint8_t intentos = 0;
+  const String clientId = "ESP8266Client-"+String(random(0xffff), HEX);
 
   // Loop until we're reconnected
   while (!client.connected() && intentos < 10){
-    String clientId = "ESP8266Client-";
-    clientId += String(random(0xffff), HEX);
     // Attempt to connect
-    if (!client.connect( clientId.c_str(),willTopic, 2, false, willMessage )) {
-      if(debugging_mqtt){
-        Serial.print("failed, rc=");
-        Serial.print(client.state());
-        Serial.println(" try again in 5 seconds");
+      if( client.connect(clientId.c_str()) ){
+        client.subscribe("esp32/MAC/system");
+        
+        if(debugging_mqtt){
+          Serial.println("connected");
+          Serial.println(clientId);
+          Serial.print("State, rc=");
+          Serial.print(client.state());
+        }
+      }else{
+        // Wait 5 seconds before retrying
+        intentos++;
+        delay(5000);
       }
-      // Wait 5 seconds before retrying
-      intentos++;
-      delay(5000);
-    }
   }
 
-  if( client.connected() ){
-    client.subscribe("esp32/MAC/system");
-  }
 }
 // Try to send the message to the Mqtt server
 void send_mqtt(String msg_topic, String msg_payload){

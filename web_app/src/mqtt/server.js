@@ -25,36 +25,36 @@ function clearClientAux(){
   clientAux.id  = "";
   clientAux.msg = "";
 }
-function sendMqtt1_on(){
-  console.log("enviando 1 on");
-  server.publish({
-    topic: 'esp32/MAC/system',
-    payload: 'led/on/plan'
-  });
-}
-function sendMqtt1_off(){
-  console.log("enviando 1 off");
-  server.publish({
-    topic: 'esp32/MAC/system',
-    payload: 'led/off/plan'
-  });
-}
-function sendMqtt2_on(){
-  console.log("enviando 2 on");
-  server.publish({
-    topic: 'esp32/MAC/system',
-    payload: 'water/on/plan'
-  });
-}
-function sendMqtt2_off(){
-  console.log("enviando 2 off");
-  server.publish({
-    topic: 'esp32/MAC/system',
-    payload: 'water/off/plan'
-  });
-}
+
 server.on('clientConnected', client => {
-  console.log(`Client connected ${client.id}`);  
+  console.log(`Client connected ${client.id}`);
+  server.publish({
+    topic: 'esp32/MAC/system',
+    payload: 'led/on/plan',
+    qos: 0, // 0, 1, or 2
+    retain: false // or true
+  },client, () => console.log("Message sent LedON"));
+  
+  server.publish({
+    topic: 'esp32/MAC/system',
+    payload: 'led/off/plan',
+    qos: 0, // 0, 1, or 2
+    retain: false // or true
+  },client, () => console.log("Message sent LedOff")); 
+
+  server.publish({
+    topic: 'esp32/MAC/system',
+    payload: 'water/onplan',
+    qos: 0, // 0, 1, or 2
+    retain: false // or true
+  },client, () => console.log("Message sent waterOn")); 
+
+  server.publish({
+    topic: 'esp32/MAC/system',
+    payload: 'water/off/plan',
+    qos: 0, // 0, 1, or 2
+    retain: false // or true
+  },client, () => console.log("Message sent waterOff")); 
 })
 
 server.on('clientDisconnected', client => {
@@ -65,6 +65,9 @@ server.on('clientDisconnected', client => {
   //clearInterval(interval2_off);
 })
 
+server.on('subscribed', (topic,client) => {
+  console.log(`Client ${client.id} with topic ${topic}`)
+})
 server.on('published', async (packet, client) => {
   
   if (packet.topic == "Huerta/Push/Digital"){ 
@@ -116,10 +119,6 @@ server.on('published', async (packet, client) => {
 
 server.on('ready', async () => {
   console.log(`[Smart-Garden-mqtt] server is running`);
-  interval1_on  = setInterval(sendMqtt1_on, 2000);
-  interval1_off = setInterval(sendMqtt1_off,2500);
-  interval2_on  = setInterval(sendMqtt2_on, 3000);
-  interval2_off = setInterval(sendMqtt2_off,3500);
 })
 
 server.on('error', handleFatalError)

@@ -23,6 +23,10 @@ const String urlGetUser = "http://35.224.59.94:3000/Users/GetData/";
 // Switchs
 #define SW1 23
 
+#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
+#define S_TO_M_FACTOR  60  /* Conversion factor for micro seconds to seconds */
+#define TIME_TO_SLEEP  (1*S_TO_M_FACTOR* uS_TO_S_FACTOR)         /* Time ESP32 will go to sleep (in Min) */
+
 // Wifi setting
 const char* WIFI_SSID = "MIWIFI_2G_jPek";
 const char* WIFI_PASSWORD = "TdvM6Urk";
