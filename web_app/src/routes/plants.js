@@ -68,14 +68,18 @@ router.get('/edit-plant/:index/',isAuthenticated, async(req,res) =>{
  });
  
 router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
-    const _index = parseInt(req.params.index , 10);
-    const _type = req.params.type;
-    const { waterF, waterU, lightH, color ,adc1,adc2,adc3,adc4} = req.body;
-    
+    const errors =[];
+    const index = parseInt(req.params.index , 10);
+    const Type = req.params.type;
+    const { waterF, waterU, lightH, color ,adc1,adc2,adc3,adc4,name} = req.body;
+    if( !Number.isInteger( parseInt(adc1,10) ) ){errors.push({text: "ADC1 neeeds to be a number"})}
+    if( !Number.isInteger( parseInt(adc2,10) ) ){errors.push({text: "ADC2 neeeds to be a number"})}
+    if( !Number.isInteger( parseInt(adc3,10) ) ){errors.push({text: "ADC3 neeeds to be a number"})}
+    if( !Number.isInteger( parseInt(adc4,10) ) ){errors.push({text: "ADC4 neeeds to be a number"})}
     let plant = {
         info:{
-            type: _type,
-            index: _index,
+            type: Type,
+            index: index,
             date: Date.now()
         },
         sowing:{
@@ -98,9 +102,16 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
             ADC4: parseInt(adc4)
         }
     };
-    await User.findByIdAndUpdate(req.user.id, {'$push': {plants: plant } },{ new: true });
-    req.flash("success_msg","Data update succefully");
-    res.redirect('/my-plants');
+
+    if(errors.length >= 1){
+        plant.info.name = name;
+        res.render('plants/edit', {plant ,index,Type, errors});
+    }else{
+
+        await User.findByIdAndUpdate(req.user.id, {'$push': {plants: plant } },{ new: true });
+        req.flash("success_msg","Data update succefully");
+        res.redirect('/my-plants');
+    }
 });
 
 
@@ -119,8 +130,8 @@ router.post('/edit-plant/:index/save',isAuthenticated, async(req,res)=>{
         plant.pinout.ADC2 = parseInt(adc2,10);
         plant.pinout.ADC3 = parseInt(adc3,10);
         plant.pinout.ADC4 = parseInt(adc4,10);
+        console.log(plant); 
         doc.save();
-    console.log(plant);
       
         //sent respnse to client
       }).catch(err => {

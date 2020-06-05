@@ -249,7 +249,7 @@ void setup(){
 */
 void loop(){
   digitalWrite(LED_BUILTIN, LOW);
-  
+  Serial.println("New loop");
   if( wifi_status() ){
     if ( getUser() ){
       /* Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
@@ -268,6 +268,6 @@ void loop(){
     client.disconnect();
   }  
 
-  delay(1000);
-  ESP.deepSleep(sleepTime);
+  delay(100000);
+  //ESP.deepSleep(sleepTime);
 }

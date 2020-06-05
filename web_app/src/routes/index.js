@@ -29,12 +29,22 @@ router.get('/about', (req,res)=>{
 *        }
 *    }
 */
-router.get("/Users/HW/:Mac",async (req,res)=>{
+router.get("/Users/GetData/:Mac",async (req,res)=>{
+    var plants = {};
     var _mac = req.params.Mac
     var _user = await User.findOne({"MAC":_mac});
+
+    if(_user != null){
+        if(_user.plants.lenght != 0){
+            _user.plants.forEach( (element, index) => {
+                plants[index] = element.pinout;
+            }); 
+        }
+    }
     console.log( `Receved ${_mac}`);
-    console.log( `Send `,_user.Data.HW);
-    res.json(_user.Data.HW);
+    console.log(_user); 
+    console.log( `Send `,plants);
+    res.json(plants);
 });
 
 

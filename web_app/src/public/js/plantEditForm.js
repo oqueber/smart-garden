@@ -84,6 +84,7 @@ var fillData = function(event) {
         waterU: waterU.noUiSlider.get(),
         waterF: waterF.noUiSlider.get(),
         lightH: lightH.noUiSlider.get(),
+        name: document.getElementById("PlantName").textContent,
         color: String(colors)
     };
     for (const key in data) {
