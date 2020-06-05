@@ -35,16 +35,23 @@ router.get("/Users/GetData/:Mac",async (req,res)=>{
     var _user = await User.findOne({"MAC":_mac});
 
     if(_user != null){
-        if(_user.plants.lenght != 0){
+        console.log("User Find it");
+        if(_user.plants.lenght >= 0){
+            
+            console.log("Exits plants");
+            
             _user.plants.forEach( (element, index) => {
                 plants[index] = element.pinout;
             }); 
+
+            console.log( `Send `,{Measurements: "1111",plants:plants});
+            res.json({Measurements: "1111",plants:plants});
         }
+    }else{
+        res.send(204);
     }
     console.log( `Receved ${_mac}`);
     console.log(_user); 
-    console.log( `Send `,plants);
-    res.json(plants);
 });
 
 

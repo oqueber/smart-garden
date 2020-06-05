@@ -55,6 +55,8 @@ bool getUser(){
           if(debugging){ Serial.println(payload); };   // Mostrar respuesta por serial
           UserFinded = true;
         }
+      }else if(httpCode == 204){
+        Serial.println("User don't exist");
       }else{
         sisError (2);
       }
@@ -221,10 +223,12 @@ void taskCore0( void * pvParameters);
 
 void setup(){
   esp_wifi_start();
+
   if (debugging || debugging_mqtt){
     Serial.begin(115200);
     delay(100);
   }
+  
   pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
   pinMode(SW1, OUTPUT);
   pinMode(4, OUTPUT);
@@ -268,7 +272,8 @@ void taskCore1( void * pvParameters){
     Serial.println("New loop in core 1");
       if( wifi_status() ){
         if ( getUser() ){
-          /* Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
+          /* 
+          *  Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
           *  and this is send to database for store it.
           */
           for (auto kvp : ( localUser["Plants"].as<JsonObject>() ) ) {

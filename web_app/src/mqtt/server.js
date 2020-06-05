@@ -2,7 +2,6 @@
 const mosca = require('mosca')
 const DatadB = require('../models/DatadB');
 const {io} = require('../utils/socketio.js');
-var interval1_on, interval1_off, interval2_on,interval2_off;
 const settings = {
 	port: 1883
 }
@@ -28,6 +27,14 @@ function clearClientAux(){
 
 server.on('clientConnected', client => {
   console.log(`Client connected ${client.id}`);
+})
+
+server.on('clientDisconnected', client => {
+  console.log(`Client Disconnected ${client.id}`);
+})
+
+server.on('subscribed', (topic,client) => {
+  console.log(`Client ${client.id} with topic ${topic}`);
   server.publish({
     topic: 'esp32/MAC/system',
     payload: 'led/on/plan',
@@ -37,36 +44,24 @@ server.on('clientConnected', client => {
   
   server.publish({
     topic: 'esp32/MAC/system',
-    payload: 'led/off/plan',
+    payload: 'led/off/pplan',
     qos: 0, // 0, 1, or 2
     retain: false // or true
   },client, () => console.log("Message sent LedOff")); 
 
   server.publish({
     topic: 'esp32/MAC/system',
-    payload: 'water/onplan',
+    payload: 'water/on/plan',
     qos: 0, // 0, 1, or 2
     retain: false // or true
   },client, () => console.log("Message sent waterOn")); 
 
   server.publish({
     topic: 'esp32/MAC/system',
-    payload: 'water/off/plan',
+    payload: 'water/off/pplan',
     qos: 0, // 0, 1, or 2
     retain: false // or true
   },client, () => console.log("Message sent waterOff")); 
-})
-
-server.on('clientDisconnected', client => {
-  console.log(`Client Disconnected ${client.id}`)
-  //clearInterval(interval1_on);
-  //clearInterval(interval1_off);
-  //clearInterval(interval2_on);
-  //clearInterval(interval2_off);
-})
-
-server.on('subscribed', (topic,client) => {
-  console.log(`Client ${client.id} with topic ${topic}`)
 })
 server.on('published', async (packet, client) => {
   
@@ -112,10 +107,7 @@ server.on('published', async (packet, client) => {
       }
     }
   }
-})
-
-
-
+});
 
 server.on('ready', async () => {
   console.log(`[Smart-Garden-mqtt] server is running`);
