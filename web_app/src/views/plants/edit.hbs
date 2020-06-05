@@ -63,6 +63,12 @@
     </div>
   </div>
   <button id="submit" type="submit" class="btn btn-primary">Save</button>
+  <a href="/my-plants" class="btn btn-primary">Cancel</a>
+  {{#if Type}}
+
+  {{else}}  
+    <a href="/delete-plant/{{date}}" class="btn btn-primary">Delente</a>
+  {{/if}}
   </form>
 </div>
 <script src="/js/nouislider.js"></script>

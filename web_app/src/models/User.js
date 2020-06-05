@@ -10,7 +10,7 @@ const UserSchema = new Schema({
     state: { type: String},
     city: { type: String},
     MAC: { type: String, required:true },
-    I2C: {type: String},
+    devices: {type: String},
     plants: [{
         info: {
             type: {type: String},

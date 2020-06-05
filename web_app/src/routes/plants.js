@@ -47,7 +47,16 @@ router.get('/new-plant/:Type/:index',isAuthenticated, (req,res)=>{
 
     res.render('plants/edit', {plant ,index,Type});
 });
+router.get('/delete-plant/:date', isAuthenticated, async(req,res) =>{
+    const date = req.params.date;
 
+    await User.findByIdAndUpdate(req.user.id,{
+        $pull: {plants: { 'info.date': date}}
+    });
+
+    req.flash("success_msg","Data update succefully");
+    res.redirect('/my-plants');
+});
 router.get('/edit-plant/:index/',isAuthenticated, async(req,res) =>{
     
     const index = parseInt(req.params.index,10);
@@ -64,7 +73,7 @@ router.get('/edit-plant/:index/',isAuthenticated, async(req,res) =>{
         res.render('404');
     }
     
-    res.render('plants/edit',{plant ,info:info_copy  ,index});
+    res.render('plants/edit',{plant ,info:info_copy ,index, date: plant.info.date});
  });
  
 router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{

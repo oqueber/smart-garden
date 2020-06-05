@@ -61,7 +61,32 @@
           <input class="validate" type="text" maxlength="3" value="{{MAC5}}" onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 13) ? null : event.charCode >= 48 && event.charCode <= 57" name="MAC5"/>
         </div>
       </div>
-            
+      <div class="row">
+          <div class="col s3">
+            <p> 
+              <input type="checkbox" id="BME280" name="BME280" {{BME280}} />
+              <label for="BME280">BME280</label>
+            </p>
+          </div>
+          <div class="col s3">
+            <p>
+              <input type="checkbox" id="CCS811" name="CCS811" {{CCS811}}/>
+              <label for="CCS811">CCS811</label>
+            </p>
+          </div>
+          <div class="col s3">
+            <p>
+              <input type="checkbox" id="Si7021" name="Si7021" {{Si7021}}/>
+              <label for="Si7021">Si7021</label>
+            </p>
+          </div>
+          <div class="col s3">
+            <p> 
+              <input type="checkbox" id="TCS34725" name="TCS34725" {{TCS34725}}/>
+              <label for="TCS34725">TCS34725</label>
+            </p>
+          </div>
+      </div>      
         <button class="col s12 btn waves-effect waves-light" type="submit">
         Save changes 
           <i class="material-icons">send</i>
