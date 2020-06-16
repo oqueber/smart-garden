@@ -2,7 +2,7 @@
 const DatadB = require('../models/DatadB');
 const {io} = require('../utils/socketio.js');
 io.on('connection',   (socket)=>{
-  console.log('[Smart-Garden-Socket] connected'+ socket.id)
+  console.log('[Smart-Garden-Socket] connected '+ socket.id)
   
   socket.on('chart/getData', (Data)=>{
     console.log('Recibido al Servidor: ', Data);

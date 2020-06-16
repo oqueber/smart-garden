@@ -1,3 +1,8 @@
+#include <SparkFunBME280.h> //Click here to get the library: http://librarymanager/All#SparkFun_BME280
+#include <SparkFunCCS811.h> //Click here to get the library: http://librarymanager/All#SparkFun_CCS811
+#include <Adafruit_Si7021.h>
+#include <Adafruit_TCS34725.h>
+
 // Created the object CCS811
 CCS811 myCCS811(CCS811_ADDR);
 // Created the object BME280

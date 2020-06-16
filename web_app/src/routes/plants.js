@@ -7,25 +7,9 @@ const User = require('../models/User');
 
 router.get('/my-plants',isAuthenticated, async(req,res)=>{
     
-    const plants = {};
     const user = await User.findOne({email: req.user.email});
     
-    user.plants.forEach( (element, index )=> {
-        let info_copy;
-        
-        if(element.info.type == "vegetable"){
-            info_copy = JSON.stringify(vegetable[ (element.info.index) ]);
-        }else if(element.info.type == "aromatic"){
-            info_copy = JSON.stringify(Aromatics[ (element.info.index) ]);
-        }else{
-            res.render('404');
-        }
-        let plant = JSON.parse(info_copy).info;
-        plant['date'] = element.info.date;
-
-        plants[index] = {info: plant};
-    }); 
-    res.render('plants/home', {plants});
+    res.render('plants/home', {plants: user.plants});
 });
 
 router.get('/new-plant',isAuthenticated, (req,res)=>{
@@ -63,6 +47,11 @@ router.get('/edit-plant/:index/',isAuthenticated, async(req,res) =>{
     const user = await User.findOne({email: req.user.email});
     //const user = await User.findOne({email: "luis@gmail.com"});
     let plant = user.plants[index];
+    plant["pinout/adc1"]=plant["pinout/photocell1"];
+    plant["pinout/adc2"]=plant["pinout/photocell2"];
+    plant["pinout/adc3"]=plant["pinout/humCap"];
+    plant["pinout/adc4"]=plant["pinout/humEC"];
+
     let info_copy;
     
     if(plant.info.type == "vegetable"){
@@ -87,6 +76,7 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
     if( !Number.isInteger( parseInt(adc4,10) ) ){errors.push({text: "ADC4 neeeds to be a number"})}
     let plant = {
         info:{
+            name: name,
             type: Type,
             index: index,
             date: Date.now()
@@ -105,15 +95,14 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
             }
         },
         pinout:{
-            ADC1: parseInt(adc1),
-            ADC2: parseInt(adc2),
-            ADC3: parseInt(adc3),
-            ADC4: parseInt(adc4)
+            photocell1: parseInt(adc1),
+            photocell2: parseInt(adc2),
+            humCap: parseInt(adc3),
+            humEC: parseInt(adc4)
         }
     };
 
     if(errors.length >= 1){
-        plant.info.name = name;
         res.render('plants/edit', {plant ,index,Type, errors});
     }else{
 
@@ -135,10 +124,10 @@ router.post('/edit-plant/:index/save',isAuthenticated, async(req,res)=>{
         plant.sowing.water.frequency = parseInt(waterF,10);
         plant.sowing.water.limit = parseInt(waterU,10);
         plant.sowing.temperature.min = parseInt('12');
-        plant.pinout.ADC1 = parseInt(adc1,10);
-        plant.pinout.ADC2 = parseInt(adc2,10);
-        plant.pinout.ADC3 = parseInt(adc3,10);
-        plant.pinout.ADC4 = parseInt(adc4,10);
+        plant.pinout.photocell1 = parseInt(adc1,10);
+        plant.pinout.photocell2 = parseInt(adc2,10);
+        plant.pinout.humCap = parseInt(adc3,10);
+        plant.pinout.humEC = parseInt(adc4,10);
         console.log(plant); 
         doc.save();
       

@@ -1,54 +1,17 @@
-/* Error Definitions:
-* 1 --> wifi connection error 
-* 2 --> server connection error
-* 3 --> 
-*
-*/
-void sisError(unsigned int numberError){
-  
-  if (debugging){
-    Serial.print("Error: ");
-    if(numberError == 1){ Serial.print("Wifi connection error");}
-    if(numberError == 2){ Serial.print("Server connection error");}
-    Serial.println();
-  }
-}
+#include <PubSubClient.h>
 
-/*
-* if the wifi is disconnect, it wil try to connect.
-* if the wifi already connected, it returns a true.
-*/
-bool wifi_status (){
+PubSubClient client(espClient);
 
-  if ( WiFi.status() != WL_CONNECTED ) { //Check the current connection status
-    // connect to wifi.
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    uint8_t reintentos = 0;
-    while ((reintentos <= 10) && (WiFi.status() != WL_CONNECTED)) {
-      delay(1500);
-      reintentos++;
-    }
-  }
-
-  if ( WiFi.status() != WL_CONNECTED ){ sisError(1); }
-  return(WiFi.status() == WL_CONNECTED);
-}
-// return a string with the MAC Device AA:AA:AA:AA:AA:AA
-String getMac(){
-  byte mac[6];
-  WiFi.macAddress(mac);
-  return (String(mac[5])+':'+String(mac[4])+':'+String(mac[3])+':'+String(mac[2])+':'+String(mac[1])+':'+String(mac[0]));
-}
 // Try connecting to the Mqtt server
 void reconnect() {
   uint8_t intentos = 0;
-  const String clientId = "ESP8266Client-"+String(random(0xffff), HEX);
+  const String clientId = "device/"+getMac();
 
   // Loop until we're reconnected
   while (!client.connected() && intentos < 10){
     // Attempt to connect
       if( client.connect(clientId.c_str()) ){
-        client.subscribe("esp32/MAC/system");
+        client.subscribe("device/get/task");
         
         if(debugging_mqtt){
           Serial.println("connected");
@@ -59,6 +22,7 @@ void reconnect() {
       }else{
         // Wait 5 seconds before retrying
         intentos++;
+        Serial.println("Mqtt try to connecte to mqtt server");
         delay(5000);
       }
   }
@@ -78,7 +42,7 @@ void send_mqtt(String msg_topic, String msg_payload){
       String json = "";
       uint8_t intentos = 0;
 
-      doc["Device"] = getMac();
+      doc["device"] = getMac();
       serializeJson(doc, json);
       
       if(debugging_mqtt){
@@ -92,7 +56,7 @@ void send_mqtt(String msg_topic, String msg_payload){
         Serial.print("Topic:");
         Serial.println(msg_topic);
         Serial.print("Msg:");
-        Serial.println(msg_payload);
+        Serial.println(json);
         Serial.println("----------------------------------------------------------");
       }else{
         while((client.publish(msg_topic.c_str(), json.c_str(),false) != 1)&&(intentos <=10)){
@@ -109,8 +73,7 @@ void send_mqtt(String msg_topic, String msg_payload){
 
   
 }
-
-
+// Recived the packages from the server. 
 void callback(char* topic, byte* payload, unsigned int length) {
   String message = "";
   for (int i = 0; i < length; i++) {
@@ -125,18 +88,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.println();
   }
 
-  if (String(topic) == "esp32/MAC/system") {
-    
-    if(message == "led/on/plan"){
-      digitalWrite(4, HIGH);
-    }else if(message == "led/off/plan"){
-      digitalWrite(4, LOW);
-    }
-    else if(message == "water/off/plan"){
-      digitalWrite(5, LOW);
-    }
-    else if(message == "water/on/plan"){
-      digitalWrite(5, HIGH);
-    }
-  }
+  receptionSystem( String(topic) , message);
 }
+

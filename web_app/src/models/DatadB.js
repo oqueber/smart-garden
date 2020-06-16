@@ -3,19 +3,17 @@ const { Schema }= mongoose;
 
 const DataSchema = new Schema({
   
-  HumCap : {
-    RawData : Number
+  humCap : {
+    rawData : Number
   },
-  HumEC : {
-    RawData : Number
+  humEC : {
+    rawData : Number
   },
-  Photocell1 : {
-    Res : Number,
-    RawData : Number
+  photocell1 : {
+    rawData : Number
   },
-  Photocell2 : {
-    Res : Number,
-    RawData : Number
+  photocell2 : {
+    rawData : Number
   },
   BME280 : {
     Altitude : Number,
@@ -38,7 +36,8 @@ const DataSchema = new Schema({
     ColorTemp : Number,
     Lux : Number,
   },
-  Device: { type: String, required:true},
+  device: { type: String, required:true},
+  plantId: { type: String},
   timestamps: {type: Date, default: Date.now } 
    
 })

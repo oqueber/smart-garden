@@ -2,83 +2,50 @@
 #include <Wire.h>
 #include <esp_wifi.h>
 #include <esp_bt.h>
-#include <WiFi.h>
-#include <PubSubClient.h>
+
+
 #include <ArduinoJson.hpp>
 #include <ArduinoJson.h>
 
-#include <SparkFunBME280.h> //Click here to get the library: http://librarymanager/All#SparkFun_BME280
-#include <SparkFunCCS811.h> //Click here to get the library: http://librarymanager/All#SparkFun_CCS811
-#include <Adafruit_Si7021.h>
-#include <Adafruit_TCS34725.h>
+#include "soc/sens_reg.h" // needed for manipulating ADC2 control register
 
-#include <HTTPClient.h>
+static RTC_NOINIT_ATTR int reg_b; // place in RTC slow memory so available after deepsleep
 
-WiFiClient espClient;
-PubSubClient client(espClient);
-DynamicJsonDocument localUser (2048);
+#include "config.h"
+#include <sistem_error.cpp>
+
+#include <./wifi/wifi.h>
+#include <./wifi/wifi.cpp>
+
+#include <sistem_control.cpp>
+
+#include <./mqtt/mqtt.h>
+#include <./mqtt/mqtt.cpp>
+
+#include "setup_sensors.cpp"
+#define Threshold 40 /* Greater the value, more the sensitivity */
+
+RTC_DATA_ATTR int bootCount = 0;
+const int touchPin = 4;
+
 
 TaskHandle_t Task0;
 TaskHandle_t Task1;
+TaskHandle_t Task2;
 
-#include "config.h"
-#include "setup_sensors.cpp"
-#include "mqtt.cpp"
 bool finishedCore1 = false;
 bool finishedCore0 = false;
 
-/* The getUser() function is used as a flag if a user is found or not.
-* Each device has a unique identification to connect to the internet (MAC)
-* This code is used as a uuid and each measurement reported by this divice
-* has this code as the author of a book
-* --> Measurement by uuid (Device M.A.C)
-*/
-bool getUser(){
-
-  bool UserFinded= false;
-
-  if( wifi_status() ){
-    HTTPClient http;
-
-    http.begin( (urlGetUser+getMac()) );
-    int httpCode = http.GET();  // Realizar petición
-  
-    if (httpCode > 0) {
-
-      if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-        
-        
-        String payload = http.getString();   // Obtener respuesta
-        auto error = deserializeJson(localUser, payload);
-
-        if( error == DeserializationError::Ok ){  
-          if(debugging){ Serial.println(payload); };   // Mostrar respuesta por serial
-          UserFinded = true;
-        }
-      }else if(httpCode == 204){
-        Serial.println("User don't exist");
-      }else{
-        sisError (2);
-      }
-    }else {
-      Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
-    }
-  
-    http.end();
-  }
-
-  return UserFinded;  
-}
 void Sensors_on_off(int io){
   digitalWrite(SW1, io);
   delay(1000);
 }
-void getDataDig(uint8_t select){
+void getDataDig(String select){
   String json = "";
   DynamicJsonDocument doc(1024);
-  doc["PlantId"] = "measurement";
+  //doc["PlantId"] = "measurement";
   
-  if (select & 0x1) {
+  if (select[0] == '1'){
     if (Setup_TCS34725() ){
     
       uint16_t r, g, b, c;
@@ -111,7 +78,7 @@ void getDataDig(uint8_t select){
       Data["Lux"] = lux;
     }
   }
-  if (select & 0x2){
+  if (select[3] == '1'){
     if ( Setup_CCS811() ){
       //Check to see if data is available
       if (myCCS811.dataAvailable()){
@@ -138,12 +105,12 @@ void getDataDig(uint8_t select){
       }
     }
   }
-  if (select & 0x4) {
+  if (select[2] == '1'){
     if ( Setup_Si7021() ){
       float SItempC = sensor.readTemperature();
       float SIhumid = sensor.readHumidity();
 
-      if (select & 0x2){        
+      if (select[3] == '1'){        
         //This sends the temperature data to the CCS811
         myCCS811.setEnvironmentalData(SIhumid, SItempC);
       }
@@ -160,7 +127,7 @@ void getDataDig(uint8_t select){
       
     }
   }
-  if (select & 0x8){
+  if (select[1] == '1'){
     if (Setup_BME280()){
 
       float readTempC = myBME280.readTempC();
@@ -183,19 +150,19 @@ void getDataDig(uint8_t select){
   }
 
   serializeJson(doc, json);
-  //send_mqtt("Huerta/Push/Digital" ,json);
   
   if (debugging){
     Serial.println("");
     Serial.println("json:");
     Serial.println(json);
   }
+  send_mqtt("Huerta/Push/Digital" ,json);
 }
 void getDataAnalog(JsonObjectConst User, String plant ){
   String json = "";
   DynamicJsonDocument doc(1024);
   JsonObject analog = doc.createNestedObject("Analog");
-  analog["PlantId"] = plant;
+  analog["plantId"] = plant;
 
   unsigned int SumaAnalog = 0;
   unsigned int samples = 10; 
@@ -203,40 +170,69 @@ void getDataAnalog(JsonObjectConst User, String plant ){
   for (auto element : User) {
 
     for(int i = 0; i < samples; i++){
+      
+      if (element.value() < 30){
+        // ADC2 control register restoring
+        WRITE_PERI_REG(SENS_SAR_READ_CTRL2_REG, reg_b);
+        //VERY IMPORTANT: DO THIS TO NOT HAVE INVERTED VALUES!
+        SET_PERI_REG_MASK(SENS_SAR_READ_CTRL2_REG, SENS_SAR2_DATA_INV);
+        //We have to do the 2 previous instructions BEFORE EVERY analogRead() calling!
+      }
       SumaAnalog += analogRead( element.value() );
       delay(50);
     }
 
     JsonObject path = analog.createNestedObject(element.key());
-    path["RawData"] = (SumaAnalog/samples);
-    path["Pin"] = element.value();
+    path["rawData"] = (SumaAnalog/samples);
+    //path["pin"] = element.value();
     SumaAnalog = 0;
   }
 
   serializeJson(doc, json);
-  //Serial.println("Enviando a mqtt");
-  //Serial.println(json);
-  //send_mqtt("Huerta/Push/Analog" ,json);
+  Serial.println("Enviando a mqtt");
+  Serial.println(json);
+  send_mqtt("Huerta/Push/Analog" ,json);
 }
+void taskCore2( void * pvParameters);
 void taskCore1( void * pvParameters);
 void taskCore0( void * pvParameters);
-
+void callback_touch(){
+  //placeholder callback function
+}
 void setup(){
-  esp_wifi_start();
-
   if (debugging || debugging_mqtt){
     Serial.begin(115200);
     delay(100);
   }
   
+  esp_sleep_wakeup_cause_t wakeup_reason;
+  wakeup_reason = esp_sleep_get_wakeup_cause();
+
+  switch(wakeup_reason)
+  {
+    case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
+    case ESP_SLEEP_WAKEUP_TOUCHPAD : digitalWrite(LED_BLUE,HIGH); Serial.println("Wakeup caused by touchpad"); break;
+    default : 
+      reg_b = READ_PERI_REG(SENS_SAR_READ_CTRL2_REG);
+      Serial.println("Reading reg b.....");
+      Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
+  }
+
+  //Setup interrupt on Touch Pad 3 (GPIO15)
+  touchAttachInterrupt(touchPin, callback_touch, Threshold);
+
+  //Configure Touchpad as wakeup source
+  esp_sleep_enable_touchpad_wakeup();
+
+  esp_wifi_start();
+
   pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
-  pinMode(SW1, OUTPUT);
-  pinMode(4, OUTPUT);
-  pinMode(5, OUTPUT);
+  pinMode(LED_GREEN, OUTPUT);
+  pinMode(LED_BLUE, OUTPUT);
+  pinMode(LED_RED, OUTPUT);
+  pinMode(LED_YELLOW, OUTPUT);
 
   Wire.begin();
-
-  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP);  
 
   if ( wifi_status() ){
     client.setServer(mqtt_server, mqttPort);
@@ -244,11 +240,17 @@ void setup(){
   }
 
   delay(100);
-  
-  xTaskCreatePinnedToCore(taskCore0, "Task0", 10000, NULL, 1, &Task0,  0); 
-  delay(500); 
   xTaskCreatePinnedToCore(taskCore1, "Task1", 10000, NULL, 1, &Task1,  1); 
-  delay(500); 
+  delay(500);
+
+  if (wakeup_reason == ESP_SLEEP_WAKEUP_TOUCHPAD){
+    xTaskCreatePinnedToCore(taskCore2, "Task2", 10000, NULL, 1, &Task2,  0); 
+    delay(500); 
+  }
+  else{
+    xTaskCreatePinnedToCore(taskCore0, "Task0", 10000, NULL, 1, &Task0,  0); 
+    delay(500); 
+  }
   
 
   if (debugging || debugging_mqtt){
@@ -268,36 +270,59 @@ void taskCore1( void * pvParameters){
   Serial.print("Task of the core 1:");
   Serial.println(xPortGetCoreID());
   for(;;){
-    digitalWrite(LED_BUILTIN, LOW);
-    Serial.println("New loop in core 1");
-      if( wifi_status() ){
-        if ( getUser() ){
-          /* 
-          *  Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
-          *  and this is send to database for store it.
-          */
-          for (auto kvp : ( localUser["Plants"].as<JsonObject>() ) ) {
-            getDataAnalog(kvp.value(), kvp.key().c_str() ); 
-          }
-          delay(100);
-          getDataDig(  localUser["Measurements"] );
-        }else{
-          //ESP.deepSleep(sleepTime_reconnect);
+    digitalWrite(LED_GREEN, HIGH);
+    if( wifi_status() ){
+      if ( getUser() ){
+        /* 
+        *  Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
+        *  and this is send to database for store it.
+        */
+        for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
+          getDataAnalog(kvp.value(), kvp.key().c_str() ); 
         }
-
-      }  
-      delay(10000);
-      finishedCore1 = true;
-      client.disconnect();
-
-      while ( !finishedCore0 ){
-        delay(1000);
+        delay(100);
+        /* 
+        *  Each User has max 4 measurements ( TCS34725, BME280, CCS811 and Si7021 )
+        *  and this is send to database for store it.
+        */
+        getDataDig(  localUser["Measurements"] );
       }
-      Serial.println("Core 1 finished");
-      Serial.flush();
-      esp_wifi_stop();
-      esp_bt_controller_disable();
-      esp_deep_sleep_start();
+    }  
+    finishedCore1 = true;
+    controlSystem();
+
+    while ( !finishedCore0 ){
+      delay(1000);
+    }
+
+    Serial.println("Core 1 finished");
+    Serial.flush();
+    toSleep(TIME_TO_SLEEP);
+  }
+  
+}
+void taskCore2( void * pvParameters){
+  Serial.print("Task by touch:");
+  Serial.println(xPortGetCoreID());
+  delay(10000);
+  for(;;){
+
+    if( touchRead(touchPin) < Threshold){
+      digitalWrite(LED_BLUE,LOW);
+      Serial.println("Task2 by touch finished");
+      client.disconnect();
+      delay(5000);
+      toSleep(TIME_TO_SLEEP);
+    }
+
+
+    Serial.println("Task2 by touch new loop");
+    if (!client.connected())  // Reconnect if connection is lost
+    {
+      reconnect();
+    }
+    client.loop();
+    delay(500);
   }
   
 }
@@ -308,7 +333,6 @@ void taskCore0( void * pvParameters){
 
     while ( !finishedCore1 )
     {  
-      Serial.println("New loop in core 0");
       if (!client.connected())  // Reconnect if connection is lost
       {
         reconnect();
@@ -318,7 +342,7 @@ void taskCore0( void * pvParameters){
     }
 
     finishedCore0 = true;
-    
+    client.disconnect();
     Serial.println("Core 0 finished");
     while (true) { delay(1000);}
     
@@ -326,7 +350,6 @@ void taskCore0( void * pvParameters){
   }
   
 }
-
 
 /*
 {"Measurements":"1111",

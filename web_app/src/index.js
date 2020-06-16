@@ -35,6 +35,13 @@ app.engine('.hbs', exphbs({
         JSON2string: function (object) {
             return JSON.stringify(object);
         },
+        toDate: function(date){
+            if ( date == 0){
+                return "never";
+            }else{
+                return (new Date(date)).toDateString();
+            }
+        },
         isVegetable: function (value) {
             return value == "vegetable";
         }
@@ -80,6 +87,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 //-----------------------------------------
 //------------ Server is listenning -------
 //-----------------------------------------
-server.listen(port, () =>{
+server.listen(port,'0.0.0.0', () =>{
     console.log(`[Smart-Garden-Server]: Server on port ${port}`);
 });

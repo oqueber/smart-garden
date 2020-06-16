@@ -10,6 +10,13 @@ router.get('/about', (req,res)=>{
     res.render('about');
 });
 
+router.get('/act/:date', (req,res)=>{
+    const date = parseInt(req.params.date,10);
+    const MAC = req.user.MAC;
+
+    res.render('plants/act',{date,MAC});
+});
+
 /*  Data:{
 *        HW:{
 *            // BME280 CCS811 Si7021 TCS34725, un 1 en su lugar representa que se buscara esta metrica
@@ -35,14 +42,12 @@ router.get("/Users/GetData/:Mac",async (req,res)=>{
     var _user = await User.findOne({"MAC":_mac});
 
     if(_user != null){
-        console.log("User Find it, plants :" );
-        console.log(_user.plants);
         if(_user.plants.length >= 1){
             
             console.log("Exits plants");
             
             _user.plants.forEach( (element, index) => {
-                plants[index] = element.pinout;
+                plants[element.info.date] = element.pinout;
             }); 
 
             console.log( `Send `,{Measurements: _user.devices,plants:plants});
@@ -53,8 +58,6 @@ router.get("/Users/GetData/:Mac",async (req,res)=>{
     }else{
         res.sendStatus(204);
     }
-    console.log( `Receved ${_mac}`);
-    console.log(_user); 
 });
 
 

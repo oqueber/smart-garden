@@ -23,7 +23,10 @@
               <a href="/edit-plant/{{@index}}" class="btn-floating halfway-fab waves-effect waves-light red"><i class="material-icons">mode_edit</i></a>
             </div>
             <div class="card-content">
-              <p>{{ info.date }} </p>
+              <!-- <p>Fecha de creacion {{{toDate info.date }}} </p> --->
+              <p>Fecha de creacion {{{info.date }}} </p> 
+              <p>Ultima regada {{{toDate sowing.water.last_water }}} </p>
+              <p>ultima suministro de luz {{{toDate sowing.light.last_light }}} </p>
             </div>
           </div>
         </div>

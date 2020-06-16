@@ -13,17 +13,23 @@ const UserSchema = new Schema({
     devices: {type: String},
     plants: [{
         info: {
+            name: {type: String},
             type: {type: String},
             index: {type: Number},
             date: {type: Number}   //Creation Date
         },
         sowing:{
             light:{
+                last_light:{ type: Number, default: 0}, 
                 hours: {type: Number},
+                led_start: {type: Number},
+                led_end: {type: Number},
                 color: {type: String}
             },
             water:{
+                last_water:{ type: Number,  default: 0}, 
                 frequency:{ type:Number},
+                supply: {type: Number},
                 limit: {type: Number}
             },
             temperature:{
@@ -31,10 +37,10 @@ const UserSchema = new Schema({
             }
         },
         pinout:{
-            ADC1: {type: Number},
-            ADC2: {type: Number},
-            ADC3: {type: Number},
-            ADC4: {type: Number}
+            photocell1: {type: Number},
+            photocell2: {type: Number},
+            humCap: {type: Number},
+            humEC: {type: Number}
         },
         others:{ type: Array}
     }],

@@ -1,116 +1,152 @@
 'use strict'
-const mosca = require('mosca')
+
+const debug = require('debug')("SG:MQTT server");
+const chalk = require('chalk');
+const mosca = require('mosca');
 const DatadB = require('../models/DatadB');
+const Users = require('../models/User');
 const {io} = require('../utils/socketio.js');
+// Import events module
+var events = require('events');
+// Create an eventEmitter object
+var eventEmitter = new events.EventEmitter();
+
 const settings = {
 	port: 1883
 }
 const server = new mosca.Server(settings)
 
-let clientAux= {
-  id: "",
-  msg: ""
-}
+let userTask = new Map();
 
-function getClienteAux( ){
-  return clientAux;
-}
-
-function setClientAux( id, msg ){
-  clientAux.id  = id;
-  clientAux.msg = msg;
-}
-function clearClientAux(){
-  clientAux.id  = "";
-  clientAux.msg = "";
-}
-
-server.on('clientConnected', client => {
-  console.log(`Client connected ${client.id}`);
-})
-
-server.on('clientDisconnected', client => {
-  console.log(`Client Disconnected ${client.id}`);
-})
-
-server.on('subscribed', (topic,client) => {
-  console.log(`Client ${client.id} with topic ${topic}`);
-  server.publish({
-    topic: 'esp32/MAC/system',
-    payload: 'led/on/plan',
-    qos: 0, // 0, 1, or 2
-    retain: false // or true
-  },client, () => console.log("Message sent LedON"));
-  
-  server.publish({
-    topic: 'esp32/MAC/system',
-    payload: 'led/off/pplan',
-    qos: 0, // 0, 1, or 2
-    retain: false // or true
-  },client, () => console.log("Message sent LedOff")); 
-
-  server.publish({
-    topic: 'esp32/MAC/system',
-    payload: 'water/on/plan',
-    qos: 0, // 0, 1, or 2
-    retain: false // or true
-  },client, () => console.log("Message sent waterOn")); 
-
-  server.publish({
-    topic: 'esp32/MAC/system',
-    payload: 'water/off/pplan',
-    qos: 0, // 0, 1, or 2
-    retain: false // or true
-  },client, () => console.log("Message sent waterOff")); 
-})
-server.on('published', async (packet, client) => {
-  
-  if (packet.topic == "Huerta/Push/Digital"){ 
-    setClientAux(client.id, packet.payload.toString('utf-8') )
-    ;
-    console.log(`Received: ${packet.topic}`) 
-    console.log(`Client: `)
-    console.log(getClienteAux())
-  }
-
-  if (packet.topic == "Huerta/Push/Analog") {
-    let clientBef = getClienteAux();
-
-    console.log(`Client: ${client.id}`)
-    console.log(`before Client: ${clientBef.id}`)
-    console.log(`Received: ${packet.topic}`)
-    console.log(`Payload: `, packet.payload.toString('utf-8'));
-    
-    if( clientBef.id == client.id){
-      try {
-        let analog_json = JSON.parse(packet.payload.toString('utf-8'));
-        let digital_json = JSON.parse(clientBef.msg);
-
-        delete analog_json.timestamps;
-
-        Object.keys(analog_json).forEach(function(key) { digital_json[key] = analog_json[key]; });
-
-
-        if(digital_json != null){
-
-          const newData = new DatadB(digital_json);
-          io.emit('chart/NewData', newData );
+eventEmitter.on('client/set/connection', async function( id ){
+  if ( !userTask.has( id ) ){
+    let task = new Promise( async (resolve, reject) => {
+      const user = await Users.findOne({MAC: id});
+       
+      if(user){
+        if(user.plants.length >= 1){
+          let task_for_plant = new Map();
           
-          console.log(newData);
-          await newData.save().then(()=>{
-            console.log('save');
-          }).catch((err)=>console.log(`ERR`,err));    
+          user.plants.forEach( (element, index) => {
+            let today = Date.now();
+            let last_water     = element.sowing.water.last_water;
+            let frequency_water= element.sowing.water.frequency;
+            let limit_water = element.sowing.water.limit;
+            let last_light = element.sowing.light.last_light;
+            debug( chalk.blue( ` ${(today-last_water)/(1000*60*60*24)} > ${frequency_water}`) );
+            if( ((today-last_water)/(1000*60*60*24)) >  frequency_water){
+              task_for_plant.set(index,{
+                topic: 'device/get/task',
+                payload: 'water/on/'+index+"/"+limit_water,
+                qos: 0, // 0, 1, or 2
+                retain: false // or true
+              });
+            }
+          }); 
+          
+          if( task_for_plant.size > 0){
+            resolve(task_for_plant);
+          }else{
+            reject(Error("Nothing to doing right now"))
+          }
+        }else{
+          reject(Error("The user don't have plants"));
         }
-      }catch(err){
-        console.log('error dee JSON')
-        console.log(err)
+      }else{
+        reject(Error("User don't found"));
       }
-    }
+
+    });
+    task.then( function(tasks) {
+      userTask.set(id,tasks);
+
+    }).catch(function(reason) {
+      debug( chalk.yellow('Manejar promesa rechazada ('+reason+') aquí.') );
+    });
+    
+  }else{
+    //already have a notice
+    debug('the user already have a task');
   }
 });
 
+eventEmitter.on('user/update/water', async function(UserMac,plantIndex){  
+  const index = parseInt(plantIndex,10);
+  await Users.findOne( {MAC: UserMac }).then(doc => {
+
+      let plant = doc.plants[index];
+      plant.sowing.water.last_water = Date.now();
+      doc.save();
+      debug(chalk.green(`Update plant water ${plantIndex} in the user ${UserMac}`));
+      userTask.delete(UserMac);
+  });
+});
+
+server.on('clientConnected', async client => {
+  
+  debug(`Client connected ${client.id}`);
+
+});
+
+server.on('clientDisconnected', client => {
+  debug(`Client Disconnected ${client.id}`);
+})
+
+server.on('subscribed', (topic,client) => {
+  debug(`Client subscribed ${client.id} with topic ${topic}`);
+  let deviceId = (client.id).split('/')[1];
+
+  if( topic == "device/get/task"){
+    if ( userTask.has(deviceId) ){
+      debug( chalk.yellow( `searching task for ${deviceId}`) );
+      userTask.get(deviceId).forEach(function(value, key, map){
+
+        server.publish(value,client, () => debug("Message sent"));
+      });
+      userTask.delete(deviceId);
+    }else{
+      debug( chalk.yellow( `there are not task for the user ${deviceId}`) );
+      eventEmitter.emit('client/set/connection',deviceId );
+    }
+  }else{
+    debug(chalk.yellow("It's don't the topic") );
+  }
+})
+server.on('published', async (packet, client) => {
+  debug(`Received published with topic: ${packet.topic}`)
+
+  if(packet.topic == "device/update/task"){
+    let deviceMAC = (client.id).split('/')[1]; 
+    let devicePayload = packet.payload.toString('utf-8').split('/');
+
+    if (devicePayload[0] = "water"){
+      eventEmitter.emit('user/update/water', deviceMAC, devicePayload[1] );
+    }
+
+  }
+  if ((packet.topic == "Huerta/Push/Digital") || (packet.topic == "Huerta/Push/Analog")) {
+    
+    try {
+      let json_data = JSON.parse(packet.payload.toString('utf-8'));
+      if(json_data != null){
+
+        const newData = new DatadB(json_data);
+        io.emit('chart/NewData', newData );
+        
+        await newData.save().then(()=>{
+          debug('save :');
+          debug(newData);
+        }).catch((err)=>debug(`ERR`,err));    
+      }
+    }catch(err){
+      debug( chalk.yellow('error dee JSON'))
+      debug(err)
+    }
+  } 
+});
+
 server.on('ready', async () => {
-  console.log(`[Smart-Garden-mqtt] server is running`);
+  debug( chalk.blue(` Server is running`));
 })
 
 server.on('error', handleFatalError)
@@ -119,12 +155,12 @@ module.exports = server
 
 
 function handleFatalError (err) {
-  console.error(`[Fatal eror] ${err.message}`)
-  console.error(err.stack)
+  debug( chalk.red(`[Fatal eror] ${err.message}`) );
+  debug( chalk.red(err.stack));
   process.exit(1)
 }
 
 // Manejadores expeciones
 process.on('uncaughtException', handleFatalError)
 // Manejo de errores de las promesas
-process.on('unhandledRejection', handleFatalError)
+process.on('unhandledRejection', handleFatalError);

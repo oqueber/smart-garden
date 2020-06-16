@@ -1,0 +1,146 @@
+
+<div class="row">
+  <div class="section">
+  <h4>Activar sensores para <span id="PlantId">{{date}}</span> </h4>
+  
+    <div class="row">
+      <div class="col m6 s12">
+        <div class="row">
+          <div class="input-field col s12">
+            <label >Umbral maximo de riego: <span class="" id="valueSpanWater"></span></label>
+            <div id="waterU"></div>
+          </div>
+
+        </div>
+        <div class="row">
+          <div class="col s12">
+            <a id="waterU_link" href="/act/water/on/{{MAC}}/{{date}}" class="btn btn-primary">Activar agua</a>
+            <a href="/act/water/off/{{MAC}}/{{date}}" class="btn btn-primary">Apagar agua</a>
+          </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s12">
+              <labe>Valor de horas de luz diarios: <span class="" id="valueSpanLux"></span></label>
+              <div id="lightH"></div>
+            </div>
+            <div class="col s12">
+              <a id="lightH_link" href="/act/light/on/{{MAC}}/{{date}}" class="btn btn-primary">Activar luz</a>
+              <a href="/act/light/off/{{MAC}}/{{date}}" class="btn btn-primary">Apagar luz</a>
+            </div>
+        </div>
+      </div>
+      <div class="col m6 s12">
+        <div class="row">
+            <div class="input-field col s12">
+                <div id="colorpicker">
+                  <div class="sliders" id="red"></div>
+                  <div class="sliders" id="green"></div>
+                  <div class="sliders" id="blue"></div>
+                  <div id="result"></div>
+                </div> 
+            </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <a href="/my-plants" class="btn btn-primary">Cancel</a>
+</div>
+<script src="/js/nouislider.js"></script>
+<script>
+  const umbralLux = ["Sin luz", "poca luz", "en sombra", "Luz directa"];
+  const umbralWater = ["Seco", "Poco Humedo", "Humedo", "Encharcado"];
+  /* --------------------------------------------------
+  *              Water Umbral
+  * --------------------------------------------------*/
+  var waterU = document.getElementById('waterU');
+  noUiSlider.create(waterU, {
+      start: [1],
+      connect: 'lower',
+      step: 1,
+      range: {
+          'min': [0],
+          'max': [3]
+      }
+  });
+  /* --------------------------------------------------
+  *              Water Umbral
+  * --------------------------------------------------*/
+  var lightH = document.getElementById('lightH');
+  noUiSlider.create(lightH, {
+      start: [1],
+      connect: 'lower',
+      step: 1,
+      range: {
+          'min': [0],
+          'max': [24]
+      }
+  });
+  /* --------------------------------------------------
+  *              Color
+  * --------------------------------------------------*/
+  var resultElement = document.getElementById('result');
+  var sliders = document.getElementsByClassName('sliders');
+  var colors = [0, 0, 0];
+  [].slice.call(sliders).forEach(function (slider, index) {
+
+      noUiSlider.create(slider, {
+          start: 127,
+          connect: [true, false],
+          orientation: "vertical",
+          range: {
+              'min': 0,
+              'max': 255
+          },
+          format: {   
+              from: function(value) {
+              return parseInt(value);
+          },
+              to: function(value) {
+              return parseInt(value);
+          }}
+      });
+      // Bind the color changing function to the update event.
+      slider.noUiSlider.on('update', function () {
+
+          colors[index] = slider.noUiSlider.get();
+
+          var color = 'rgb(' + colors.join(',') + ')';
+
+          resultElement.style.background = color;
+          resultElement.style.color = color;
+      });
+  });
+
+    const valueSliderWater = document.getElementById("waterU");
+    const valueSliderLux = document.getElementById("lightH");
+    let valueSpanWater = document.getElementById('valueSpanWater');
+    let valueSpanLux = document.getElementById('valueSpanLux');
+
+  $( document ).ready(function() {
+
+    valueSpanWater.textContent = `${umbralWater[1]}`;
+    valueSpanLux.textContent = `1 horas diarias`;
+    
+    document.getElementById("waterU_link").addEventListener('click',function(e){
+      e.preventDefault();
+      window.location.href = `${document.getElementById("waterU_link").href}/${parseInt(valueSliderWater.noUiSlider.get(),10)}`;
+    });
+    document.getElementById("lightH_link").addEventListener('click',function(e){
+      e.preventDefault();
+      const url = document.getElementById("lightH_link").href;
+      const hours = parseInt(valueSliderLux.noUiSlider.get(),10);
+      const red = colors[0];
+      const green = colors[1];
+      const blue = colors[2];
+      window.location.href = `${url}/${hours}/${red}/${green}/${blue}`;
+    });
+    valueSliderWater.noUiSlider.on('change.one', (values) => {
+        valueSpanWater.textContent = `${umbralWater[parseInt(values[0],10)]}`;
+    });
+
+    valueSliderLux.noUiSlider.on('change.one', (values) => {
+        valueSpanLux.textContent = `Activar por ${parseInt(values[0],10)} horas`;
+    });
+  });
+</script>

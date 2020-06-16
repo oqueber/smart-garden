@@ -26,6 +26,16 @@
               <div id="lightH"></div>
             </div>
         </div>
+        <div class="row">
+            <div class="input-field col s6">
+              <labe>Led start</label>
+              <input type="number" name="led_start" id="led_start">
+            </div>
+            <div class="input-field col s6">
+              <labe>Led start</label>
+              <input type="number" name="led_end" id="led_end">
+            </div>
+        </div>
     </div>
     <div class="col m6 s12">
       <div class="row">
@@ -62,12 +72,13 @@
       </div>
     </div>
   </div>
-  <button id="submit" type="submit" class="btn btn-primary">Save</button>
+  <button id="submit" type="submit" class="btn green">Save</button>
   <a href="/my-plants" class="btn btn-primary">Cancel</a>
   {{#if Type}}
 
   {{else}}  
-    <a href="/delete-plant/{{date}}" class="btn btn-primary">Delente</a>
+    <a href="/delete-plant/{{date}}" class="btn red">Delente</a>
+    <a href="/act/{{date}}" class="btn purple">action</a>
   {{/if}}
   </form>
 </div>
@@ -80,10 +91,10 @@
   const localPlant =  {{{JSON2string plant}}} ;
 
   $( document ).ready(function() {
-    document.getElementById("adc1").value = localPlant.pinout.ADC1;
-    document.getElementById("adc2").value = localPlant.pinout.ADC2;
-    document.getElementById("adc3").value = localPlant.pinout.ADC3;
-    document.getElementById("adc4").value = localPlant.pinout.ADC4;
+    document.getElementById("adc1").value = localPlant.pinout.photocell1;
+    document.getElementById("adc2").value = localPlant.pinout.photocell2;
+    document.getElementById("adc3").value = localPlant.pinout.humCap;
+    document.getElementById("adc4").value = localPlant.pinout.humEC;
 
     const color = localPlant.sowing.light.color.split(",");
     const red = document.getElementById("red");

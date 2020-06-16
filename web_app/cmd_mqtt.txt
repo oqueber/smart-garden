@@ -3,3 +3,5 @@ mqtt pub -t "push" -h localhost -m '{"Analog":{"HumCap":{"rawData":253},"HumEC":
 mqtt pub -t "Huerta/Push/Digital" -h localhost -m '{"TCS34725" : { "R" : 5558, "G" : 4735, "B" : 4889, "C" : 13083, "ColorTemp" : 8475, "Lux" : 2090 }, "Si7021" : { "Temp" : 20.97552, "Humi" : 47.70712 }, "BME280" : { "Temp" : 21.45, "Pressure" : 94042.98, "Altitude" : 624.6133 }, "CCS811" : { "CO2" : 0, "TVOC" : 0 }, "Device" : "87:136:119:50:244:44" }' -i 'oqueber'
 
 mqtt pub -t "Huerta/Push/Analog" -h localhost -m '{"Photocell1":{"RawData":977,"Res":481.0643},"Photocell2":{"RawData":939,"Res":905.2181},"HumEC":{"RawData":446},"HumCap":{"RawData":347},"Device":"87:136:119:50:244:44"}' -i 'oqueber'
+
+mqtt sub -t 'device/get/task' -h 'localhost' -i "Device/678:567:876:898:76:789" -v
