@@ -15,18 +15,20 @@
 #define A10 12
 #define A11 13
 //#define A12 0 // Can not used
-#define A12 15
-#define A13 2
-#define A14 4
+//#define A12 15
+//#define A13 2
+#define A12 4
 
+
+//buttom Tocch
+#define touchPin 15
 // Switchs
-#define SW1 23
+#define SW1 16
 // Led on board
-#define LED_BUILTIN 2
-#define LED_GREEN 5
-#define LED_BLUE 16
-#define LED_YELLOW 17
-#define LED_RED 18
+//#define LED_BUILTIN 2
+#define LED_GREEN 17
+#define LED_BLUE 5
+#define LED_RED 1
 
 // ---------------------------------------------------------------------
 // --------------------  I2C in ESP32  --------------------------
@@ -40,8 +42,8 @@
 // --------------------------------------------------------------------- 
 
 // API url to Users finding
-const String IP = "35.224.59.94"; // google server
-//const String IP = "192.168.1.136"; //Server local
+//const String IP = "35.224.59.94"; // google server
+const String IP = "192.168.1.136"; //Server local
 const String urlGetUser = "http://"+ IP +":3000/Users/GetData/";
 
 // ---------------------------------------------------------------------

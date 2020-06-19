@@ -2,7 +2,7 @@
 #include <Wire.h>
 #include <esp_wifi.h>
 #include <esp_bt.h>
-
+#include <SD.cpp>
 
 #include <ArduinoJson.hpp>
 #include <ArduinoJson.h>
@@ -25,20 +25,24 @@ static RTC_NOINIT_ATTR int reg_b; // place in RTC slow memory so available after
 #include "setup_sensors.cpp"
 #define Threshold 40 /* Greater the value, more the sensitivity */
 
-RTC_DATA_ATTR int bootCount = 0;
-const int touchPin = 4;
+uint8_t cardType;
 
 
 TaskHandle_t Task0;
 TaskHandle_t Task1;
 TaskHandle_t Task2;
 
+void taskCore2( void * pvParameters);
+void taskCore1( void * pvParameters);
+void taskCore0( void * pvParameters);
+void callback_touch(){};
+
 bool finishedCore1 = false;
 bool finishedCore0 = false;
 
-void Sensors_on_off(int io){
+void swichs_on_off(int io){
   digitalWrite(SW1, io);
-  delay(1000);
+  delay(5000);
 }
 void getDataDig(String select){
   String json = "";
@@ -193,23 +197,51 @@ void getDataAnalog(JsonObjectConst User, String plant ){
   Serial.println(json);
   send_mqtt("Huerta/Push/Analog" ,json);
 }
-void taskCore2( void * pvParameters);
-void taskCore1( void * pvParameters);
-void taskCore0( void * pvParameters);
-void callback_touch(){
-  //placeholder callback function
-}
+
 void setup(){
   if (debugging || debugging_mqtt){
     Serial.begin(115200);
     delay(100);
   }
+
+  //pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
+  pinMode(LED_GREEN, OUTPUT);
+  pinMode(LED_BLUE, OUTPUT);
+  pinMode(LED_RED, OUTPUT);
+  pinMode(SW1, OUTPUT);
   
+
+  if(!SD.begin()){
+    Serial.println("Card Mount Failed");
+  }
+
+  cardType = SD.cardType();
+  if(cardType == CARD_NONE){
+    sisError(5);
+  }else{
+    deleteFile(SD, "/userData.txt");
+    listDir(SD, "/", 2);
+    // Check to see if the file exists:
+    if (SD.exists("/userData.txt")) {
+      String stringUser = readFile(SD, "/userData.txt");
+      Serial.println("");
+      Serial.println("Document inside have this:");
+      Serial.println(stringUser);
+
+      auto error = deserializeJson(localUser, stringUser );
+      if( error == DeserializationError::Ok ){  
+        userLocalFlag = true ;
+        Serial.println("User found");
+      }
+    } else {
+      Serial.println("userData.txt doesn't exist.");
+    }
+  }
+    
   esp_sleep_wakeup_cause_t wakeup_reason;
   wakeup_reason = esp_sleep_get_wakeup_cause();
 
-  switch(wakeup_reason)
-  {
+  switch(wakeup_reason){
     case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
     case ESP_SLEEP_WAKEUP_TOUCHPAD : digitalWrite(LED_BLUE,HIGH); Serial.println("Wakeup caused by touchpad"); break;
     default : 
@@ -217,26 +249,26 @@ void setup(){
       Serial.println("Reading reg b.....");
       Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
   }
-
+    
   //Setup interrupt on Touch Pad 3 (GPIO15)
   touchAttachInterrupt(touchPin, callback_touch, Threshold);
-
   //Configure Touchpad as wakeup source
   esp_sleep_enable_touchpad_wakeup();
 
   esp_wifi_start();
 
-  pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
-  pinMode(LED_GREEN, OUTPUT);
-  pinMode(LED_BLUE, OUTPUT);
-  pinMode(LED_RED, OUTPUT);
-  pinMode(LED_YELLOW, OUTPUT);
-
   Wire.begin();
 
+  // If we can connected to wifi..
   if ( wifi_status() ){
     client.setServer(mqtt_server, mqttPort);
     client.setCallback(callback);
+
+  }else{
+    if( !userLocalFlag ){
+      //Nothing to do, reboot
+      sisError(0);
+    }
   }
 
   delay(100);
@@ -252,7 +284,6 @@ void setup(){
     delay(500); 
   }
   
-
   if (debugging || debugging_mqtt){
     Serial.println("----------------------------------------------------------");
     Serial.println("--------------------- SETUP END --------------------------");
@@ -260,6 +291,8 @@ void setup(){
     Serial.println(WiFi.localIP());
     Serial.print("User: ");
     Serial.println(getMac());
+    Serial.print("user local :");
+    Serial.println(userLocalFlag);
     Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) +" Seconds");
     Serial.println("----------------------------------------------------------");
   }
@@ -271,24 +304,31 @@ void taskCore1( void * pvParameters){
   Serial.println(xPortGetCoreID());
   for(;;){
     digitalWrite(LED_GREEN, HIGH);
+
     if( wifi_status() ){
-      if ( getUser() ){
-        /* 
-        *  Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
-        *  and this is send to database for store it.
-        */
-        for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
-          getDataAnalog(kvp.value(), kvp.key().c_str() ); 
+      if( !userLocalFlag ){
+        if ( !getUser()){
+          sisError(0);
         }
-        delay(100);
-        /* 
-        *  Each User has max 4 measurements ( TCS34725, BME280, CCS811 and Si7021 )
-        *  and this is send to database for store it.
-        */
-        getDataDig(  localUser["Measurements"] );
       }
-    }  
+    }
+    swichs_on_off(HIGH);
+    /* 
+    *  Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
+    *  and this is send to database for store it.
+    */
+    for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
+      getDataAnalog(kvp.value(), kvp.key().c_str() ); 
+    }
+    /* 
+    *  Each User has max 4 measurements ( TCS34725, BME280, CCS811 and Si7021 )
+    *  and this is send to database for store it.
+    */
+    getDataDig(  localUser["Measurements"] );
+    swichs_on_off(LOW);
+     
     finishedCore1 = true;
+    //  Do something with all tasks received
     controlSystem();
 
     while ( !finishedCore0 ){
@@ -299,7 +339,6 @@ void taskCore1( void * pvParameters){
     Serial.flush();
     toSleep(TIME_TO_SLEEP);
   }
-  
 }
 void taskCore2( void * pvParameters){
   Serial.print("Task by touch:");
@@ -351,14 +390,4 @@ void taskCore0( void * pvParameters){
   
 }
 
-/*
-{"Measurements":"1111",
-"Plants":{
-  "Plant1":{"PhotoCell1":"A0","PhotoCell2":"A1","HumCap":"A2","HumEC":"A3"},
-  "Plant2":{"HumCap":"A4","HumEC":"A5","Photocell1":"A0","Photocell2":"A1"}
-  }
-}
-*/
-void loop(){
-  
-}
+void loop(){}

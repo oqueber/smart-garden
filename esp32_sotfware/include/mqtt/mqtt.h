@@ -3,7 +3,7 @@
 // --------------------------------------------------------------------- 
 
 const int mqttPort = 1883;
-const char* mqtt_server = IP.c_str();
+const char* mqtt_server = "192.168.1.136";
 const char* willTopic = "PW";
 const char* willMessage = "Offline";
 

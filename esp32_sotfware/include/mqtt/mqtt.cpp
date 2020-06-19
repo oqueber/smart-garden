@@ -45,8 +45,15 @@ void send_mqtt(String msg_topic, String msg_payload){
       doc["device"] = getMac();
       serializeJson(doc, json);
       
-      if(debugging_mqtt){
-        Serial.println("-----------Enviando a mqtt---------------");
+      while((client.publish(msg_topic.c_str(), json.c_str(),false) != 1)&&(intentos <=10)){
+        intentos++;
+        Serial.print("try send number: ");
+        Serial.println(intentos);
+        delay(1000);
+      }
+
+      if(debugging_mqtt && (intentos < 10 )){
+        Serial.println("-----------Se envio a mqtt---------------");
         Serial.print("Status mqtt: ");
         Serial.println( client.state() );
         Serial.print("connected wifi: ");
@@ -58,12 +65,8 @@ void send_mqtt(String msg_topic, String msg_payload){
         Serial.print("Msg:");
         Serial.println(json);
         Serial.println("----------------------------------------------------------");
-      }else{
-        while((client.publish(msg_topic.c_str(), json.c_str(),false) != 1)&&(intentos <=10)){
-          intentos++;
-          delay(1000);
-        }
       }
+      
     }else{
       ESP.deepSleep(sleepTime_reconnect);
     }

@@ -6,10 +6,13 @@
   clock_prescale_set(clock_div_1);
 #endif
 
+bool userLocalFlag = false;
+
 Adafruit_NeoPixel pixels(num_pixels, pin_pixel, NEO_GRB + NEO_KHZ800);
 DynamicJsonDocument doc (200);
 DynamicJsonDocument localUser (2048);
 JsonArray userTasks = doc.to<JsonArray>();
+
 
 void receptionSystem( String topic, String message){
   if ( topic == "device/get/task" ) {
@@ -83,7 +86,7 @@ bool getUser(){
         
         String payload = http.getString();   // Obtener respuesta
         auto error = deserializeJson(localUser, payload);
-
+        writeFile(SD, "/userData.txt", payload.c_str() );
         if( error == DeserializationError::Ok ){  
           if(debugging){ Serial.println(payload); };   // Mostrar respuesta por serial
           UserFinded = true;

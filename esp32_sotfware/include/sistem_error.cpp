@@ -21,29 +21,34 @@ void sisError(unsigned int numberError, String text = ""){
   
   if (debugging){
 
-    Serial.print("-> Error: ");
-    switch (numberError)
-    {
+    Serial.println("");
+    Serial.println("-> Error: ");
+    digitalWrite(LED_RED,HIGH);
+    switch (numberError){
+    case 0:
+      Serial.println("Nothing to do, no wifi or localUser save ");
+      toSleep(TIME_TO_SLEEP);
+      break;
     case 1:
       Serial.println("Wifi connection error");
-      digitalWrite(LED_RED,HIGH);
-      delay(5000);
-      toSleep(TIME_TO_SLEEP);
       break;
     case 2:
       Serial.printf("[HTTP] GET... failed, error: %s\n", text.c_str());
       break;
     case 3:
-      Serial.print("User don't exist");
+      Serial.println("User don't exist");
       break;
     case 4:
-      Serial.print("Bad comunication in http");
+      Serial.println("Bad comunication in http");
       break;
     case 5:
+        Serial.println("No SD card attached");
+      break;
+    case 6:
+        Serial.println("");
       break;
     default:
       break;
     }
-    Serial.println();
   }
 }
