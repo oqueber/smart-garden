@@ -6,6 +6,7 @@ Aromatics.push({
         description: "The Albacaha is so delicius", 
         recomendation: "La Albahaca es una planta que no soporta para nada las heladas, por lo que se recomienda empezar la siembra en semilleros y luego transplantarlas",
         beginner: false,
+        image: "albahaca.jpg",
         germination: 15, //Dias
         harvest: 50, // Dias
         space: "30x20", //cm
@@ -32,6 +33,7 @@ Aromatics.push({
         description: "The Perejil is so delicius", 
         recomendation: "Poner la semilla en remojo 24 horas.",
         beginner: true,
+        image:"perejil.jpg",
         germination: 15, //Dias
         harvest: 90, // Dias
         space: "30x20", //cm

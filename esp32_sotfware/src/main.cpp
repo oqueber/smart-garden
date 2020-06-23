@@ -41,7 +41,7 @@ void swichs_on_off(int io){
   digitalWrite(SW1, io);
   delay(5000);
 }
-void getDataDig(String select){
+void getDataDig(String select , bool send = true){
   String json = "";
   DynamicJsonDocument doc(1024);
   //doc["PlantId"] = "measurement";
@@ -151,15 +151,15 @@ void getDataDig(String select){
   }
 
   serializeJson(doc, json);
-  send_mqtt("Huerta/Push/Digital" ,json);
-  
-  //if (debugging){
-  //  Serial.println("");
-  //  Serial.println("json:");
-  //  Serial.println(json);
-  //}
+  if(send) {
+    send_mqtt("Huerta/Push/Digital" ,json);
+  }else{
+    Serial.println("");
+    Serial.println("json:");
+    Serial.println(json);
+  }
 }
-void getDataAnalog(JsonObjectConst User, String plant ){
+void getDataAnalog(JsonObjectConst User, String plant, bool send = true ){
   String json = "";
   DynamicJsonDocument doc(1024);
   JsonObject analog = doc.createNestedObject("Analog");
@@ -168,7 +168,7 @@ void getDataAnalog(JsonObjectConst User, String plant ){
   unsigned int SumaAnalog = 0;
   unsigned int samples = 10; 
 
-  for (auto element : User) {
+  for (auto element : User["pinout"].as<JsonObject>() ) {
 
     for(int i = 0; i < samples; i++){
       
@@ -185,14 +185,18 @@ void getDataAnalog(JsonObjectConst User, String plant ){
 
     JsonObject path = analog.createNestedObject(element.key());
     path["rawData"] = (SumaAnalog/samples);
-    //path["pin"] = element.value();
+    
+    if(!send){path["pin"] = element.value();}
     SumaAnalog = 0;
   }
 
   serializeJson(doc, json);
-  //Serial.println("Enviando a mqtt");
-  //Serial.println(json);
-  send_mqtt("Huerta/Push/Analog" ,json);
+  if(send) {
+    send_mqtt("Huerta/Push/Analog" ,json);
+  }else{
+    Serial.println("Enviando a mqtt");
+    Serial.println(json);
+  }
 }
 
 
@@ -240,9 +244,12 @@ void setup(){
 
   //pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
   pinMode(LED_GREEN, OUTPUT);
-  pinMode(LED_BLUE, OUTPUT);
-  pinMode(LED_RED, OUTPUT);
   pinMode(SW1, OUTPUT);
+  pinMode(waterPin0, OUTPUT);
+  pinMode(waterPin1, OUTPUT);
+  pinMode(waterPin2, OUTPUT);
+  pinMode(waterPin3, OUTPUT);
+  pinMode(neoPin, OUTPUT);
   
 
   if(!SD.begin()){
@@ -267,8 +274,19 @@ void setup(){
   wakeup_reason = esp_sleep_get_wakeup_cause();
 
   switch(wakeup_reason){
-    case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
-    case ESP_SLEEP_WAKEUP_TOUCHPAD : digitalWrite(LED_BLUE,LOW); Serial.println("Wakeup caused by touchpad"); break;
+    case ESP_SLEEP_WAKEUP_TIMER : 
+      Serial.println("Wakeup caused by timer"); break;
+      digitalWrite(LED_GREEN,HIGH);
+      delay(1000);
+
+    case ESP_SLEEP_WAKEUP_TOUCHPAD : 
+      Serial.println("Wakeup caused by touchpad"); break;
+      for(int i = 0; i<10; i++){
+        digitalWrite(LED_GREEN,LOW);
+        delay(1000);
+        digitalWrite(LED_GREEN,HIGH);
+        delay(1000);
+      }  
     default : 
       reg_b = READ_PERI_REG(SENS_SAR_READ_CTRL2_REG);
       Serial.println("Reading reg b.....");
@@ -299,15 +317,16 @@ void setup(){
     }
   }
   
-  delay(100);
-  xTaskCreatePinnedToCore(taskCore1, "Task1", 10000, NULL, 1, &Task1,  1); 
-  delay(500);
 
   if (wakeup_reason == ESP_SLEEP_WAKEUP_TOUCHPAD){
     xTaskCreatePinnedToCore(taskCore2, "Task2", 10000, NULL, 1, &Task2,  0); 
     delay(500); 
   }
   else{
+
+    delay(100);
+    xTaskCreatePinnedToCore(taskCore1, "Task1", 10000, NULL, 1, &Task1,  1); 
+    delay(500);
     xTaskCreatePinnedToCore(taskCore0, "Task0", 10000, NULL, 1, &Task0,  0); 
     delay(500); 
   }
@@ -367,8 +386,8 @@ void taskCore1( void * pvParameters){
     digitalWrite(LED_GREEN, HIGH);
 
     if( wifi_status() ){
-      if( !userLocalFlag ){
-        if ( !getUser()){
+      if ( !getUser()){
+        if( !userLocalFlag ){
           sisError(0);
         }
       }
@@ -412,7 +431,7 @@ void taskCore2( void * pvParameters){
   for(;;){
 
     if( touchRead(touchPin) < Threshold){
-      digitalWrite(LED_BLUE,HIGH);
+      digitalWrite(LED_GREEN,LOW);
       Serial.println("Task2 by touch finished");
       client.disconnect();
       delay(5000);
@@ -421,12 +440,34 @@ void taskCore2( void * pvParameters){
 
 
     Serial.println("Task2 by touch new loop");
-    if (!client.connected())  // Reconnect if connection is lost
-    {
+    if( wifi_status() ){
+      if ( !getUser()){
+        if( !userLocalFlag ){
+          sisError(0);
+        }
+      }
+    }
+    swichs_on_off(HIGH);
+    /* 
+    *  Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
+    *  and this is send to database for store it.
+    */
+    for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
+      getDataAnalog(kvp.value(), kvp.key().c_str(),false ); 
+    }
+    /* 
+    *  Each User has max 4 measurements ( TCS34725, BME280, CCS811 and Si7021 )
+    *  and this is send to database for store it.
+    */
+    getDataDig(  localUser["Measurements"],false );
+    
+    swichs_on_off(LOW);
+    if (!client.connected()){  // Reconnect if connection is lost
       reconnect();
     }
     client.loop();
-    delay(500);
+    delay(10000);
+
   }
   
 }

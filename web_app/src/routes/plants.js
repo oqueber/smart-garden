@@ -8,7 +8,20 @@ const User = require('../models/User');
 router.get('/my-plants',isAuthenticated, async(req,res)=>{
     
     const user = await User.findOne({email: req.user.email});
+
+    user.plants.forEach(plant => {
+        console.log(plant);
     
+        if (plant.info.type == "aromatic"){
+            plant.info.image = Aromatics[plant.info.index].info.image;
+        }else if(plant.info.type  == "vegetable") {
+            plant.info.image = vegetable[plant.info.index].info.image;
+        }
+    });
+
+    
+    console.log("luego:");
+    console.log(user.plants);
     res.render('plants/home', {plants: user.plants});
 });
 

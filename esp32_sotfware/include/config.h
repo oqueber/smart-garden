@@ -12,24 +12,38 @@
 #define A7 26
 #define A8 27
 #define A9 14
-#define A10 12
-#define A11 13
-//#define A12 0 // Can not used
+
+//#define A10 12
+//#define A11 13
+//#define A12 0 // Can not used only with out way
 //#define A12 15
 //#define A13 2
-#define A12 4
+//#define A12 4
 
+//SPI
+//#define cs 2
+//#define mosi 23
+//#define miso 19
+//#define sclk 18
 
-//buttom Tocch
+//I2C
+//#define SCL 22
+//#define SDA 21
+
+//buttom Touch
 #define touchPin 15
 // Switchs
 #define SW1 16
-// Led on board
-//#define LED_BUILTIN 2
-#define LED_GREEN 17
-#define LED_BLUE 5
-#define LED_RED 1
+// Light pin
+#define neoPin 17
+// led pin
+#define LED_GREEN 1
 
+// Water pin
+#define waterPin0 4
+#define waterPin1 5
+#define waterPin2 12
+#define waterPin3 13
 
 // ---------------------------------------------------------------------
 // --------------------  SD in ESP32  --------------------------

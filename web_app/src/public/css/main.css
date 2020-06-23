@@ -1,3 +1,10 @@
+.card .card-image .card-title {
+    padding: 0px;
+    background: black;
+    opacity: .5;
+}
+
+
 #chart_lengend ul {
   list-style: none;
   margin: 0;

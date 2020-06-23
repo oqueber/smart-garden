@@ -23,7 +23,7 @@ void sisError(unsigned int numberError, String text = ""){
 
     Serial.println("");
     Serial.println("-> Error: ");
-    digitalWrite(LED_RED,LOW);
+    //digitalWrite(LED_RED,LOW);
     switch (numberError){
     case 0:
       Serial.println("Nothing to do, no wifi or localUser save ");
