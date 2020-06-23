@@ -16,6 +16,7 @@
 #include "SD.h"
 #include "SPI.h"
 
+
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
     Serial.printf("Listing directory: %s\n", dirname);
 
@@ -77,8 +78,7 @@ String readFile(fs::FS &fs, const char * path){
 
     Serial.print("Read from file: ");
     while(file.available()){
-        Serial.write(file.read());
-        text += char(file.read());
+        text += ( (char)file.read() );
     }
     file.close();
     return text;

@@ -7,17 +7,22 @@
   {{/if}}
     <div class="section">
       <h4>Valores recomendados para <span id="PlantName">{{plant.info.name}}</span> :</h4>
-      <div class="col m6 s12">
+      <div class="col m8 s12">
         <div class="row">
-          <div class="input-field col s12">
+          <div class="input-field col s6">
             <label>Frecuencia de riego: <span id="valueSpanFreq"></span></label>
             <div id="waterF"></div>
           </div>
+          <div class="input-field col s6">
+              <label >Umbral minimo para empezar el riego: <span class="" id="valueSpanWater"></span></label>
+              <div id="waterU"></div>
+          </div>
         </div>
         <div class="row">
+           
             <div class="input-field col s12">
-                <label >Umbral minimo para empezar el riego: <span class="" id="valueSpanWater"></span></label>
-                <div id="waterU"></div>
+                <labe>Water pin</label>
+                <input type="number" name="waterPin" id="waterPin">
             </div>
         </div>
         <div class="row">
@@ -37,7 +42,7 @@
             </div>
         </div>
     </div>
-    <div class="col m6 s12">
+    <div class="col m4 s12">
       <div class="row">
           <div class="input-field col s12">
               <div id="colorpicker">
@@ -91,18 +96,24 @@
   const localPlant =  {{{JSON2string plant}}} ;
 
   $( document ).ready(function() {
-    document.getElementById("adc1").value = localPlant.pinout.photocell1;
-    document.getElementById("adc2").value = localPlant.pinout.photocell2;
-    document.getElementById("adc3").value = localPlant.pinout.humCap;
-    document.getElementById("adc4").value = localPlant.pinout.humEC;
+    if(localPlant.pinout){
+      document.getElementById("adc1").value = localPlant.pinout.photocell1;
+      document.getElementById("adc2").value = localPlant.pinout.photocell2;
+      document.getElementById("adc3").value = localPlant.pinout.humCap;
+      document.getElementById("adc4").value = localPlant.pinout.humEC;
 
-    const color = localPlant.sowing.light.color.split(",");
-    const red = document.getElementById("red");
-    red.noUiSlider.set(parseInt(color[0]) ); 
-    const green = document.getElementById("green");
-    green.noUiSlider.set(parseInt(color[1]) ); 
-    const blue = document.getElementById("blue");
-    blue.noUiSlider.set(parseInt(color[2]) ); 
+      document.getElementById("led_start").value = localPlant.sowing.light.led_start;
+      document.getElementById("led_end").value =   localPlant.sowing.light.led_end;
+      document.getElementById("waterPin").value =   localPlant.sowing.water.pinout;
+
+      const red = document.getElementById("red");
+      red.noUiSlider.set(localPlant.sowing.light.color_red ); 
+      const green = document.getElementById("green");
+      green.noUiSlider.set(localPlant.sowing.light.color_green ); 
+      const blue = document.getElementById("blue");
+      blue.noUiSlider.set( localPlant.sowing.light.color_blue ); 
+    }
+
 
     const valueSliderFreq = document.getElementById("waterF");
     valueSliderFreq.noUiSlider.set(localPlant.sowing.water.frequency); 

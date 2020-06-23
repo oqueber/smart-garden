@@ -24,13 +24,16 @@ const UserSchema = new Schema({
                 hours: {type: Number},
                 led_start: {type: Number},
                 led_end: {type: Number},
-                color: {type: String}
+                color_red: {type: Number},
+                color_green: {type: Number},
+                color_blue: {type: Number}
             },
             water:{
                 last_water:{ type: Number,  default: 0}, 
                 frequency:{ type:Number},
                 supply: {type: Number},
-                limit: {type: Number}
+                limit: {type: Number},
+                pinout: {type: Number}
             },
             temperature:{
                 min:{type: Number}

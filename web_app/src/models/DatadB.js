@@ -38,7 +38,7 @@ const DataSchema = new Schema({
   },
   device: { type: String, required:true},
   plantId: { type: String},
-  timestamps: {type: Date, default: Date.now } 
+  timestamps: {type: Number } 
    
 })
 

@@ -69,7 +69,7 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
     const errors =[];
     const index = parseInt(req.params.index , 10);
     const Type = req.params.type;
-    const { waterF, waterU, lightH, color ,adc1,adc2,adc3,adc4,name} = req.body;
+    const { waterF, waterU, lightH,waterPin, color_red, color_blue,color_green ,adc1,adc2,adc3,adc4,led_start,led_end, name} = req.body;
     if( !Number.isInteger( parseInt(adc1,10) ) ){errors.push({text: "ADC1 neeeds to be a number"})}
     if( !Number.isInteger( parseInt(adc2,10) ) ){errors.push({text: "ADC2 neeeds to be a number"})}
     if( !Number.isInteger( parseInt(adc3,10) ) ){errors.push({text: "ADC3 neeeds to be a number"})}
@@ -83,29 +83,34 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
         },
         sowing:{
             light:{
-                hours: parseInt(lightH),
-                color: color
+                hours: parseInt(lightH,10),
+                led_start: parseInt(led_start,10),
+                led_end: parseInt(led_end,10),
+                color_red:  parseInt(color_red,10),
+                color_green:parseInt(color_green,10),
+                color_blue: parseInt(color_blue,10),
             },
             water:{
-                frequency: parseInt(waterF),
-                limit: parseInt(waterU)
+                frequency: parseInt(waterF,10),
+                pinout: parseInt(waterPin,10),
+                limit: parseInt(waterU,10)
             },
             temperature:{
-                min: parseInt('12')
+                min: parseInt('12',10)
             }
         },
         pinout:{
-            photocell1: parseInt(adc1),
-            photocell2: parseInt(adc2),
-            humCap: parseInt(adc3),
-            humEC: parseInt(adc4)
+            photocell1: parseInt(adc1,10),
+            photocell2: parseInt(adc2,10),
+            humCap: parseInt(adc3,10),
+            humEC: parseInt(adc4,10)
         }
     };
 
     if(errors.length >= 1){
         res.render('plants/edit', {plant ,index,Type, errors});
     }else{
-
+        console.log(plant.sowing);
         await User.findByIdAndUpdate(req.user.id, {'$push': {plants: plant } },{ new: true });
         req.flash("success_msg","Data update succefully");
         res.redirect('/my-plants');
@@ -114,21 +119,26 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
 
 
 router.post('/edit-plant/:index/save',isAuthenticated, async(req,res)=>{
-    const { waterF, waterU, lightH, color ,adc1,adc2,adc3,adc4} = req.body;
+    const { waterF, waterU, lightH, led_start, led_end,color_red,waterPin, color_blue,color_green ,adc1,adc2,adc3,adc4} = req.body;
     const index = parseInt(req.params.index);
     await User.findOne( {_id:req.user.id }).then(doc => {
 
         let plant = doc.plants[index];
         plant.sowing.light.hours = parseInt(lightH,10);
-        plant.sowing.light.color = color;
+        plant.sowing.light.color_red = parseInt(color_red,10);
+        plant.sowing.light.color_green = parseInt(color_green,10);
+        plant.sowing.light.color_blue = parseInt(color_blue,10);
+        plant.sowing.light.led_start = parseInt(led_start,10);
+        plant.sowing.light.led_end = parseInt(led_end,10);
         plant.sowing.water.frequency = parseInt(waterF,10);
         plant.sowing.water.limit = parseInt(waterU,10);
-        plant.sowing.temperature.min = parseInt('12');
+        plant.sowing.water.pinout = parseInt(waterPin,10);
+        plant.sowing.temperature.min = parseInt('14');
         plant.pinout.photocell1 = parseInt(adc1,10);
         plant.pinout.photocell2 = parseInt(adc2,10);
         plant.pinout.humCap = parseInt(adc3,10);
         plant.pinout.humEC = parseInt(adc4,10);
-        console.log(plant); 
+        console.log(plant.sowing); 
         doc.save();
       
         //sent respnse to client

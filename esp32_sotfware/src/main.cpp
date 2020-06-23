@@ -2,10 +2,9 @@
 #include <Wire.h>
 #include <esp_wifi.h>
 #include <esp_bt.h>
-#include <SD.cpp>
-
 #include <ArduinoJson.hpp>
 #include <ArduinoJson.h>
+#include <SD.cpp>
 
 #include "soc/sens_reg.h" // needed for manipulating ADC2 control register
 
@@ -24,8 +23,6 @@ static RTC_NOINIT_ATTR int reg_b; // place in RTC slow memory so available after
 
 #include "setup_sensors.cpp"
 #define Threshold 40 /* Greater the value, more the sensitivity */
-
-uint8_t cardType;
 
 
 TaskHandle_t Task0;
@@ -154,13 +151,13 @@ void getDataDig(String select){
   }
 
   serializeJson(doc, json);
-  
-  if (debugging){
-    Serial.println("");
-    Serial.println("json:");
-    Serial.println(json);
-  }
   send_mqtt("Huerta/Push/Digital" ,json);
+  
+  //if (debugging){
+  //  Serial.println("");
+  //  Serial.println("json:");
+  //  Serial.println(json);
+  //}
 }
 void getDataAnalog(JsonObjectConst User, String plant ){
   String json = "";
@@ -193,9 +190,46 @@ void getDataAnalog(JsonObjectConst User, String plant ){
   }
 
   serializeJson(doc, json);
-  Serial.println("Enviando a mqtt");
-  Serial.println(json);
+  //Serial.println("Enviando a mqtt");
+  //Serial.println(json);
   send_mqtt("Huerta/Push/Analog" ,json);
+}
+
+
+void printLocalTime(){
+  struct tm timeinfo;
+  if(!getLocalTime(&timeinfo)){
+    Serial.println("Failed to obtain time");
+    return;
+  }
+  Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+  /*
+    Serial.print("Day of week: ");
+    Serial.println(&timeinfo, "%A");
+    Serial.print("Month: ");
+    Serial.println(&timeinfo, "%B");
+    Serial.print("Day of Month: ");
+    Serial.println(&timeinfo, "%d");
+    Serial.print("Year: ");
+    Serial.println(&timeinfo, "%Y");
+    Serial.print("Hour: ");
+    Serial.println(&timeinfo, "%H");
+    Serial.print("Hour (12 hour format): ");
+    Serial.println(&timeinfo, "%I");
+    Serial.print("Minute: ");
+    Serial.println(&timeinfo, "%M");
+    Serial.print("Second: ");
+    Serial.println(&timeinfo, "%S");
+
+    Serial.println("Time variables");
+    char timeHour[3];
+    strftime(timeHour,3, "%H", &timeinfo);
+    Serial.println(timeHour);
+    char timeWeekDay[10];
+    strftime(timeWeekDay,10, "%A", &timeinfo);
+    Serial.println(timeWeekDay);
+    Serial.println();
+  */
 }
 
 void setup(){
@@ -213,26 +247,17 @@ void setup(){
 
   if(!SD.begin()){
     Serial.println("Card Mount Failed");
-  }
-
-  cardType = SD.cardType();
-  if(cardType == CARD_NONE){
     sisError(5);
   }else{
-    deleteFile(SD, "/userData.txt");
-    listDir(SD, "/", 2);
     // Check to see if the file exists:
-    if (SD.exists("/userData.txt")) {
-      String stringUser = readFile(SD, "/userData.txt");
-      Serial.println("");
-      Serial.println("Document inside have this:");
-      Serial.println(stringUser);
+    if (SD.exists(SD_path_user)) {
+      String stringUser = readFile(SD, SD_path_user);
 
       auto error = deserializeJson(localUser, stringUser );
       if( error == DeserializationError::Ok ){  
         userLocalFlag = true ;
-        Serial.println("User found");
       }
+
     } else {
       Serial.println("userData.txt doesn't exist.");
     }
@@ -243,7 +268,7 @@ void setup(){
 
   switch(wakeup_reason){
     case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
-    case ESP_SLEEP_WAKEUP_TOUCHPAD : digitalWrite(LED_BLUE,HIGH); Serial.println("Wakeup caused by touchpad"); break;
+    case ESP_SLEEP_WAKEUP_TOUCHPAD : digitalWrite(LED_BLUE,LOW); Serial.println("Wakeup caused by touchpad"); break;
     default : 
       reg_b = READ_PERI_REG(SENS_SAR_READ_CTRL2_REG);
       Serial.println("Reading reg b.....");
@@ -264,13 +289,16 @@ void setup(){
     client.setServer(mqtt_server, mqttPort);
     client.setCallback(callback);
 
+    // get NTP time every time connect to wifi, not necessary but wont hurts
+    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
   }else{
     if( !userLocalFlag ){
       //Nothing to do, reboot
       sisError(0);
     }
   }
-
+  
   delay(100);
   xTaskCreatePinnedToCore(taskCore1, "Task1", 10000, NULL, 1, &Task1,  1); 
   delay(500);
@@ -289,16 +317,49 @@ void setup(){
     Serial.println("--------------------- SETUP END --------------------------");
     Serial.print("connected by: ");
     Serial.println(WiFi.localIP());
-    Serial.print("User: ");
+    Serial.print("User mac: ");
     Serial.println(getMac());
-    Serial.print("user local :");
-    Serial.println(userLocalFlag);
+    Serial.print("SD on: ");
+    Serial.println(SD.cardType() == CARD_NONE);
+
+    if ( userLocalFlag ){
+      Serial.print("LocalUser: True");
+      Serial.println( readFile(SD, SD_path_user) );
+    }else{
+      Serial.print("LocalUser: False");
+    }
+
     Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) +" Seconds");
+    printLocalTime();
     Serial.println("----------------------------------------------------------");
   }
 
 }
 
+void taskCore0( void * pvParameters){
+  Serial.print("Task of the core 0:");
+  Serial.println(xPortGetCoreID());
+  for(;;){
+
+    while ( !finishedCore1 )
+    {  
+      if (!client.connected())  // Reconnect if connection is lost
+      {
+        reconnect();
+      }
+      client.loop();
+      delay(500);
+    }
+
+    finishedCore0 = true;
+    client.disconnect();
+    Serial.println("Core 0 finished");
+    while (true) { delay(1000);}
+    
+
+  }
+  
+}
 void taskCore1( void * pvParameters){
   Serial.print("Task of the core 1:");
   Serial.println(xPortGetCoreID());
@@ -326,10 +387,14 @@ void taskCore1( void * pvParameters){
     */
     getDataDig(  localUser["Measurements"] );
     swichs_on_off(LOW);
-     
-    finishedCore1 = true;
+    
+    Serial.println("re send the mqtt messages");
+    //sendPedientingMessage();
     //  Do something with all tasks received
-    controlSystem();
+    //controlSystem();
+    tasksControl();
+    
+    finishedCore1 = true;
 
     while ( !finishedCore0 ){
       delay(1000);
@@ -347,7 +412,7 @@ void taskCore2( void * pvParameters){
   for(;;){
 
     if( touchRead(touchPin) < Threshold){
-      digitalWrite(LED_BLUE,LOW);
+      digitalWrite(LED_BLUE,HIGH);
       Serial.println("Task2 by touch finished");
       client.disconnect();
       delay(5000);
@@ -365,29 +430,6 @@ void taskCore2( void * pvParameters){
   }
   
 }
-void taskCore0( void * pvParameters){
-  Serial.print("Task of the core 0:");
-  Serial.println(xPortGetCoreID());
-  for(;;){
 
-    while ( !finishedCore1 )
-    {  
-      if (!client.connected())  // Reconnect if connection is lost
-      {
-        reconnect();
-      }
-      client.loop();
-      delay(500);
-    }
-
-    finishedCore0 = true;
-    client.disconnect();
-    Serial.println("Core 0 finished");
-    while (true) { delay(1000);}
-    
-
-  }
-  
-}
 
 void loop(){}

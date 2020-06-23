@@ -21,6 +21,25 @@ void receptionSystem( String topic, String message){
 }
 
 
+void taskWater(unsigned int pin);
+void taskLight(unsigned int pinStart, unsigned int pinEnd);
+void tasksControl(){
+  time_t now;
+  time(&now);
+
+  Serial.println(" -> Init the recoletion of object ");
+  for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
+    
+    Serial.println("Key:");
+    Serial.println(kvp.key().c_str());
+    Serial.println("Value:");
+    Serial.println(kvp.value().as<String>());
+
+
+  }
+  Serial.println(" -> end the recoletion of object ");
+  
+}
 void controlSystem( void ){
   
   Serial.println("Stored tasks");
@@ -86,8 +105,15 @@ bool getUser(){
         
         String payload = http.getString();   // Obtener respuesta
         auto error = deserializeJson(localUser, payload);
-        writeFile(SD, "/userData.txt", payload.c_str() );
+        
         if( error == DeserializationError::Ok ){  
+          
+          if( payload != readFile(SD, SD_path_user)){
+            Serial.println("Different user both cloud and local");
+            deleteFile(SD, SD_path_user);
+            writeFile(SD, SD_path_user, payload.c_str() );
+          }
+          
           if(debugging){ Serial.println(payload); };   // Mostrar respuesta por serial
           UserFinded = true;
         }

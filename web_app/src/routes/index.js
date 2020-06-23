@@ -47,7 +47,12 @@ router.get("/Users/GetData/:Mac",async (req,res)=>{
             console.log("Exits plants");
             
             _user.plants.forEach( (element, index) => {
-                plants[element.info.date] = element.pinout;
+                plants[element.info.date] = {
+                                            light: element.sowing.light,
+                                            water: element.sowing.water,
+                                            temperatue: element.sowing.temperatue,
+                                            pinout: element.pinout
+                                            };
             }); 
 
             console.log( `Send `,{Measurements: _user.devices,plants:plants});

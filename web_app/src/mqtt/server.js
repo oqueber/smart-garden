@@ -130,6 +130,7 @@ server.on('published', async (packet, client) => {
       let json_data = JSON.parse(packet.payload.toString('utf-8'));
       if(json_data != null){
 
+        json_data.timestamps = json_data.timestamps *1000;
         const newData = new DatadB(json_data);
         io.emit('chart/NewData', newData );
         
