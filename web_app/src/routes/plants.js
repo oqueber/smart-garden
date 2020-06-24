@@ -18,10 +18,6 @@ router.get('/my-plants',isAuthenticated, async(req,res)=>{
             plant.info.image = vegetable[plant.info.index].info.image;
         }
     });
-
-    
-    console.log("luego:");
-    console.log(user.plants);
     res.render('plants/home', {plants: user.plants});
 });
 

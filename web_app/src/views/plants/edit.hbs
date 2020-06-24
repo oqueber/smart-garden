@@ -76,7 +76,11 @@
         </div>
       </div>
       <div class="col s4">
-        <img style="width:100%"src="/img/sample-1.jpg" alt="plant" >
+        <div class="plant">
+          <div class="scan1" id="scan1" ></div>
+          <div class="scan2" id="scan2" ></div>
+          <img class="sheet" src="/img/plant2.svg" alt="svg image plant" />
+        </div>
       </div>
       <div class="col s4">
         <div class="input-field col s12">
@@ -156,5 +160,11 @@
     valueSliderLux.noUiSlider.on('change.one', (values) => {
         valueSpanLux.textContent = `${parseInt(values[0],10)} horas diarias`;
     });
+
+    document.getElementById("colorpicker").addEventListener('click', (values) => {
+        document.getElementById("scan2").style.boxShadow = `inset -5px -30px 20px rgb(${colors[0]},${colors[1]},${colors[2]})`;
+        document.getElementById("scan1").style.boxShadow = `inset -1px 10px 100px rgb(${colors[0]},${colors[1]},${colors[2]})`;
+    });
+
 });
 </script>
