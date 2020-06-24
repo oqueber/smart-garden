@@ -3,7 +3,9 @@
     background: black;
     opacity: .5;
 }
-
+.card .card-action a{
+    margin-right: 5px !important;
+}
 
 #chart_lengend ul {
   list-style: none;

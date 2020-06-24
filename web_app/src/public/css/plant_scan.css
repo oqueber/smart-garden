@@ -1,69 +1,66 @@
 .scan2,
 .scan1{
-    width: 150px;
+    width: 100%;
     height: 150px;
     position: absolute;
     border-radius: 100%;
     transform: rotateX(70deg);
-    animation: spin 10s ease infinite;
+    animation: scan_1 10s ease infinite;
 }
 .scan1{
     box-shadow:inset -1px 10px 100px yellow;
     z-index: 0;
-    bottom: -20px;
 }
 .scan2{
-
     z-index: 2;
     box-shadow: inset -5px -30px 20px yellow;
 }
 .plant{
-    width: 150px;
-    height: 200px;
+    max-width: 150px;
+    height: 150px;
     position: relative;
     margin: 0 auto;
+    text-align: center;
 }
 .sheet {
     position: absolute;
-    top: 20px;
-    left: 20px;
-    width: 120px;
+    top: 35px;
+    left: 13px;
+    width: 80%;
     z-index: 1;
 }
 
-.soil1{
-    position: absolute;
-    top: 94px;
-    left: 5px;
-    width: 60%;
-    display: none;
-    z-index: 1;
-}
-.soil2{
-    position: absolute;
-    top: 98px;
-    width:80%;
-    display:none;
-    z-index: 1;
-}
-.soil3{
-    position: absolute;
-    top: 87px;
-    left: 10px;
-    width: 100px;
-    display: block;
-    z-index: 1;
+@media (min-width: 600px) {
+    .scan2,
+    .scan1{
+        width: 100%;
+        animation: scan_2 10s ease infinite;
+    }
 }
 
-@keyframes spin {
+
+@keyframes scan_2 {
 
     0% { 
-        top:-70px;
+        top:-50px;
     } 
     50% {
-        top: 80px
+        top: 85px
     }
     100%{
-        top:-70px; 
+        top:-50px; 
+    }
+}
+
+@keyframes scan_1 {
+
+    0% { 
+        top:-50px;
+    } 
+    50% {
+        top: 50px
+    }
+    100%{
+        top:-50px; 
     }
 }
