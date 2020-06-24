@@ -1,86 +1,98 @@
 
 <div class="row">
-  {{#if Type}}
-    <form id="form" action="/new-plant/{{Type}}/{{index}}/save" method="POST" class="col s12">
-  {{else}}  
-    <form id="form" action="/edit-plant/{{index}}/save" method="POST" class="col s12" >
-  {{/if}}
-    <div class="section">
+{{#if Type}}
+  <form id="form" action="/new-plant/{{Type}}/{{index}}/save" method="POST" class="col s12">
+{{else}}  
+  <form id="form" action="/edit-plant/{{index}}/save" method="POST" class="col s12" >
+{{/if}}
+    <div class="row">
       <h4>Valores recomendados para <span id="PlantName">{{plant.info.name}}</span> :</h4>
       <div class="col m8 s12">
         <div class="row">
           <div class="input-field col s6">
-            <label>Frecuencia de riego: <span id="valueSpanFreq"></span></label>
+            <p>Frecuencia de riego: <span id="valueSpanFreq"></span></p>
             <div id="waterF"></div>
           </div>
           <div class="input-field col s6">
-              <label >Umbral minimo para empezar el riego: <span class="" id="valueSpanWater"></span></label>
+              <p>Limite de riego: <span id="valueSpanWater"></span></p>
               <div id="waterU"></div>
           </div>
         </div>
         <div class="row">
-           
             <div class="input-field col s12">
-                <labe>Water pin</label>
-                <input type="number" name="waterPin" id="waterPin">
-            </div>
-        </div>
-        <div class="row">
-            <div class="input-field col s12">
-              <labe>Valor de horas de luz diarios: <span class="" id="valueSpanLux"></span></label>
+              <p>Valor de horas de luz diarios: <span id="valueSpanLux"></span></p>
               <div id="lightH"></div>
             </div>
         </div>
         <div class="row">
-            <div class="input-field col s6">
-              <labe>Led start</label>
-              <input type="number" name="led_start" id="led_start">
+            <div class="input-field col s4">
+              <input placeholder="Led start" id="led_start" name="led_start" type="number" class="validate">
+              <label for="waterPin">Led start</label>
             </div>
-            <div class="input-field col s6">
-              <labe>Led start</label>
-              <input type="number" name="led_end" id="led_end">
+            <div class="input-field col s4">
+              <input placeholder="Led end" id="led_end" name="led_end" type="number" class="validate">
+              <label for="waterPin">Led end</label>
+            </div>
+            <div class="input-field col s4">
+              <input placeholder="Water pin" id="waterPin" name="waterPin" type="number" class="validate">
+              <label for="waterPin">Water pin</label>
             </div>
         </div>
-    </div>
-    <div class="col m4 s12">
-      <div class="row">
-          <div class="input-field col s12">
-              <div id="colorpicker">
-                <div class="sliders" id="red"></div>
-                <div class="sliders" id="green"></div>
-                <div class="sliders" id="blue"></div>
-                <div id="result"></div>
-              </div> 
-          </div>
       </div>
+      <div class="col m4 s12">
+        <div class="row">
+            <div class="input-field col s12">
+                <div id="colorpicker">
+                  <div class="sliders" id="red"></div>
+                  <div class="sliders" id="green"></div>
+                  <div class="sliders" id="blue"></div>
+                  <div id="result"></div>
+                </div> 
+            </div>
+        </div>
+      </div>
+      <!--  
+        <div class="row">
+          <div class="col m4 s12">
+            <textarea class="input-field col s12" id="message-text">
+              {{info.description}}
+            ...............    Recomendacion.............
+              {{info.recomendation}}
+            </textarea>
+          </div> 
+        </div>
+      -->
     </div>
-    <div class="row">
-        <textarea class="input-field col s12" id="message-text">
-            {{info.description}}
-        ...............    Recomendacion.............
-            {{info.recomendation}}
-        </textarea>
-    </div>
-  </div>
-  <div class="section">
     <div class="row">
       <div class="col s4">
-        <input type="number" name="adc1" id="adc1">
-        <input type="number" name="adc2" id="adc2">
+        <div class="input-field col s12">
+          <input placeholder="photocell1" id="adc1" name="adc1" type="number" class="validate">
+          <label for="adc1">PhotoCell1</label>
+        </div>
+
+        <div class="input-field col s12">
+          <input placeholder="photocell2" id="adc2" name="adc2" type="number" class="validate">
+          <label for="adc2">PhotoCell2</label>
+        </div>
       </div>
       <div class="col s4">
         <img style="width:100%"src="/img/sample-1.jpg" alt="plant" >
       </div>
       <div class="col s4">
-        <input type="number" name="adc3" id="adc3">
-        <input type="number" name="adc4" id="adc4">
+        <div class="input-field col s12">
+          <input placeholder="HumCap" id="adc3" name="adc3" type="number" class="validate">
+          <label for="adc3">HumCap</label>
+        </div>
+
+        <div class="input-field col s12">
+          <input placeholder="HumEC" id="adc4" name="adc4" type="number" class="validate">
+          <label for="adc4">HumEC</label>
+        </div>
       </div>
     </div>
-  </div>
-  <button id="submit" type="submit" class="btn green">Save</button>
-  <a href="/my-plants" class="btn btn-primary">Cancel</a>
+    <button id="submit" type="submit" class="btn green">Save</button>
+    <a href="/my-plants" class="btn btn-primary">Cancel</a>
   {{#if Type}}
-
   {{else}}  
     <a href="/delete-plant/{{date}}" class="btn red">Delente</a>
     <a href="/act/{{date}}" class="btn purple">action</a>

@@ -14,7 +14,7 @@ Aromatics.push({
     },
     sowing: {
         light:{
-            min: 8, //Horas diarias de luz directa
+            hours: 8, //Horas diarias de luz directa
             color: '12df44' //color que le gusta
         },
         water:{
@@ -41,7 +41,7 @@ Aromatics.push({
     },
     sowing: {
         light:{
-            min: 3, //Horas diarias de luz directa
+            hours: 3, //Horas diarias de luz directa
             color: '12df44' //color que le gusta
         },
         water:{
