@@ -78,7 +78,11 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
     const errors =[];
     const index = parseInt(req.params.index , 10);
     const Type = req.params.type;
-    const { waterF, waterU, lightH,waterPin, color_red, color_blue,color_green ,adc1,adc2,adc3,adc4,led_start,led_end, name} = req.body;
+    const { waterF, waterU,waterPin, 
+            color_red, color_blue,color_green, led_start,led_end, time_start, time_stop,
+            adc1,adc2,adc3,adc4,
+            name} = req.body;
+    console.log(req.body);
     if( !Number.isInteger( parseInt(adc1,10) ) ){errors.push({text: "ADC1 neeeds to be a number"})}
     if( !Number.isInteger( parseInt(adc2,10) ) ){errors.push({text: "ADC2 neeeds to be a number"})}
     if( !Number.isInteger( parseInt(adc3,10) ) ){errors.push({text: "ADC3 neeeds to be a number"})}
@@ -92,7 +96,8 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
         },
         sowing:{
             light:{
-                hours: parseInt(lightH,10),
+                time_start: time_start,
+                time_stop: time_stop,
                 led_start: parseInt(led_start,10),
                 led_end: parseInt(led_end,10),
                 color_red:  parseInt(color_red,10),
@@ -128,17 +133,18 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
 
 
 router.post('/edit-plant/:index/save',isAuthenticated, async(req,res)=>{
-    const { waterF, waterU, lightH, led_start, led_end,color_red,waterPin, color_blue,color_green ,adc1,adc2,adc3,adc4} = req.body;
+    const { waterF, waterU,time_start,time_stop, led_start, led_end,color_red,waterPin, color_blue,color_green ,adc1,adc2,adc3,adc4} = req.body;
     const index = parseInt(req.params.index);
     await User.findOne( {_id:req.user.id }).then(doc => {
 
         let plant = doc.plants[index];
-        plant.sowing.light.hours = parseInt(lightH,10);
         plant.sowing.light.color_red = parseInt(color_red,10);
         plant.sowing.light.color_green = parseInt(color_green,10);
         plant.sowing.light.color_blue = parseInt(color_blue,10);
         plant.sowing.light.led_start = parseInt(led_start,10);
         plant.sowing.light.led_end = parseInt(led_end,10);
+        plant.sowing.light.time_start = time_start;
+        plant.sowing.light.time_stop = time_stop;
         plant.sowing.water.frequency = parseInt(waterF,10);
         plant.sowing.water.limit = parseInt(waterU,10);
         plant.sowing.water.pinout = parseInt(waterPin,10);

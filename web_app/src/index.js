@@ -48,7 +48,7 @@ app.engine('.hbs', exphbs({
     }
 }))
 app.set('view engine', '.hbs'); // Configuramos el mortor de las plantillas
-
+app.set('view options', { layout: 'webside' });
 //-----------------------------------------
 //------------ Middlewares  ---------------
 //-----------------------------------------
@@ -87,6 +87,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 //-----------------------------------------
 //------------ Server is listenning -------
 //-----------------------------------------
-server.listen(port, "0.0.0.0", () =>{
+server.listen(port, '0.0.0.0', () =>{
     console.log(`[Smart-Garden-Server]: Server on port ${port}`);
 });

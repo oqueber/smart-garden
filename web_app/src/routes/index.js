@@ -4,10 +4,10 @@ const User = require('../models/User')
 
 
 router.get('/', (req,res)=>{
-    res.render('index');
+    res.render('index',{ title: 'Index', layout: 'webside' });
 });
 router.get('/about', (req,res)=>{
-    res.render('about');
+    res.render('about',{ title: 'about', layout: 'webside' });
 });
 
 router.get('/act/:date', (req,res)=>{

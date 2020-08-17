@@ -21,8 +21,26 @@ void receptionSystem( String topic, String message){
 }
 
 
-void taskWater(unsigned int pin);
-void taskLight(unsigned int pinStart, unsigned int pinEnd);
+void taskWater( int pin){};
+void taskLight( int pinStart,  int pinEnd){};
+void taskSystem( JsonObjectConst User ){
+ 
+ struct tm timeinfo;
+  if(!getLocalTime(&timeinfo)){
+    Serial.println("Failed to obtain time");
+    return;
+  }
+ taskWater( User["Water"]["pin"] );
+
+ if( ((timeinfo.tm_hour >= User["Light"]["startHour"]) && (timeinfo.tm_min >= User["Light"]["startMin"])) &&
+     ((timeinfo.tm_hour >= User["Light"]["endHour"]) && (timeinfo.tm_min >= User["Light"]["endMin"])) 
+  ){
+
+    taskLight( User["Light"]["pinStart"] , User["Light"]["pinEnd"]);
+  }
+
+
+}
 void tasksControl(){
   time_t now;
   time(&now);

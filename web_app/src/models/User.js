@@ -21,7 +21,8 @@ const UserSchema = new Schema({
         sowing:{
             light:{
                 last_light:{ type: Number, default: 0}, 
-                hours: {type: Number},
+                time_start: {type: String},
+                time_stop: {type: String},
                 led_start: {type: Number},
                 led_end: {type: Number},
                 color_red: {type: Number},

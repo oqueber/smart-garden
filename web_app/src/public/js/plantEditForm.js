@@ -27,19 +27,6 @@ noUiSlider.create(waterU, {
     }
 });
 /* --------------------------------------------------
-*              Water Umbral
-* --------------------------------------------------*/
-var lightH = document.getElementById('lightH');
-noUiSlider.create(lightH, {
-    start: [1],
-    connect: 'lower',
-    step: 1,
-    range: {
-        'min': [0],
-        'max': [24]
-    }
-});
-/* --------------------------------------------------
 *              Color
 * --------------------------------------------------*/
 var resultElement = document.getElementById('result');
@@ -77,13 +64,12 @@ var colors = [0, 0, 0];
 /* --------------------------------------------------
 *              Send info
 * --------------------------------------------------*/
+let form = document.getElementById('myForm');
 var fillData = function(event) {
     //event.preventDefault();
-    let form = document.getElementById('form');
     let data = {
         waterU: waterU.noUiSlider.get(),
         waterF: waterF.noUiSlider.get(),
-        lightH: lightH.noUiSlider.get(),
         name: document.getElementById("PlantName").textContent,
         color_red: colors[0],
         color_green: colors[1],
@@ -103,6 +89,6 @@ var fillData = function(event) {
 
 $( document ).ready(function() {
     // attach event listener
-    form.addEventListener("submit", fillData, true)
+    form.addEventListener("submit", fillData, true);
 
 });

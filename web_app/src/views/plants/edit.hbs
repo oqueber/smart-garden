@@ -1,108 +1,137 @@
 
-<div class="row">
 {{#if Type}}
-  <form id="form" action="/new-plant/{{Type}}/{{index}}/save" method="POST" class="col s12">
+  <form name="myForm" id="myForm" action="/new-plant/{{Type}}/{{index}}/save" method="POST" class="col s12">
 {{else}}  
-  <form id="form" action="/edit-plant/{{index}}/save" method="POST" class="col s12" >
+  <form name="myForm" id="myForm" action="/edit-plant/{{index}}/save" method="POST" class="col s12" >
 {{/if}}
-    <div class="row">
-      <h4>Valores recomendados para <span id="PlantName">{{plant.info.name}}</span> :</h4>
-      <div class="col m8 s12">
-        <div class="row">
-          <div class="input-field col s6">
-            <p>Frecuencia de riego: <span id="valueSpanFreq"></span></p>
-            <div id="waterF"></div>
-          </div>
-          <div class="input-field col s6">
-              <p>Limite de riego: <span id="valueSpanWater"></span></p>
-              <div id="waterU"></div>
-          </div>
-        </div>
-        <div class="row">
-            <div class="input-field col s12">
-              <p>Valor de horas de luz diarios: <span id="valueSpanLux"></span></p>
-              <div id="lightH"></div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="input-field col s4">
-              <input placeholder="Led start" id="led_start" name="led_start" type="number" class="validate">
-              <label for="waterPin">Led start</label>
-            </div>
-            <div class="input-field col s4">
-              <input placeholder="Led end" id="led_end" name="led_end" type="number" class="validate">
-              <label for="waterPin">Led end</label>
-            </div>
-            <div class="input-field col s4">
-              <input placeholder="Water pin" id="waterPin" name="waterPin" type="number" class="validate">
-              <label for="waterPin">Water pin</label>
-            </div>
-        </div>
-      </div>
-      <div class="col m4 s12">
-        <div class="row">
-            <div class="input-field col s12">
-                <div id="colorpicker">
-                  <div class="sliders" id="red"></div>
-                  <div class="sliders" id="green"></div>
-                  <div class="sliders" id="blue"></div>
-                  <div id="result"></div>
-                </div> 
-            </div>
-        </div>
-      </div>
-      <!--  
-        <div class="row">
-          <div class="col m4 s12">
-            <textarea class="input-field col s12" id="message-text">
-              {{info.description}}
-            ...............    Recomendacion.............
-              {{info.recomendation}}
-            </textarea>
-          </div> 
-        </div>
-      -->
-    </div>
-    <div class="row">
-      <div class="col s4">
-        <div class="input-field col s12">
-          <input placeholder="photocell1" id="adc1" name="adc1" type="number" class="validate">
-          <label for="adc1">PhotoCell1</label>
-        </div>
 
-        <div class="input-field col s12">
-          <input placeholder="photocell2" id="adc2" name="adc2" type="number" class="validate">
-          <label for="adc2">PhotoCell2</label>
-        </div>
-      </div>
-      <div class="col s4">
-        <div class="plant">
-          <div class="scan1" id="scan1" ></div>
-          <div class="scan2" id="scan2" ></div>
-          <img class="sheet" src="/img/plant2.svg" alt="svg image plant" />
-        </div>
-      </div>
-      <div class="col s4">
-        <div class="input-field col s12">
-          <input placeholder="HumCap" id="adc3" name="adc3" type="number" class="validate">
-          <label for="adc3">HumCap</label>
-        </div>
-
-        <div class="input-field col s12">
-          <input placeholder="HumEC" id="adc4" name="adc4" type="number" class="validate">
-          <label for="adc4">HumEC</label>
-        </div>
+  <!-- One "tab" for each step in the form: -->
+  <div class="tab blue white-text">
+    <h4>Iluminacion - parte 1</h4>
+    <div class="row">
+      <div class="col s12">
+        <div id="colorpicker">
+          <div class="sliders" id="red"></div>
+          <div class="sliders" id="green"></div>
+          <div class="sliders" id="blue"></div>
+          <div id="result"></div>
+        </div> 
       </div>
     </div>
-    <button id="submit" type="submit" class="btn green">Save</button>
-    <a href="/my-plants" class="btn btn-primary">Cancel</a>
-  {{#if Type}}
-  {{else}}  
-    <a href="/delete-plant/{{date}}" class="btn red">Delente</a>
-    <a href="/act/{{date}}" class="btn purple">action</a>
-  {{/if}}
-  </form>
-</div>
+  </div>
+
+  <div class="tab amber white-text">
+    <h4>Iluminacion - parte 2</h4>
+      <div class="row">
+        <div class="col s12">
+          <div class="col s6">
+            <p>Start work: </p>
+          </div>  
+          <div class="col s6">
+            <input id="time_start" type="time" name="time_start" value="13:30">
+          </div>
+        </div>
+        <div class="col s12">
+          <div class="col s6">
+            <p>Stop work: </p>
+          </div>  
+          <div class="col s6">
+            <input id="time_stop" type="time" name="time_stop" value="13:30">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s6">
+          <input placeholder="Led start" id="led_start" name="led_start" type="number" class="validate">
+          <label for="led_start">Led start</label>
+        </div>
+        <div class="input-field col s6">
+          <input placeholder="Led end" id="led_end" name="led_end" type="number" class="validate">
+          <label for="led_end">Led end</label>
+        </div>
+      </div>
+  </div>
+
+  <div class="tab green white-text">
+    <h4>Water</h4>
+    <div class="row">
+      <div class="input-field col s12">
+        <p>Frecuencia de riego: <span id="valueSpanFreq"></span></p>
+        <div id="waterF"></div>
+      </div>
+      <div class="input-field col s12">
+          <p>Limite de riego: <span id="valueSpanWater"></span></p>
+          <div id="waterU"></div>
+      </div>
+      <div class="input-field col s4">
+        <input placeholder="Water pin" id="waterPin" name="waterPin" type="number" class="validate">
+        <label for="waterPin">Water pin</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab blue white-text">
+      <h4>Sensors</h4>
+      <div class="row">
+        <div class="col s4">
+          <div class="input-field col s12">
+            <input placeholder="photocell1" id="adc1" name="adc1" type="number" class="validate">
+            <label for="adc1">PhotoCell1</label>
+          </div>
+          <div class="input-field col s12">
+            <input placeholder="photocell2" id="adc2" name="adc2" type="number" class="validate">
+            <label for="adc2">PhotoCell2</label>
+          </div>
+        </div>
+        <div class="col s4">
+          <div class="plant">
+            <div class="scan1" id="scan1" ></div>
+            <div class="scan2" id="scan2" ></div>
+            <img class="sheet" src="/img/plant2.svg" alt="svg image plant" />
+          </div>
+        </div>
+        <div class="col s4">
+          <div class="input-field col s12">
+            <input placeholder="HumCap" id="adc3" name="adc3" type="number" class="validate">
+            <label for="adc3">HumCap</label>
+          </div>
+
+          <div class="input-field col s12">
+            <input placeholder="HumEC" id="adc4" name="adc4" type="number" class="validate">
+            <label for="adc4">HumEC</label>
+          </div>
+        </div>
+      </div>
+  </div>
+
+  <div style="overflow:auto;">
+    <div style="float:right;">
+                 
+      <a href="/my-plants" class="btn btn-primary">Cancel</a>
+      {{#if Type}}
+      {{else}}  
+        <a href="/delete-plant/{{date}}" class="btn red">Delente</a>
+        <a href="/act/{{date}}" class="btn purple">action</a>
+      {{/if}}
+
+      <button class="btn grey" type="button" id="prevBtn" onclick="nextPrev(-1)">Previous</button>
+      <button class="btn green" type="button" id="nextBtn" onclick="nextPrev(1)">Next</button>
+      <button style="display:none" id="submit" type="submit" class="btn green">Save</button>
+    </div>
+  </div>
+
+  <!-- Circles which indicates the steps of the form: -->
+  <div style="text-align:center;margin-top:40px;">
+    <span class="step"></span>
+    <span class="step"></span>
+    <span class="step"></span>
+    <span class="step"></span>
+  </div>
+
+  <h4>Valores recomendados para <span id="PlantName">{{plant.info.name}}</span> :</h4>
+
+</form>
+
 <script src="/js/nouislider.js"></script>
 <script src="/js/tools.js"></script>
 <script src="/js/plantEditForm.js"></script> 
@@ -111,7 +140,85 @@
   const umbralWater = ["Seco", "Poco Humedo", "Humedo", "Encharcado"];
   const localPlant =  {{{JSON2string plant}}} ;
 
+  var currentTab = 0; // Current tab is set to be the first tab (0)
+  showTab(currentTab); // Display the current tab
+
+  function showTab(n) {
+    // This function will display the specified tab of the form ...
+    var x = document.getElementsByClassName("tab");
+    x[n].style.display = "block";
+    // ... and fix the Previous/Next buttons:
+    if (n == 0) {
+      document.getElementById("prevBtn").style.display = "none";
+    } else {
+      document.getElementById("prevBtn").style.display = "inline";
+    }
+    if (n == (x.length - 1)) {
+      document.getElementById("submit").style.display = "inline";
+      document.getElementById("nextBtn").style.display = "none";
+    } else {
+      document.getElementById("submit").style.display = "none";
+      document.getElementById("nextBtn").style.display = "inline";
+    }
+    // ... and run a function that displays the correct step indicator:
+    fixStepIndicator(n)
+  }
+
+  function nextPrev(n) {
+    // This function will figure out which tab to display
+    var x = document.getElementsByClassName("tab");
+    // Exit the function if any field in the current tab is invalid:
+    //if (n == 1 && !validateForm()) return false;
+    // Hide the current tab:
+    x[currentTab].style.display = "none";
+    // Increase or decrease the current tab by 1:
+    currentTab = currentTab + n;
+    // if you have reached the end of the form... :
+    //if (currentTab >= x.length) {
+      //...the form gets submitted:
+      //document.getElementById('myForm').submit(); 
+      //return false;
+      //console.log("bye")
+    //}
+    // Otherwise, display the correct tab:
+    showTab(currentTab);
+  }
+
+  function validateForm() {
+    // This function deals with validation of the form fields
+    var x, y, i, valid = true;
+    x = document.getElementsByClassName("tab");
+    y = x[currentTab].getElementsByTagName("input");
+    // A loop that checks every input field in the current tab:
+    for (i = 0; i < y.length; i++) {
+      // If a field is empty...
+      if (y[i].value == "") {
+        // add an "invalid" class to the field:
+        y[i].className += " invalid";
+        // and set the current valid status to false:
+        valid = false;
+      }
+    }
+    // If the valid status is true, mark the step as finished and valid:
+    if (valid) {
+      document.getElementsByClassName("step")[currentTab].className += " finish";
+    }
+    return valid; // return the valid status
+  }
+
+  function fixStepIndicator(n) {
+    // This function removes the "active" class of all steps...
+    var i, x = document.getElementsByClassName("step");
+    for (i = 0; i < x.length; i++) {
+      x[i].className = x[i].className.replace(" active", "");
+    }
+    //... and adds the "active" class to the current step:
+    x[n].className += " active";
+  }
+
   $( document ).ready(function() {
+
+
     if(localPlant.pinout){
       document.getElementById("adc1").value = localPlant.pinout.photocell1;
       document.getElementById("adc2").value = localPlant.pinout.photocell2;
@@ -120,6 +227,8 @@
 
       document.getElementById("led_start").value = localPlant.sowing.light.led_start;
       document.getElementById("led_end").value =   localPlant.sowing.light.led_end;
+      document.getElementById("time_start").value =  localPlant.sowing.light.time_start;
+      document.getElementById("time_stop").value =   localPlant.sowing.light.time_stop;
       document.getElementById("waterPin").value =   localPlant.sowing.water.pinout;
 
       const red = document.getElementById("red");
@@ -134,8 +243,8 @@
     const valueSliderFreq = document.getElementById("waterF");
     valueSliderFreq.noUiSlider.set(localPlant.sowing.water.frequency); 
 
-    const valueSliderLux = document.getElementById("lightH");
-    valueSliderLux.noUiSlider.set(localPlant.sowing.light.hours);
+    //const valueSliderLux = document.getElementById("lightH");
+    //valueSliderLux.noUiSlider.set(localPlant.sowing.light.hours);
 
     const valueSliderWater = document.getElementById("waterU");
     valueSliderWater.noUiSlider.set(localPlant.sowing.water.limit);
@@ -146,8 +255,8 @@
     let valueSpanWater = document.getElementById('valueSpanWater');
     valueSpanWater.textContent = `${umbralWater[ localPlant.sowing.water.limit ]}`;
 
-    let valueSpanLux = document.getElementById('valueSpanLux');
-    valueSpanLux.textContent = `${ localPlant.sowing.light.hours } horas diarias`;
+    //let valueSpanLux = document.getElementById('valueSpanLux');
+    //valueSpanLux.textContent = `${ localPlant.sowing.light.hours } horas diarias`;
 
     valueSliderFreq.noUiSlider.on('change.one', (values) => {
         valueSpanFreq.textContent = `cada ${parseInt(values[0],10)} dias`;
@@ -157,9 +266,9 @@
         valueSpanWater.textContent = `${umbralWater[parseInt(values[0],10)]}`;
     });
 
-    valueSliderLux.noUiSlider.on('change.one', (values) => {
-        valueSpanLux.textContent = `${parseInt(values[0],10)} horas diarias`;
-    });
+    //valueSliderLux.noUiSlider.on('change.one', (values) => {
+    //    valueSpanLux.textContent = `${parseInt(values[0],10)} horas diarias`;
+    //});
 
     document.getElementById("colorpicker").addEventListener('click', (values) => {
         document.getElementById("scan2").style.boxShadow = `inset -5px -30px 20px rgb(${colors[0]},${colors[1]},${colors[2]})`;

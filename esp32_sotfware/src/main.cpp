@@ -9,6 +9,8 @@
 #include "soc/sens_reg.h" // needed for manipulating ADC2 control register
 
 static RTC_NOINIT_ATTR int reg_b; // place in RTC slow memory so available after deepsleep
+static RTC_NOINIT_ATTR int counterSleep; 
+static RTC_NOINIT_ATTR bool plant_LEDOn = false; 
 
 #include "config.h"
 #include <sistem_error.cpp>
@@ -247,34 +249,21 @@ void setup(){
   pinMode(SW1, OUTPUT);
   pinMode(waterPin0, OUTPUT);
   pinMode(waterPin1, OUTPUT);
+  pinMode(waterPin1, OUTPUT);
   pinMode(waterPin2, OUTPUT);
   pinMode(waterPin3, OUTPUT);
   pinMode(neoPin, OUTPUT);
-  
-
-  if(!SD.begin()){
-    Serial.println("Card Mount Failed");
-    sisError(5);
-  }else{
-    // Check to see if the file exists:
-    if (SD.exists(SD_path_user)) {
-      String stringUser = readFile(SD, SD_path_user);
-
-      auto error = deserializeJson(localUser, stringUser );
-      if( error == DeserializationError::Ok ){  
-        userLocalFlag = true ;
-      }
-
-    } else {
-      Serial.println("userData.txt doesn't exist.");
-    }
-  }
     
   esp_sleep_wakeup_cause_t wakeup_reason;
   wakeup_reason = esp_sleep_get_wakeup_cause();
 
   switch(wakeup_reason){
-    case ESP_SLEEP_WAKEUP_TIMER : 
+    case ESP_SLEEP_WAKEUP_TIMER :
+      
+      if(plant_LEDOn){
+        counterSleep++; 
+      }
+
       Serial.println("Wakeup caused by timer"); break;
       digitalWrite(LED_GREEN,HIGH);
       delay(1000);
@@ -288,6 +277,7 @@ void setup(){
         delay(1000);
       }  
     default : 
+      counterSleep = 0;
       reg_b = READ_PERI_REG(SENS_SAR_READ_CTRL2_REG);
       Serial.println("Reading reg b.....");
       Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
@@ -300,29 +290,60 @@ void setup(){
 
   esp_wifi_start();
 
-  Wire.begin();
+
 
   // If we can connected to wifi..
   if ( wifi_status() ){
+    // definimos el servidor y el puerto del MQTT
     client.setServer(mqtt_server, mqttPort);
     client.setCallback(callback);
 
     // get NTP time every time connect to wifi, not necessary but wont hurts
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
+    // Try to get the user by the server
+    if ( !getUser() ){
+      // Try to get the user by SDs
+      if( !SD.begin() ){
+        //if we fount any user. we have nothing to do, go to sleep
+        sisError(0);
+      }
+      SD.end();
+    }
+    
   }else{
-    if( !userLocalFlag ){
+    
+    // If we can't fount the user in local. Go to sleep
+    if(!SD.begin()){
+      Serial.println("Card Mount Failed");
+      //sisError(5);
       //Nothing to do, reboot
       sisError(0);
-    }
+    }else{
+      // Check to see if the file exists:
+      if (SD.exists(SD_path_user)) {
+        String stringUser = readFile(SD, SD_path_user);
+
+        auto error = deserializeJson(localUser, stringUser );
+        if( error == DeserializationError::Ok ){  
+          userLocalFlag = true ;
+        }
+
+      } else {
+        Serial.println("userData.txt doesn't exist.");
+      }
+
+    }  
+    SD.end();
   }
   
 
+  Wire.begin();
   if (wakeup_reason == ESP_SLEEP_WAKEUP_TOUCHPAD){
     xTaskCreatePinnedToCore(taskCore2, "Task2", 10000, NULL, 1, &Task2,  0); 
     delay(500); 
-  }
-  else{
+  
+  }else{
 
     delay(100);
     xTaskCreatePinnedToCore(taskCore1, "Task1", 10000, NULL, 1, &Task1,  1); 
@@ -339,13 +360,17 @@ void setup(){
     Serial.print("User mac: ");
     Serial.println(getMac());
     Serial.print("SD on: ");
-    Serial.println(SD.cardType() == CARD_NONE);
+    Serial.println(SD.cardType() == CARD_NONE ? "No" : "Yes");
+    Serial.print("LED ON: ");
+    Serial.println(plant_LEDOn == false ? "No" : "Yes");
+    Serial.print("Reinicios: ");
+    Serial.println(counterSleep);
 
     if ( userLocalFlag ){
       Serial.print("LocalUser: True");
-      Serial.println( readFile(SD, SD_path_user) );
+      //Serial.println( readFile(SD, SD_path_user) );
     }else{
-      Serial.print("LocalUser: False");
+      Serial.println("LocalUser: False");
     }
 
     Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) +" Seconds");
@@ -366,6 +391,7 @@ void taskCore0( void * pvParameters){
       {
         reconnect();
       }
+
       client.loop();
       delay(500);
     }
@@ -374,8 +400,6 @@ void taskCore0( void * pvParameters){
     client.disconnect();
     Serial.println("Core 0 finished");
     while (true) { delay(1000);}
-    
-
   }
   
 }
@@ -384,21 +408,17 @@ void taskCore1( void * pvParameters){
   Serial.println(xPortGetCoreID());
   for(;;){
     digitalWrite(LED_GREEN, HIGH);
-
-    if( wifi_status() ){
-      if ( !getUser()){
-        if( !userLocalFlag ){
-          sisError(0);
-        }
-      }
-    }
     swichs_on_off(HIGH);
     /* 
     *  Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
     *  and this is send to database for store it.
     */
     for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
+      
+      //Definir los datos analogicos y los datos de riego y de iluminacion para ser activados
       getDataAnalog(kvp.value(), kvp.key().c_str() ); 
+      taskSystem(kvp.value() ); 
+
     }
     /* 
     *  Each User has max 4 measurements ( TCS34725, BME280, CCS811 and Si7021 )
@@ -411,7 +431,7 @@ void taskCore1( void * pvParameters){
     //sendPedientingMessage();
     //  Do something with all tasks received
     //controlSystem();
-    tasksControl();
+    //tasksControl();
     
     finishedCore1 = true;
 
@@ -424,6 +444,7 @@ void taskCore1( void * pvParameters){
     toSleep(TIME_TO_SLEEP);
   }
 }
+// manual mood
 void taskCore2( void * pvParameters){
   Serial.print("Task by touch:");
   Serial.println(xPortGetCoreID());
