@@ -87,6 +87,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 //-----------------------------------------
 //------------ Server is listenning -------
 //-----------------------------------------
-server.listen(port, '192.168.1.136', () =>{
+server.listen(port, '0.0.0.0', () =>{
     console.log(`[Smart-Garden-Server]: Server on port ${port}`);
 });
