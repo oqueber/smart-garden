@@ -1,18 +1,22 @@
-<form class="col s12" action="/users/login-user" method="POST">
-  <div class="row">
-    <div class="input-field col s12">
-      <input class="validate" type="email" name="email">
-      <label for="email">Email address</label>
+<div class="container">
+  <form action="/users/login-user" method="POST">
+    <div  style="height:90vh" class="valign-wrapper"> 
+      <div style="margin: 0 auto;width: 500px;text-align: center;"class="row">
+        <div class="input-field col s12">
+          <input class="validate" type="email" name="email">
+          <label for="email">Email address</label>
+        </div>
+        <div class="input-field col s12">
+          <input class="validate" type="password" name="password">
+          <label for="password">Password</label>
+        </div>
+        <div class="input-field col s12">
+          <button class="btn waves-effect waves-light" type="submit">Submit
+            <i class="material-icons right">assignment_ind</i>
+          </button>
+        </div>
+      </div>  
     </div>
-  </div>
-  <div class="row">
-    <div class="input-field col s12">
-      <input class="validate" type="password" name="password">
-      <label for="password">Password</label>
-    </div>
-  </div>
-  
-  <button class="btn waves-effect waves-light" type="submit">Submit
-    <i class="material-icons right">assignment_ind</i>
-  </button>
-</form>
+  </form>
+</div>
+

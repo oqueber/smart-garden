@@ -107,3 +107,4 @@ const int   daylightOffset_sec = 3600;
 // Debugging flag for printing in monitor serial
 const bool debugging = true;
 const bool debugging_mqtt = true;
+const bool debugging_SD = true;

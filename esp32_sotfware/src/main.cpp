@@ -201,7 +201,37 @@ void getDataAnalog(JsonObjectConst User, String plant, bool send = true ){
   }
 }
 
+bool getUserSD(){
+    userLocalFlag = false;
+    
+    // If we can't fount the user in local. Go to sleep
+    if(!SD.begin()){
+      Serial.println("Card Mount Failed");
+      sisError(5);
+    }else{
+      // Check to see if the file exists:
+      if (SD.exists(SD_path_user)) {
+        
+        if( debugging_SD){
+          deleteFile(SD, SD_path_user);
+          delay(100);
+        }else{
+          String stringUser = readFile(SD, SD_path_user);
 
+          auto error = deserializeJson(localUser, stringUser );
+          if( error == DeserializationError::Ok ){  
+            userLocalFlag = true ;
+          }
+        }
+
+      } else {
+        Serial.println("userData.txt doesn't exist.");
+      }
+
+    }  
+    SD.end();
+    return userLocalFlag;
+}
 void printLocalTime(){
   struct tm timeinfo;
   if(!getLocalTime(&timeinfo)){
@@ -289,11 +319,20 @@ void setup(){
   esp_sleep_enable_touchpad_wakeup();
 
   esp_wifi_start();
-
-
+  Wire.begin();
 
   // If we can connected to wifi..
   if ( wifi_status() ){
+    Serial.println("We connected to the wifi...");
+
+    // Try to get the user by the server
+    // Try to get the user by SDs
+    if( !getUser() && !getUserSD() ){
+      //if we fount any user. we have nothing to do, go to sleep
+      sisError(0);
+    }
+    delay(100);
+
     // definimos el servidor y el puerto del MQTT
     client.setServer(mqtt_server, mqttPort);
     client.setCallback(callback);
@@ -301,57 +340,11 @@ void setup(){
     // get NTP time every time connect to wifi, not necessary but wont hurts
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
-    // Try to get the user by the server
-    if ( !getUser() ){
-      // Try to get the user by SDs
-      if( !SD.begin() ){
-        //if we fount any user. we have nothing to do, go to sleep
-        sisError(0);
-      }
-      SD.end();
-    }
-    
-  }else{
-    
-    // If we can't fount the user in local. Go to sleep
-    if(!SD.begin()){
-      Serial.println("Card Mount Failed");
-      //sisError(5);
-      //Nothing to do, reboot
-      sisError(0);
-    }else{
-      // Check to see if the file exists:
-      if (SD.exists(SD_path_user)) {
-        String stringUser = readFile(SD, SD_path_user);
-
-        auto error = deserializeJson(localUser, stringUser );
-        if( error == DeserializationError::Ok ){  
-          userLocalFlag = true ;
-        }
-
-      } else {
-        Serial.println("userData.txt doesn't exist.");
-      }
-
-    }  
-    SD.end();
+  }else if(!getUserSD()){
+    //Nothing to do, reboot
+    sisError(0);
   }
-  
 
-  Wire.begin();
-  if (wakeup_reason == ESP_SLEEP_WAKEUP_TOUCHPAD){
-    xTaskCreatePinnedToCore(taskCore2, "Task2", 10000, NULL, 1, &Task2,  0); 
-    delay(500); 
-  
-  }else{
-
-    delay(100);
-    xTaskCreatePinnedToCore(taskCore1, "Task1", 10000, NULL, 1, &Task1,  1); 
-    delay(500);
-    xTaskCreatePinnedToCore(taskCore0, "Task0", 10000, NULL, 1, &Task0,  0); 
-    delay(500); 
-  }
-  
   if (debugging || debugging_mqtt){
     Serial.println("----------------------------------------------------------");
     Serial.println("--------------------- SETUP END --------------------------");
@@ -361,8 +354,10 @@ void setup(){
     Serial.println(getMac());
     Serial.print("SD on: ");
     Serial.println(SD.cardType() == CARD_NONE ? "No" : "Yes");
+    Serial.print("SD on: ");
+    Serial.println(SD.cardType() == CARD_NONE);
     Serial.print("LED ON: ");
-    Serial.println(plant_LEDOn == false ? "No" : "Yes");
+    Serial.println(plant_LEDOn ? "No" : "Yes");
     Serial.print("Reinicios: ");
     Serial.println(counterSleep);
 
@@ -378,11 +373,23 @@ void setup(){
     Serial.println("----------------------------------------------------------");
   }
 
+  if (wakeup_reason == ESP_SLEEP_WAKEUP_TOUCHPAD){
+    xTaskCreatePinnedToCore(taskCore2, "Task2", 10000, NULL, 1, &Task2,  0); 
+    delay(500); 
+  
+  }else{
+
+    delay(100);
+    xTaskCreatePinnedToCore(taskCore1, "Task1", 10000, NULL, 1, &Task1,  1); 
+    delay(500);
+    xTaskCreatePinnedToCore(taskCore0, "Task0", 10000, NULL, 1, &Task0,  0); 
+    delay(500); 
+  }
 }
 
 void taskCore0( void * pvParameters){
-  Serial.print("Task of the core 0:");
-  Serial.println(xPortGetCoreID());
+  //Serial.print("Task of the core 0:");
+  //Serial.println(xPortGetCoreID());
   for(;;){
 
     while ( !finishedCore1 )
@@ -404,8 +411,8 @@ void taskCore0( void * pvParameters){
   
 }
 void taskCore1( void * pvParameters){
-  Serial.print("Task of the core 1:");
-  Serial.println(xPortGetCoreID());
+  //Serial.print("Task of the core 1:");
+  //Serial.println(xPortGetCoreID());
   for(;;){
     digitalWrite(LED_GREEN, HIGH);
     swichs_on_off(HIGH);
@@ -461,13 +468,12 @@ void taskCore2( void * pvParameters){
 
 
     Serial.println("Task2 by touch new loop");
-    if( wifi_status() ){
-      if ( !getUser()){
-        if( !userLocalFlag ){
-          sisError(0);
-        }
-      }
-    }
+    //if( wifi_status() ){
+    //  if ( !getUser() && !getUserSD() ){
+    //    sisError(0);
+    //  }
+    //}
+    
     swichs_on_off(HIGH);
     /* 
     *  Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)

@@ -87,13 +87,13 @@ bool send_mqtt(String msg_topic, String msg_payload){
       Serial.println("----------------------------------------------------------");
     }
 
-    if ( SD.exists(SD_path_measure) ){
-      appendFile(SD, SD_path_measure, dataSave.c_str() );
-      //Serial.println("Store message old: ");
-      //Serial.println(readFile(SD,SD_path_measure));
-    }else{
-      writeFile(SD, SD_path_measure, dataSave.c_str() );
-    }
+    //if ( SD.exists(SD_path_measure) ){
+    //  appendFile(SD, SD_path_measure, dataSave.c_str() );
+    //  //Serial.println("Store message old: ");
+    //  //Serial.println(readFile(SD,SD_path_measure));
+    //}else{
+    //  writeFile(SD, SD_path_measure, dataSave.c_str() );
+    //}
 
   }
   return sendMsg;
@@ -161,7 +161,7 @@ void sendPedientingMessage(){
     file.close();
     deleteFile(SD,SD_path_user);
     Serial.println(failMsg);
-    writeFile(SD,SD_path_user, failMsg.c_str());
+    //writeFile(SD,SD_path_user, failMsg.c_str());
 
   }
 }
