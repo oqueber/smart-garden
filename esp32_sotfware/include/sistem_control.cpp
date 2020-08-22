@@ -34,11 +34,11 @@ void taskSystem( JsonObjectConst plant ){
   //Observamos el entorno por cada planta
   // Last_time_water : "YYYY:MM:DDD"
   time_t timeinfo_2 = mktime(&timeinfo);
+  unsigned long plant_water_time = plant["water"]["last_water"].as<unsigned long>();
 
-  double diff = difftime (timeinfo_2, (plant["water"]["last_water"].as<unsigned long>()) );
+  double diff = difftime (timeinfo_2, plant_water_time);
 
-
-  if( (diff/(60*60*60*24))  >=  plant["water"]["frequency"].as<String>().toInt() ) {
+  if( (diff/(60*60*24))  >=  plant["water"]["frequency"].as<String>().toInt() ) {
     
     taskWater( plant["pinout"]["humCap"].as<int>(),
                plant["pinout"]["humEC"].as<int>(),
@@ -76,7 +76,8 @@ void taskSystem( JsonObjectConst plant ){
     Serial.print("[light][time_stop][Hour]: "); Serial.println( (plant["light"]["time_stop"].as<String>()).substring (0 , 2).toInt()  );
     Serial.print("[light][time_stop][min]: "); Serial.println(  (plant["light"]["time_stop"].as<String>()).substring (3 , 5).toInt() );
 
-    Serial.print("[water][last_water]: "); Serial.println( plant["water"]["last_water"].as<unsigned long>() );
+    Serial.print("[water][last_water]: "); Serial.println( plant_water_time );
+    Serial.print("time: "); Serial.println( timeinfo_2 );
     Serial.print("diff: "); Serial.println( diff/(60*60*60*24) );
     Serial.print("[water][frequency]: "); Serial.println( plant["water"]["frequency"].as<String>() );
     
