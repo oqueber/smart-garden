@@ -20,7 +20,7 @@ const UserSchema = new Schema({
         },
         sowing:{
             light:{
-                last_light:{ type: Date }, 
+                last_light:{ type: Number }, 
                 time_start: {type: String},
                 time_stop: {type: String},
                 led_start: {type: Number},
@@ -30,7 +30,7 @@ const UserSchema = new Schema({
                 color_blue: {type: Number}
             },
             water:{
-                last_water:{ type: Date }, 
+                last_water:{ type: Number }, 
                 frequency:{ type:Number},
                 supply: {type: Number},
                 limit: {type: Number},
