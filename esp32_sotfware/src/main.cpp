@@ -2,6 +2,7 @@
 #include <Wire.h>
 #include <esp_wifi.h>
 #include <esp_bt.h>
+#define ARDUINOJSON_USE_LONG_LONG 1 // we need to store long long
 #include <ArduinoJson.hpp>
 #include <ArduinoJson.h>
 #include <SD.cpp>
@@ -18,11 +19,12 @@ static RTC_NOINIT_ATTR bool plant_LEDOn = false;
 #include <./wifi/wifi.h>
 #include <./wifi/wifi.cpp>
 
-#include <sistem_control.cpp>
 
 #include <./mqtt/mqtt.h>
+
 #include <./mqtt/mqtt.cpp>
 
+#include <sistem_control.cpp>
 #include "setup_sensors.cpp"
 #define Threshold 40 /* Greater the value, more the sensitivity */
 
@@ -239,33 +241,6 @@ void printLocalTime(){
     return;
   }
   Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
-  /*
-    Serial.print("Day of week: ");
-    Serial.println(&timeinfo, "%A");
-    Serial.print("Month: ");
-    Serial.println(&timeinfo, "%B");
-    Serial.print("Day of Month: ");
-    Serial.println(&timeinfo, "%d");
-    Serial.print("Year: ");
-    Serial.println(&timeinfo, "%Y");
-    Serial.print("Hour: ");
-    Serial.println(&timeinfo, "%H");
-    Serial.print("Hour (12 hour format): ");
-    Serial.println(&timeinfo, "%I");
-    Serial.print("Minute: ");
-    Serial.println(&timeinfo, "%M");
-    Serial.print("Second: ");
-    Serial.println(&timeinfo, "%S");
-
-    Serial.println("Time variables");
-    char timeHour[3];
-    strftime(timeHour,3, "%H", &timeinfo);
-    Serial.println(timeHour);
-    char timeWeekDay[10];
-    strftime(timeWeekDay,10, "%A", &timeinfo);
-    Serial.println(timeWeekDay);
-    Serial.println();
-  */
 }
 
 void setup(){
@@ -353,9 +328,9 @@ void setup(){
     Serial.print("User mac: ");
     Serial.println(getMac());
     Serial.print("SD on: ");
-    Serial.println(SD.cardType() == CARD_NONE ? "No" : "Yes");
+    Serial.println(userLocalFlag ? "Yes" : "No");
     Serial.print("SD on: ");
-    Serial.println(SD.cardType() == CARD_NONE);
+    Serial.println(userLocalFlag);
     Serial.print("LED ON: ");
     Serial.println(plant_LEDOn ? "No" : "Yes");
     Serial.print("Reinicios: ");
@@ -424,7 +399,7 @@ void taskCore1( void * pvParameters){
       
       //Definir los datos analogicos y los datos de riego y de iluminacion para ser activados
       getDataAnalog(kvp.value(), kvp.key().c_str() ); 
-      taskSystem(kvp.value() ); 
+      taskSystem(kvp.value(), kvp.key().c_str() ); 
 
     }
     /* 

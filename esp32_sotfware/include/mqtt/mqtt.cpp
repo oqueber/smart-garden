@@ -113,7 +113,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.println();
   }
 
-  receptionSystem( String(topic) , message);
+  //receptionSystem( String(topic) , message);
 }
 
 

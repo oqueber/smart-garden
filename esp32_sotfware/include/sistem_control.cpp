@@ -14,6 +14,7 @@ DynamicJsonDocument localUser (2048);
 JsonArray userTasks = doc.to<JsonArray>();
 
 
+void updateUser();
 void receptionSystem( String topic, String message){
   if ( topic == "device/get/task" ) {
     userTasks.add(message);
@@ -23,37 +24,54 @@ void receptionSystem( String topic, String message){
 
 void taskWater( int pin_humCap, int pin_humEc,int limit, int pinout){  Serial.println("Activado el sistema de riego"); };
 void taskLight( int led_start,  int led_end, int r, int g, int b){ Serial.println("Activado el sistema de iluminacion"); };
-void taskSystem( JsonObjectConst plant ){
+void taskSystem( JsonObjectConst plant , String plant_id){
  
- struct tm timeinfo;
+  struct tm timeinfo;
   if(!getLocalTime(&timeinfo)){
     Serial.println("Failed to obtain time");
     return;
   }
+
+  // Variables para calcular el dia de regiego
+  int rightNow = (timeinfo.tm_hour *60*60) + (timeinfo.tm_min *60);
+  int hourStart_hour= (plant["light"]["time_start"].as<String>()).substring (0 , 2).toInt() ;
+      hourStart_hour= hourStart_hour*60*60;
+  int hourStart_min=  (plant["light"]["time_start"].as<String>()).substring (3 , 5).toInt() ;
+      hourStart_min= hourStart_min*60;
+  int hourStop_hour= (plant["light"]["time_stop"].as<String>()).substring (0 , 2).toInt() ;
+      hourStop_hour= hourStart_hour*60*60;
+  int hourStop_min=  (plant["light"]["time_stop"].as<String>()).substring (3 , 5).toInt() ;
+      hourStop_min= hourStart_min*60;; 
+
+
+
+
     
-  //Observamos el entorno por cada planta
+  // Calculamos la diferencia de dias desde la ultima vez de riego
   // Last_time_water : "YYYY:MM:DDD"
   time_t timeinfo_2 = mktime(&timeinfo);
-  unsigned long plant_water_time = plant["water"]["last_water"].as<unsigned long>();
+  uint64_t plant_water_time = plant["water"]["last_water"];
+  double diff = difftime(timeinfo_2,  (unsigned long)(plant_water_time/1000)) ;
 
-  double diff = difftime (timeinfo_2, plant_water_time);
 
-  if( (diff/(60*60*24))  >=  plant["water"]["frequency"].as<String>().toInt() ) {
+  if( (diff/(60*60*24))  >=  0 ) {
     
+    //Enviar una actualizacion de la fecha del agua agua y actualizar la variable en local
+    //Hacer un sistema de backup, que utilice solo el contador reinicios del micro para activar el riego
+    // counterRiego >= frecuencia*24  --> CounterRiego aumenta 1 cada 30min. asi establecemos el encendido del micro
     taskWater( plant["pinout"]["humCap"].as<int>(),
                plant["pinout"]["humEC"].as<int>(),
                plant["water"]["limit"].as<int>(),
                plant["water"]["pinout"].as<int>());
-  
+    localUser["water"]["last_water"] = timeinfo_2;
+    //enviar mqtt con los cambios
+    send_mqtt("Huerta/update/water" , (plant_id+"/"+String(timeinfo_2) ));
+    // actualizar el usuario local
+    updateUser();
+
   }
-
-
-  if(    (timeinfo.tm_hour <= (plant["light"]["time_start"].as<String>()).substring (0 , 2).toInt()) 
-      && (timeinfo.tm_min  <= (plant["light"]["time_start"].as<String>()).substring (3 , 5).toInt()) 
-      && (timeinfo.tm_hour >= (plant["light"]["time_stop"].as<String>()).substring (0 , 2).toInt()) 
-      && (timeinfo.tm_min  >= (plant["light"]["time_stop"].as<String>()).substring (3 , 5).toInt()) 
-  ){
-
+  
+  if( (rightNow >= (hourStart_hour + hourStart_min)) &&  (rightNow <= (hourStop_hour + hourStop_min)) ){
     taskLight( plant["light"]["led_start"].as<int>(), 
                plant["light"]["led_end"].as<int>(),
                plant["light"]["color_red"].as<int>(),
@@ -64,21 +82,18 @@ void taskSystem( JsonObjectConst plant ){
   if( debugging ){
     Serial.println("------------------  taskSystem   ---------------------------------");
     
-    Serial.print("Time Hours: "); Serial.println( timeinfo.tm_hour );
-    Serial.print("Time min: "); Serial.println( timeinfo.tm_min );
+    Serial.print("Time now: "); Serial.println( rightNow);
     Serial.print("ID plant: "); Serial.println( plant["info"]["date"].as<int>());
 
     Serial.print("[light][time_start]: "); Serial.println( plant["light"]["time_start"].as<String>() );
-    Serial.print("[light][time_start][Hour]: "); Serial.println( (plant["light"]["time_start"].as<String>()).substring (0 , 2).toInt()  );
-    Serial.print("[light][time_start][min]: "); Serial.println(  (plant["light"]["time_start"].as<String>()).substring (3 , 5).toInt() );
+    Serial.print("[light][time_start][seg]: "); Serial.println( (hourStart_hour + hourStart_min) );
    
     Serial.print("[light][time_stop]: "); Serial.println( plant["light"]["time_stop"].as<String>()  );
-    Serial.print("[light][time_stop][Hour]: "); Serial.println( (plant["light"]["time_stop"].as<String>()).substring (0 , 2).toInt()  );
-    Serial.print("[light][time_stop][min]: "); Serial.println(  (plant["light"]["time_stop"].as<String>()).substring (3 , 5).toInt() );
+    Serial.print("[light][time_stop][seg]: "); Serial.println( (hourStop_hour + hourStop_min) );
 
-    Serial.print("[water][last_water]: "); Serial.println( plant_water_time );
+    Serial.print("[water][last_water]: "); Serial.println(  (unsigned long)(plant_water_time/1000));
     Serial.print("time: "); Serial.println( timeinfo_2 );
-    Serial.print("diff: "); Serial.println( diff/(60*60*60*24) );
+    Serial.print("diff: "); Serial.println( diff/(60*60*24) );
     Serial.print("[water][frequency]: "); Serial.println( plant["water"]["frequency"].as<String>() );
     
     Serial.println("------------------  taskSystem end   ---------------------------------");
@@ -146,7 +161,26 @@ void controlSystem( void ){
   } 
 }
 
+void updateUser(){
+  String userUpdate;
+  
 
+  if(!SD.begin()){
+    Serial.println("Card Mount Failed");
+    sisError(5);
+  }else{
+    listDir(SD, "/", 0);
+    if ( SD.exists(SD_path_user) ){
+      auto error = serializeJson(localUser, userUpdate);      
+      
+      if( error == DeserializationError::Ok ){  
+        deleteFile(SD, SD_path_user);
+        delay(100);
+        writeFile(SD, SD_path_user, userUpdate .c_str());
+      }
+    }
+  }
+}
 /* The getUser() function is used as a flag if a user is found or not.
 * Each device has a unique identification to connect to the internet (MAC)
 * This code is used as a uuid and each measurement reported by this divice

@@ -124,6 +124,27 @@ server.on('published', async (packet, client) => {
     }
 
   }
+
+  if(packet.topic == "Huerta/update/water"){
+    let deviceMAC = (client.id).split('/')[1]; 
+    let devicePayload = packet.payload.toString('utf-8').split('/');
+    debug(chalk.green(`Update plant water ${devicePayload[0]} in the user ${UserMac} with value ${devicePayload[1]}`));
+    await Users.findOne( {MAC: deviceMAC }).then(doc => {
+
+      debug(chalk.green(`User found: `));
+      debug(chalk.green(doc));
+      for( element in doc.plants){
+        if (element.info.date == devicePayload[0].parseInt() ){
+          element.sowing.water.last_water = Number(devicePayload[1]) ;
+        }
+      }
+      doc.save();
+      debug(chalk.green(`after:`));
+      debug(chalk.green(doc));
+    });
+
+
+  }
   if ((packet.topic == "Huerta/Push/Digital") || (packet.topic == "Huerta/Push/Analog")) {
     
     try {
