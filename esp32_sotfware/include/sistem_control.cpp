@@ -93,7 +93,7 @@ void taskSystem( JsonObjectConst plant , String plant_id){
     Serial.print("[light][time_stop]: "); Serial.println( plant["light"]["time_stop"].as<String>()  );
     Serial.print("[light][time_stop][seg]: "); Serial.println( (hourStop_hour + hourStop_min) );
 
-    Serial.print("[water][last_water]: "); Serial.println(  (unsigned long)(plant_water_time/1000));
+    Serial.print("[water][last_water]: "); Serial.println( plant_water_time);
     Serial.print("time: "); Serial.println( timeinfo_2 );
     Serial.print("diff: "); Serial.println( diff/(60*60*24) );
     Serial.print("[water][frequency]: "); Serial.println( plant["water"]["frequency"].as<String>() );
@@ -229,7 +229,7 @@ bool getUser(){
               }
             }
             SD.end();
-            //if(debugging){ Serial.println(payload); };   // Mostrar respuesta por serial
+            if(debugging){ Serial.println(payload); };   // Mostrar respuesta por serial
             UserFinded = true;
           }
         }else if(httpCode == 204){

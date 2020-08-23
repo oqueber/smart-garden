@@ -139,7 +139,7 @@ server.on('published', async (packet, client) => {
           doc.plants[element].sowing.water.last_water = Number(devicePayload[1]) ;
         }
       }
-      //doc.save();
+      doc.save();
       debug(chalk.green(`after:`));
       debug(chalk.green(doc.plants[0] ));
     });

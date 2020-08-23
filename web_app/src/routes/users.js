@@ -84,7 +84,7 @@ router.post('/Users/new-user', async(req,res) =>{
     const errors = [];
     console.log(req.body);
     if(email != emailRepeat){errors.push({text: "Please both emails have the same"})}
-
+    if(email == '' || emailRepeat == ''){errors.push({text: "Please enter a email"})}
     if(errors.length >= 1){
         res.render('users/signup', {errors, name, email,emailRepeat, city,state,zip,MAC0,MAC1,MAC2,MAC3,MAC4,MAC5});
      }else{
