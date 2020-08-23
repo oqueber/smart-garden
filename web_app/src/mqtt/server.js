@@ -128,12 +128,13 @@ server.on('published', async (packet, client) => {
   if(packet.topic == "Huerta/update/water"){
     let deviceMAC = (client.id).split('/')[1]; 
     let devicePayload = packet.payload.toString('utf-8').split('/');
-    debug(chalk.green(`Update plant water ${devicePayload[0]} in the user ${UserMac} with value ${devicePayload[1]}`));
+    debug(chalk.green(`Update plant water ${devicePayload[0]} in the user ${deviceMAC} with value ${devicePayload[1]}`));
+    console.log(packet.payload.toString('utf-8'));
     await Users.findOne( {MAC: deviceMAC }).then(doc => {
 
       debug(chalk.green(`User found: `));
       debug(chalk.green(doc));
-      for( element in doc.plants){
+      for( const element in doc.plants){
         if (element.info.date == devicePayload[0].parseInt() ){
           element.sowing.water.last_water = Number(devicePayload[1]) ;
         }

@@ -65,7 +65,7 @@ void taskSystem( JsonObjectConst plant , String plant_id){
                plant["water"]["pinout"].as<int>());
     localUser["water"]["last_water"] = timeinfo_2;
     //enviar mqtt con los cambios
-    send_mqtt("Huerta/update/water" , (plant_id+"/"+String(timeinfo_2) ));
+    send_mqtt("Huerta/update/water" , (plant_id+"/"+String(timeinfo_2)), true);
     // actualizar el usuario local
     updateUser();
 

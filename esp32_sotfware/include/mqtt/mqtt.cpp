@@ -30,8 +30,8 @@ void reconnect() {
   if(!client.connected()){ sisError(6); }
 }
 // Try to send the message to the Mqtt server
-bool send_mqtt(String msg_topic, String msg_payload){
-
+bool send_mqtt(String msg_topic, String msg_payload, bool update){
+  DynamicJsonDocument doc(2048);
   bool sendMsg = false;  
   uint8_t intentos = 0;
   String json = "";
@@ -39,28 +39,31 @@ bool send_mqtt(String msg_topic, String msg_payload){
   time_t now;
   time(&now);
 
-  DynamicJsonDocument doc(2048);
-  auto error = deserializeJson(doc, msg_payload);
+  if(update){
+    json = msg_payload;
+  }else{
+    auto error = deserializeJson(doc, msg_payload);
 
-  if( error == DeserializationError::Ok ){
-    doc["device"] = getMac();
-    doc["timestamps"] = now;
-    serializeJson(doc, json);
+    if( error == DeserializationError::Ok ){
+      doc["device"] = getMac();
+      doc["timestamps"] = now;
+      serializeJson(doc, json);
 
-    if(debugging_mqtt ){
-      Serial.println("----------- mqtt packgate---------------");
-      Serial.print("Status mqtt: ");
-      Serial.println( client.state() );
-      Serial.print("connected wifi: ");
-      Serial.println(WiFi.status() == WL_CONNECTED);
-      Serial.print("connected mqtt: ");
-      Serial.println(client.connected());
-      Serial.print("Topic:");
-      Serial.println(msg_topic);
-      Serial.print("Msg:");
-      Serial.println(json);
-      Serial.println("----------------------------------------------------------");
-    }  
+      if(debugging_mqtt ){
+        Serial.println("----------- mqtt packgate---------------");
+        Serial.print("Status mqtt: ");
+        Serial.println( client.state() );
+        Serial.print("connected wifi: ");
+        Serial.println(WiFi.status() == WL_CONNECTED);
+        Serial.print("connected mqtt: ");
+        Serial.println(client.connected());
+        Serial.print("Topic:");
+        Serial.println(msg_topic);
+        Serial.print("Msg:");
+        Serial.println(json);
+        Serial.println("----------------------------------------------------------");
+      }  
+    }
   }
 
   //Core 0 is already doing it.
@@ -146,7 +149,7 @@ void sendPedientingMessage(){
 
           Serial.print("Message forwarding on topic");
           
-          if( !send_mqtt(topic,payload) ){
+          if( !send_mqtt(topic,payload,false) ){
             Serial.println("falll");
             failMsg += msg + "\n";
           }
