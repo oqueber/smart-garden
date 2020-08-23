@@ -96,7 +96,7 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
         },
         sowing:{
             light:{
-                last_light: Date.now(),
+                last_light: Math.round(new Date() / 1000),
                 time_start: time_start,
                 time_stop: time_stop,
                 led_start: parseInt(led_start,10),
@@ -106,7 +106,7 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
                 color_blue: parseInt(color_blue,10),
             },
             water:{
-                last_water: Date.now(),
+                last_water: Math.round(new Date() / 1000),
                 frequency: parseInt(waterF,10),
                 pinout: parseInt(waterPin,10),
                 limit: parseInt(waterU,10)

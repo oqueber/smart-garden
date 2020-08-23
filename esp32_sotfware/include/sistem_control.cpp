@@ -41,7 +41,7 @@ void taskSystem( JsonObjectConst plant , String plant_id){
   int hourStop_hour= (plant["light"]["time_stop"].as<String>()).substring (0 , 2).toInt() ;
       hourStop_hour= hourStart_hour*60*60;
   int hourStop_min=  (plant["light"]["time_stop"].as<String>()).substring (3 , 5).toInt() ;
-      hourStop_min= hourStart_min*60;; 
+      hourStop_min= hourStart_min*60; 
 
 
 
@@ -50,11 +50,11 @@ void taskSystem( JsonObjectConst plant , String plant_id){
   // Calculamos la diferencia de dias desde la ultima vez de riego
   // Last_time_water : "YYYY:MM:DDD"
   time_t timeinfo_2 = mktime(&timeinfo);
-  uint64_t plant_water_time = plant["water"]["last_water"];
-  double diff = difftime(timeinfo_2,  (unsigned long)(plant_water_time/1000)) ;
+  unsigned long plant_water_time = plant["water"]["last_water"];
+  double diff = difftime(timeinfo_2,  plant_water_time ) ;
 
 
-  if( (diff/(60*60*24))  >=  0 ) {
+  if( (diff/(60*60*24))  >=   plant["water"]["frequency"].as<int>()  ) {
     
     //Enviar una actualizacion de la fecha del agua agua y actualizar la variable en local
     //Hacer un sistema de backup, que utilice solo el contador reinicios del micro para activar el riego
@@ -83,6 +83,8 @@ void taskSystem( JsonObjectConst plant , String plant_id){
     Serial.println("------------------  taskSystem   ---------------------------------");
     
     Serial.print("Time now: "); Serial.println( rightNow);
+    Serial.print("Time millis "); Serial.println( millis());
+    
     Serial.print("ID plant: "); Serial.println( plant["info"]["date"].as<int>());
 
     Serial.print("[light][time_start]: "); Serial.println( plant["light"]["time_start"].as<String>() );
