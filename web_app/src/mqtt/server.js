@@ -133,15 +133,15 @@ server.on('published', async (packet, client) => {
     await Users.findOne( {MAC: deviceMAC }).then(doc => {
 
       debug(chalk.green(`User found: `));
-      debug(chalk.green(doc));
       for( const element in doc.plants){
+        debug(chalk.green(doc.plants[element] ));
         if (doc.plants[element].info.date == Number(devicePayload[0]) ){
           doc.plants[element].sowing.water.last_water = Number(devicePayload[1]) ;
         }
       }
       //doc.save();
       debug(chalk.green(`after:`));
-      debug(chalk.green(doc));
+      debug(chalk.green(doc.plants[0] ));
     });
 
 
