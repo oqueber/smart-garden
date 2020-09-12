@@ -141,10 +141,27 @@ server.on('published', async (packet, client) => {
       }
       doc.save();
       debug(chalk.green(`after:`));
-      debug(chalk.green(doc.plants[0] ));
+      debug(chalk.green(doc.plants ));
     });
+  }
+  if(packet.topic == "Huerta/update/light"){
+    let deviceMAC = (client.id).split('/')[1]; 
+    let devicePayload = packet.payload.toString('utf-8').split('/');
+    debug(chalk.green(`Update plant water ${Number(devicePayload[0])} in the user ${deviceMAC} with value ${Number(devicePayload[1])}`));
+    console.log(packet.payload.toString('utf-8'));
+    await Users.findOne( {MAC: deviceMAC }).then(doc => {
 
-
+      debug(chalk.green(`User found: `));
+      for( const element in doc.plants){
+        debug(chalk.green(doc.plants[element] ));
+        if (doc.plants[element].info.date == Number(devicePayload[0]) ){
+          doc.plants[element].sowing.light.status = Boolean(devicePayload[1]) ;
+        }
+      }
+      doc.save();
+      debug(chalk.green(`after:`));
+      debug(chalk.green(doc.plants ));
+    });
   }
   if ((packet.topic == "Huerta/Push/Digital") || (packet.topic == "Huerta/Push/Analog")) {
     

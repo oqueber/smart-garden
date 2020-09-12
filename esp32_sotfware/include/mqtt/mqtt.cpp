@@ -83,14 +83,27 @@ bool send_mqtt(String msg_topic, String msg_payload, bool update){
   // the message can not sent. so we store
   if ( intentos > 10  || !client.connected() ){
     String dataSave = msg_topic + "-" + json + "\n";
+    String pathSave = "/db/"+doc["timestamps"].as<String>()+".txt";
     if(debugging_mqtt ){
       Serial.println("-----------Store message---------------");
+      Serial.print("path:");
+      Serial.println(pathSave);
       Serial.print("data:");
       Serial.println(dataSave);
       Serial.println("----------------------------------------------------------");
     }
 
-    //if ( SD.exists(SD_path_measure) ){
+/*
+    if(!SD.begin()){
+      Serial.println("Card Mount Failed");
+      sisError(5);
+    }else{
+      listDir(SD, "/", 1);
+      writeFile(SD,pathSave.c_str(), dataSave.c_str() );
+    }
+    SD.end();
+*/
+    //if ( SD.exists("/db/"+SD_path_measure) ){
     //  appendFile(SD, SD_path_measure, dataSave.c_str() );
     //  //Serial.println("Store message old: ");
     //  //Serial.println(readFile(SD,SD_path_measure));

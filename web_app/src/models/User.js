@@ -27,7 +27,8 @@ const UserSchema = new Schema({
                 led_end: {type: Number},
                 color_red: {type: Number},
                 color_green: {type: Number},
-                color_blue: {type: Number}
+                color_blue: {type: Number},
+                status: {type: Boolean, default: false }
             },
             water:{
                 last_water:{ type: Number }, 

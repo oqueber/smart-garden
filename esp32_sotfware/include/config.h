@@ -65,8 +65,8 @@ const char* SD_path_measure = "/measures.txt";
 // --------------------------------------------------------------------- 
 
 // API url to Users finding
-const String IP = "35.224.59.94"; // google server
-//const String IP = "192.168.1.136"; //Server local
+//const String IP = "35.224.59.94"; // google server
+const String IP = "192.168.1.136"; //Server local
 const String urlGetUser = "http://"+ IP +":3000/Users/GetData/";
 
 // ---------------------------------------------------------------------
@@ -81,15 +81,15 @@ const String urlGetUser = "http://"+ IP +":3000/Users/GetData/";
 const unsigned int time_1S = 1000000;
 const unsigned int sleepTime_reconnect= 60 * time_1S; // 1 Min
 const unsigned int sleepTime = 30*60 * time_1S; // 30 Min
-
+bool itsHardReboot = false;
 // ---------------------------------------------------------------------
 // ------------------ NeoPixel (Led Strip) -----------------------------
 // --------------------------------------------------------------------- 
 
 // Which pin on the Arduino is connected to the NeoPixels?
-#define pin_pixel 6 
+#define pin_pixel 17 
 // How many NeoPixels are attached to the Arduino?
-#define num_pixels 16 
+#define num_pixels 27 
 #define DELAYVAL 500 // Time (in milliseconds) to pause between pixels
 
 
@@ -107,4 +107,4 @@ const int   daylightOffset_sec = 3600;
 // Debugging flag for printing in monitor serial
 const bool debugging = true;
 const bool debugging_mqtt = true;
-const bool debugging_SD = true;
+const bool debugging_SD = false;

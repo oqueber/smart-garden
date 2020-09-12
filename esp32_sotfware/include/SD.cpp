@@ -17,6 +17,7 @@
 #include "SPI.h"
 
 
+
 void listDir(fs::FS &fs, const char * dirname, uint8_t levels){
     Serial.printf("Listing directory: %s\n", dirname);
 
@@ -76,7 +77,6 @@ String readFile(fs::FS &fs, const char * path){
         return "null";
     }
 
-    Serial.print("Read from file: ");
     while(file.available()){
         text += ( (char)file.read() );
     }
@@ -175,5 +175,34 @@ void testFileIO(fs::FS &fs, const char * path){
     end = millis() - start;
     Serial.printf("%u bytes written for %u ms\n", 2048 * 512, end);
     file.close();
+}
+
+void listMsgStore(fs::FS &fs, const char * dirname){
+    Serial.printf("reading directory: %s\n", dirname);
+
+    File root = fs.open(dirname);
+    if(!root){
+        Serial.println("Failed to open directory");
+        return;
+    }
+    if(!root.isDirectory()){
+        Serial.println("Not a directory");
+        return;
+    }
+
+    File file = root.openNextFile();
+    while(file){
+        String pathFile = dirname;
+        pathFile += "/";
+        pathFile +=  file.name();
+        Serial.print("  ------------------------------- ");
+        Serial.print("  FILE: ");
+        Serial.print(pathFile);
+        readFile( fs,pathFile.c_str());
+        Serial.print("  SIZE: ");
+        Serial.println(file.size());
+        file = root.openNextFile();
+        Serial.println("----------------------------- ");
+    }
 }
 

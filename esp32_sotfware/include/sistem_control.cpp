@@ -23,8 +23,24 @@ void receptionSystem( String topic, String message){
 
 
 void taskWater( int pin_humCap, int pin_humEc,int limit, int pinout){  Serial.println("Activado el sistema de riego"); };
-void taskLight( int led_start,  int led_end, int r, int g, int b){ Serial.println("Activado el sistema de iluminacion"); };
-void taskSystem( JsonObjectConst plant , String plant_id){
+void taskLight( int led_start,  int led_end, int r, int g, int b){ 
+
+    Serial.println("Activado el sistema de iluminacion"); 
+    
+
+    // The first NeoPixel in a strand is #0, second is 1, all the way up
+    // to the count of pixels minus one.
+    for(int i=led_start; i<=led_end; i++) { // For each pixel...
+
+      // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
+      // Here we're using a moderately bright green color:
+      pixels.setPixelColor(i, pixels.Color(r, g, b));
+      pixels.show();   // Send the updated pixel colors to the hardware.
+      delay(DELAYVAL); // Pause before next pass through loop
+    }
+
+};
+void taskSystem( JsonObject plant , String plant_id){
  
   struct tm timeinfo;
   if(!getLocalTime(&timeinfo)){
@@ -39,12 +55,9 @@ void taskSystem( JsonObjectConst plant , String plant_id){
   int hourStart_min=  (plant["light"]["time_start"].as<String>()).substring (3 , 5).toInt() ;
       hourStart_min= hourStart_min*60;
   int hourStop_hour= (plant["light"]["time_stop"].as<String>()).substring (0 , 2).toInt() ;
-      hourStop_hour= hourStart_hour*60*60;
+      hourStop_hour= hourStop_hour*60*60;
   int hourStop_min=  (plant["light"]["time_stop"].as<String>()).substring (3 , 5).toInt() ;
-      hourStop_min= hourStart_min*60; 
-
-
-
+      hourStop_min= hourStop_min*60; 
 
     
   // Calculamos la diferencia de dias desde la ultima vez de riego
@@ -63,29 +76,52 @@ void taskSystem( JsonObjectConst plant , String plant_id){
                plant["pinout"]["humEC"].as<int>(),
                plant["water"]["limit"].as<int>(),
                plant["water"]["pinout"].as<int>());
-    localUser["water"]["last_water"] = timeinfo_2;
+    
+    Serial.print("Before: ");
+    Serial.println(plant["water"]["last_water"].as<String>());
+    plant["water"]["last_water"] = timeinfo_2;
+
+    Serial.print("After: ");
+    Serial.println(plant["water"]["last_water"].as<String>());
     //enviar mqtt con los cambios
     send_mqtt("Huerta/update/water" , (plant_id+"/"+String(timeinfo_2)), true);
     // actualizar el usuario local
-    updateUser();
+    //updateUser();
 
   }
   
   if( (rightNow >= (hourStart_hour + hourStart_min)) &&  (rightNow <= (hourStop_hour + hourStop_min)) ){
-    taskLight( plant["light"]["led_start"].as<int>(), 
-               plant["light"]["led_end"].as<int>(),
-               plant["light"]["color_red"].as<int>(),
-               plant["light"]["color_green"].as<int>(),
-               plant["light"]["color_blue"].as<int>());
+
+    //Si es la primera vez, encendemos la luz
+    if( plant["light"]["status"].as<bool>() == false || itsHardReboot ){
+
+      plant["light"]["status"] = true;
+      //enviar mqtt con los cambios
+      send_mqtt("Huerta/update/light" , (plant_id+"/1"), true);
+
+      taskLight( plant["light"]["led_start"].as<int>(), 
+                plant["light"]["led_end"].as<int>(),
+                plant["light"]["color_red"].as<int>(),
+                plant["light"]["color_green"].as<int>(),
+                plant["light"]["color_blue"].as<int>());
+
+    }
+
+  }else{
+    plant["light"]["status"] == false;
+    send_mqtt("Huerta/update/light" , (plant_id+"/0"), true);
+    pixels.clear();
+    pixels.show();
   }
-  
+
   if( debugging ){
     Serial.println("------------------  taskSystem   ---------------------------------");
     
     Serial.print("Time now: "); Serial.println( rightNow);
-    Serial.print("Time millis "); Serial.println( millis());
+    Serial.print("LightStatus: "); Serial.println( plant["light"]["status"].as<bool>() );
+    Serial.print("ItsHardReboot: "); Serial.println( itsHardReboot);
     
-    Serial.print("ID plant: "); Serial.println( plant["info"]["date"].as<int>());
+    Serial.print("ID plant: "); Serial.println( plant_id );
 
     Serial.print("[light][time_start]: "); Serial.println( plant["light"]["time_start"].as<String>() );
     Serial.print("[light][time_start][seg]: "); Serial.println( (hourStart_hour + hourStart_min) );
@@ -100,9 +136,6 @@ void taskSystem( JsonObjectConst plant , String plant_id){
     
     Serial.println("------------------  taskSystem end   ---------------------------------");
   }
-    
-  
-
 }
 void tasksControl(){
   time_t now;
@@ -164,24 +197,28 @@ void controlSystem( void ){
 }
 
 void updateUser(){
-  String userUpdate;
+  String msgUpdate = "";
   
-
+  serializeJsonPretty(localUser, msgUpdate);      
+  
   if(!SD.begin()){
     Serial.println("Card Mount Failed");
     sisError(5);
   }else{
     listDir(SD, "/", 0);
     if ( SD.exists(SD_path_user) ){
-      auto error = serializeJson(localUser, userUpdate);      
-      
-      if( error == DeserializationError::Ok ){  
+      if( msgUpdate != readFile(SD, SD_path_user)){
+        Serial.println("Different user both update and local");
         deleteFile(SD, SD_path_user);
         delay(100);
-        writeFile(SD, SD_path_user, userUpdate .c_str());
+        writeFile(SD, SD_path_user, msgUpdate.c_str());
       }
+    }else{
+        writeFile(SD, SD_path_user, msgUpdate.c_str());
     }
   }
+  SD.end();
+
 }
 /* The getUser() function is used as a flag if a user is found or not.
 * Each device has a unique identification to connect to the internet (MAC)
@@ -225,7 +262,7 @@ bool getUser(){
                   writeFile(SD, SD_path_user, payload.c_str() );
                 }
               }else{
-                writeFile(SD, SD_path_measure, payload.c_str() );
+                writeFile(SD, SD_path_user, payload.c_str() );
               }
             }
             SD.end();

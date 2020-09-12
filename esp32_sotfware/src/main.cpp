@@ -11,7 +11,6 @@
 
 static RTC_NOINIT_ATTR int reg_b; // place in RTC slow memory so available after deepsleep
 static RTC_NOINIT_ATTR int counterSleep; 
-static RTC_NOINIT_ATTR bool plant_LEDOn = false; 
 
 #include "config.h"
 #include <sistem_error.cpp>
@@ -39,7 +38,7 @@ void taskCore0( void * pvParameters);
 void callback_touch(){};
 
 bool finishedCore1 = false;
-bool finishedCore0 = false;
+bool finishedCore0 = true;
 
 void swichs_on_off(int io){
   digitalWrite(SW1, io);
@@ -223,6 +222,8 @@ bool getUserSD(){
           auto error = deserializeJson(localUser, stringUser );
           if( error == DeserializationError::Ok ){  
             userLocalFlag = true ;
+            Serial.print("Read from file: ");
+            Serial.println(stringUser);
           }
         }
 
@@ -244,6 +245,15 @@ void printLocalTime(){
 }
 
 void setup(){
+
+  // These lines are specifically to support the Adafruit Trinket 5V 16 MHz.
+  // Any other board, you can remove this part (but no harm leaving it):
+  #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
+    clock_prescale_set(clock_div_1);
+  #endif
+  // END of Trinket-specific code.
+  pixels.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
+
   if (debugging || debugging_mqtt){
     Serial.begin(115200);
     delay(100);
@@ -265,10 +275,6 @@ void setup(){
   switch(wakeup_reason){
     case ESP_SLEEP_WAKEUP_TIMER :
       
-      if(plant_LEDOn){
-        counterSleep++; 
-      }
-
       Serial.println("Wakeup caused by timer"); break;
       digitalWrite(LED_GREEN,HIGH);
       delay(1000);
@@ -283,6 +289,9 @@ void setup(){
       }  
     default : 
       counterSleep = 0;
+      itsHardReboot = true;
+      pixels.show();
+
       reg_b = READ_PERI_REG(SENS_SAR_READ_CTRL2_REG);
       Serial.println("Reading reg b.....");
       Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
@@ -303,6 +312,7 @@ void setup(){
     // Try to get the user by the server
     // Try to get the user by SDs
     if( !getUser() && !getUserSD() ){
+    //if( !getUser()  ){
       //if we fount any user. we have nothing to do, go to sleep
       sisError(0);
     }
@@ -327,22 +337,10 @@ void setup(){
     Serial.println(WiFi.localIP());
     Serial.print("User mac: ");
     Serial.println(getMac());
-    Serial.print("SD on: ");
+    Serial.print("SLocalUser: ");
     Serial.println(userLocalFlag ? "Yes" : "No");
-    Serial.print("SD on: ");
-    Serial.println(userLocalFlag);
-    Serial.print("LED ON: ");
-    Serial.println(plant_LEDOn ? "No" : "Yes");
-    Serial.print("Reinicios: ");
-    Serial.println(counterSleep);
-
-    if ( userLocalFlag ){
-      Serial.print("LocalUser: True");
-      //Serial.println( readFile(SD, SD_path_user) );
-    }else{
-      Serial.println("LocalUser: False");
-    }
-
+    Serial.print("HardReboot: ");
+    Serial.println(itsHardReboot ? "Yes" : "No");
     Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) +" Seconds");
     printLocalTime();
     Serial.println("----------------------------------------------------------");
@@ -357,8 +355,8 @@ void setup(){
     delay(100);
     xTaskCreatePinnedToCore(taskCore1, "Task1", 10000, NULL, 1, &Task1,  1); 
     delay(500);
-    xTaskCreatePinnedToCore(taskCore0, "Task0", 10000, NULL, 1, &Task0,  0); 
-    delay(500); 
+    //xTaskCreatePinnedToCore(taskCore0, "Task0", 10000, NULL, 1, &Task0,  0); 
+    //delay(500); 
   }
 }
 
@@ -389,6 +387,7 @@ void taskCore1( void * pvParameters){
   //Serial.print("Task of the core 1:");
   //Serial.println(xPortGetCoreID());
   for(;;){
+    
     digitalWrite(LED_GREEN, HIGH);
     swichs_on_off(HIGH);
     /* 
@@ -402,6 +401,7 @@ void taskCore1( void * pvParameters){
       taskSystem(kvp.value(), kvp.key().c_str() ); 
 
     }
+    updateUser();
     /* 
     *  Each User has max 4 measurements ( TCS34725, BME280, CCS811 and Si7021 )
     *  and this is send to database for store it.
