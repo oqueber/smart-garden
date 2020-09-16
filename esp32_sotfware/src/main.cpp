@@ -38,7 +38,7 @@ void taskCore0( void * pvParameters);
 void callback_touch(){};
 
 bool finishedCore1 = false;
-bool finishedCore0 = true;
+bool finishedCore0 = false;
 
 void swichs_on_off(int io){
   digitalWrite(SW1, io);
@@ -164,8 +164,8 @@ void getDataDig(String select , bool send = true){
 }
 void getDataAnalog(JsonObjectConst User, String plant, bool send = true ){
   String json = "";
-  DynamicJsonDocument doc(1024);
-  JsonObject analog = doc.createNestedObject("Analog");
+  DynamicJsonDocument analog(1024);
+  //JsonObject analog = doc.createNestedObject("Analog");
   analog["plantId"] = plant;
 
   unsigned int SumaAnalog = 0;
@@ -193,7 +193,7 @@ void getDataAnalog(JsonObjectConst User, String plant, bool send = true ){
     SumaAnalog = 0;
   }
 
-  serializeJson(doc, json);
+  serializeJson(analog, json);
   if(send) {
     send_mqtt("Huerta/Push/Analog" ,json);
   }else{
@@ -201,7 +201,6 @@ void getDataAnalog(JsonObjectConst User, String plant, bool send = true ){
     Serial.println(json);
   }
 }
-
 bool getUserSD(){
     userLocalFlag = false;
     
@@ -210,6 +209,7 @@ bool getUserSD(){
       Serial.println("Card Mount Failed");
       sisError(5);
     }else{
+      listDir(SD, "/", 0);
       // Check to see if the file exists:
       if (SD.exists(SD_path_user)) {
         
@@ -290,6 +290,7 @@ void setup(){
     default : 
       counterSleep = 0;
       itsHardReboot = true;
+      pixels.clear();
       pixels.show();
 
       reg_b = READ_PERI_REG(SENS_SAR_READ_CTRL2_REG);
@@ -311,7 +312,7 @@ void setup(){
 
     // Try to get the user by the server
     // Try to get the user by SDs
-    if( !getUser() && !getUserSD() ){
+    if( !getUserSD()  &&  !getUser()){
     //if( !getUser()  ){
       //if we fount any user. we have nothing to do, go to sleep
       sisError(0);
@@ -337,7 +338,7 @@ void setup(){
     Serial.println(WiFi.localIP());
     Serial.print("User mac: ");
     Serial.println(getMac());
-    Serial.print("SLocalUser: ");
+    Serial.print("LocalUser: ");
     Serial.println(userLocalFlag ? "Yes" : "No");
     Serial.print("HardReboot: ");
     Serial.println(itsHardReboot ? "Yes" : "No");
@@ -355,8 +356,8 @@ void setup(){
     delay(100);
     xTaskCreatePinnedToCore(taskCore1, "Task1", 10000, NULL, 1, &Task1,  1); 
     delay(500);
-    //xTaskCreatePinnedToCore(taskCore0, "Task0", 10000, NULL, 1, &Task0,  0); 
-    //delay(500); 
+    xTaskCreatePinnedToCore(taskCore0, "Task0", 10000, NULL, 1, &Task0,  0); 
+    delay(500); 
   }
 }
 
@@ -373,7 +374,7 @@ void taskCore0( void * pvParameters){
       }
 
       client.loop();
-      delay(500);
+      delay(100);
     }
 
     finishedCore0 = true;
@@ -390,6 +391,8 @@ void taskCore1( void * pvParameters){
     
     digitalWrite(LED_GREEN, HIGH);
     swichs_on_off(HIGH);
+
+    getDataDig(  localUser["Measurements"] );
     /* 
     *  Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
     *  and this is send to database for store it.
@@ -406,7 +409,7 @@ void taskCore1( void * pvParameters){
     *  Each User has max 4 measurements ( TCS34725, BME280, CCS811 and Si7021 )
     *  and this is send to database for store it.
     */
-    getDataDig(  localUser["Measurements"] );
+    
     swichs_on_off(LOW);
     
     Serial.println("re send the mqtt messages");

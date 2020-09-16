@@ -3,9 +3,10 @@
 const debug = require('debug')("SG:MQTT server");
 const chalk = require('chalk');
 const mosca = require('mosca');
-const DatadB = require('../models/DatadB');
+const DigitaldB = require('../models/Digital');
+const AnalogdB = require('../models/Analog');
 const Users = require('../models/User');
-const {io} = require('../utils/socketio.js');
+const {io} = require('../utils/socketio.js'); 
 // Import events module
 var events = require('events');
 // Create an eventEmitter object
@@ -132,7 +133,7 @@ server.on('published', async (packet, client) => {
     console.log(packet.payload.toString('utf-8'));
     await Users.findOne( {MAC: deviceMAC }).then(doc => {
 
-      debug(chalk.green(`User found: `));
+      debug(chalk.yellow(`User found: `));
       for( const element in doc.plants){
         debug(chalk.green(doc.plants[element] ));
         if (doc.plants[element].info.date == Number(devicePayload[0]) ){
@@ -140,18 +141,18 @@ server.on('published', async (packet, client) => {
         }
       }
       doc.save();
-      debug(chalk.green(`after:`));
+      debug(chalk.yellow(`after:`));
       debug(chalk.green(doc.plants ));
     });
   }
   if(packet.topic == "Huerta/update/light"){
     let deviceMAC = (client.id).split('/')[1]; 
     let devicePayload = packet.payload.toString('utf-8').split('/');
-    debug(chalk.green(`Update plant water ${Number(devicePayload[0])} in the user ${deviceMAC} with value ${Number(devicePayload[1])}`));
+    debug(chalk.yellow(`Update plant water ${Number(devicePayload[0])} in the user ${deviceMAC} with value ${Number(devicePayload[1])}`));
     console.log(packet.payload.toString('utf-8'));
     await Users.findOne( {MAC: deviceMAC }).then(doc => {
 
-      debug(chalk.green(`User found: `));
+      debug(chalk.yellow(`User found: `));
       for( const element in doc.plants){
         debug(chalk.green(doc.plants[element] ));
         if (doc.plants[element].info.date == Number(devicePayload[0]) ){
@@ -159,18 +160,44 @@ server.on('published', async (packet, client) => {
         }
       }
       doc.save();
-      debug(chalk.green(`after:`));
+      debug(chalk.yellow(`after:`));
       debug(chalk.green(doc.plants ));
     });
   }
-  if ((packet.topic == "Huerta/Push/Digital") || (packet.topic == "Huerta/Push/Analog")) {
+  if (packet.topic == "Huerta/Push/Digital") {
     
     try {
+      debug( chalk.yellow('Msg Dig: '));
+      debug( packet.payload.toString('utf-8') );
       let json_data = JSON.parse(packet.payload.toString('utf-8'));
       if(json_data != null){
 
         json_data.timestamps = json_data.timestamps *1000;
-        const newData = new DatadB(json_data);
+        
+        const newData = new DigitaldB(json_data);
+        io.emit('chart/NewData', newData );
+        
+        await newData.save().then(()=>{
+          debug('save :');
+          debug(newData);
+        }).catch((err)=>debug(`ERR`,err));    
+      }
+    }catch(err){
+      debug( chalk.yellow('error de JSON in DigitaldB'))
+      debug(err)
+    }
+  } 
+  if (packet.topic == "Huerta/Push/Analog") {
+    
+    try {
+      debug( chalk.yellow('Msg Anag: '));
+      debug( packet.payload.toString('utf-8') );
+      let json_data = JSON.parse(packet.payload.toString('utf-8'));
+      if(json_data != null){
+
+        json_data.timestamps = json_data.timestamps *1000;
+        
+        const newData = new AnalogdB(json_data);
         io.emit('chart/NewData', newData );
         
         await newData.save().then(()=>{

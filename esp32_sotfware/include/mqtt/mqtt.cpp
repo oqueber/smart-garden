@@ -1,3 +1,4 @@
+#define MQTT_MAX_PACKET_SIZE = 500
 #include <PubSubClient.h>
 
 PubSubClient client(espClient);

@@ -15,31 +15,11 @@ const DataSchema = new Schema({
   photocell2 : {
     rawData : Number
   },
-  BME280 : {
-    Altitude : Number,
-    Pressure : Number,
-    Temp : Number
-  },
-  CCS811 : {
-    CO2 : Number,
-    TVOC : Number
-  },
-  Si7021 : {
-    Humi : Number,
-    Temp : Number
-  },
-  TCS34725 : {
-    R : Number,
-    G : Number,
-    B : Number,
-    C : Number,
-    ColorTemp : Number,
-    Lux : Number,
-  },
+  type: { type: String, default:"Analog"},
   device: { type: String, required:true},
   plantId: { type: String},
   timestamps: {type: Number } 
    
 })
 
-module.exports = mongoose.model('Data', DataSchema)
+module.exports = mongoose.model('Analog', DataSchema)
