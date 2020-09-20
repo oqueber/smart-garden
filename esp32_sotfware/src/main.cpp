@@ -46,7 +46,8 @@ void swichs_on_off(int io){
 }
 void getDataDig(String select , bool send = true){
   String json = "";
-  DynamicJsonDocument doc(1024);
+  DynamicJsonDocument parte1(200);
+  DynamicJsonDocument parte2(200);
   //doc["PlantId"] = "measurement";
   
   if (select[0] == '1'){
@@ -73,13 +74,23 @@ void getDataDig(String select , bool send = true){
           Serial.print(lux);Serial.println("");
       }
 
-      JsonObject Data = doc.createNestedObject("TCS34725");
+      JsonObject Data = parte1.createNestedObject("TCS34725");
       Data["R"] = r;
       Data["G"] = g;
       Data["B"] = b;
       Data["C"] = c;
       Data["ColorTemp"] = colorTemp;
       Data["Lux"] = lux;
+
+      serializeJson(parte1, json);
+      if(send) {
+        send_mqtt("Huerta/Push/Digital" ,json);
+      }else{
+        Serial.println("");
+        Serial.println("json:");
+        Serial.println(json);
+      }
+      json = "";
     }
   }
   if (select[3] == '1'){
@@ -98,7 +109,7 @@ void getDataDig(String select , bool send = true){
           Serial.print(TVOC);Serial.println("");
         }
 
-        JsonObject Data = doc.createNestedObject("CCS811");
+        JsonObject Data = parte2.createNestedObject("CCS811");
         Data["CO2"] = CO2;
         Data["TVOC"] = TVOC;
         
@@ -125,7 +136,7 @@ void getDataDig(String select , bool send = true){
         Serial.print(SIhumid,2);Serial.println("");  
       }
 
-      JsonObject Data = doc.createNestedObject("Si7021");
+      JsonObject Data = parte2.createNestedObject("Si7021");
       Data["Temp"] = SItempC;
       Data["Humi"] = SIhumid;
       
@@ -145,7 +156,7 @@ void getDataDig(String select , bool send = true){
           Serial.print(readFloatAltitudeMeters, 2);Serial.println("");
       }
 
-      JsonObject Data = doc.createNestedObject("BME280");
+      JsonObject Data = parte2.createNestedObject("BME280");
       Data["Temp"] = readTempC;
       Data["Pressure"] = readFloatPressure;
       Data["Altitude"] = readFloatAltitudeMeters;
@@ -153,7 +164,7 @@ void getDataDig(String select , bool send = true){
     }
   }
 
-  serializeJson(doc, json);
+  serializeJson(parte2, json);
   if(send) {
     send_mqtt("Huerta/Push/Digital" ,json);
   }else{
@@ -310,12 +321,13 @@ void setup(){
   if ( wifi_status() ){
     Serial.println("We connected to the wifi...");
 
-    // Try to get the user by the server
     // Try to get the user by SDs
-    if( !getUserSD()  &&  !getUser()){
-    //if( !getUser()  ){
-      //if we fount any user. we have nothing to do, go to sleep
-      sisError(0);
+    if( !getUserSD() ){
+    // Try to get the user by the server
+      if( !getUser()  ){
+        //if we fount any user. we have nothing to do, go to sleep
+        sisError(0);
+      }
     }
     delay(100);
 
@@ -359,6 +371,7 @@ void setup(){
     xTaskCreatePinnedToCore(taskCore0, "Task0", 10000, NULL, 1, &Task0,  0); 
     delay(500); 
   }
+  time(&now);
 }
 
 void taskCore0( void * pvParameters){
@@ -372,7 +385,6 @@ void taskCore0( void * pvParameters){
       {
         reconnect();
       }
-
       client.loop();
       delay(100);
     }

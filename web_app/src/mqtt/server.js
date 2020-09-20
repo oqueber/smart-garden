@@ -19,6 +19,7 @@ const server = new mosca.Server(settings)
 
 let userTask = new Map();
 
+/*
 eventEmitter.on('client/set/connection', async function( id ){
   if ( !userTask.has( id ) ){
     let task = new Promise( async (resolve, reject) => {
@@ -70,7 +71,8 @@ eventEmitter.on('client/set/connection', async function( id ){
     debug('the user already have a task');
   }
 });
-
+*/
+/*
 eventEmitter.on('user/update/water', async function(UserMac,plantIndex){  
   const index = parseInt(plantIndex,10);
   await Users.findOne( {MAC: UserMac }).then(doc => {
@@ -82,11 +84,9 @@ eventEmitter.on('user/update/water', async function(UserMac,plantIndex){
       userTask.delete(UserMac);
   });
 });
-
+*/
 server.on('clientConnected', async client => {
-  
   debug(`Client connected ${client.id}`);
-
 });
 
 server.on('clientDisconnected', client => {
@@ -95,27 +95,30 @@ server.on('clientDisconnected', client => {
 
 server.on('subscribed', (topic,client) => {
   debug(`Client subscribed ${client.id} with topic ${topic}`);
+  
+  /*
   let deviceId = (client.id).split('/')[1];
 
-  if( topic == "device/get/task"){
+  if( topic == "device/update/user"){
     if ( userTask.has(deviceId) ){
-      debug( chalk.yellow( `searching task for ${deviceId}`) );
-      userTask.get(deviceId).forEach(function(value, key, map){
-
-        server.publish(value,client, () => debug("Message sent"));
-      });
+        debug( chalk.yellow( `searching update for ${deviceId}`) );
+        userTask.get(deviceId).forEach(function(value, key, map){
+          server.publish(value,client, () => debug("Message sent"));
+        });
       userTask.delete(deviceId);
     }else{
-      debug( chalk.yellow( `there are not task for the user ${deviceId}`) );
+      debug( chalk.yellow( `there are not updated for the user ${deviceId}`) );
       eventEmitter.emit('client/set/connection',deviceId );
     }
   }else{
     debug(chalk.yellow("It's don't the topic") );
   }
+  */
 })
 server.on('published', async (packet, client) => {
   debug(`Received published with topic: ${packet.topic}`)
 
+  /*
   if(packet.topic == "device/update/task"){
     let deviceMAC = (client.id).split('/')[1]; 
     let devicePayload = packet.payload.toString('utf-8').split('/');
@@ -123,9 +126,8 @@ server.on('published', async (packet, client) => {
     if (devicePayload[0] = "water"){
       eventEmitter.emit('user/update/water', deviceMAC, devicePayload[1] );
     }
-
   }
-
+  */
   if(packet.topic == "Huerta/update/water"){
     let deviceMAC = (client.id).split('/')[1]; 
     let devicePayload = packet.payload.toString('utf-8').split('/');
@@ -135,14 +137,14 @@ server.on('published', async (packet, client) => {
 
       debug(chalk.yellow(`User found: `));
       for( const element in doc.plants){
-        debug(chalk.green(doc.plants[element] ));
+        debug(chalk.green(doc.plants[element].sowing.water ));
         if (doc.plants[element].info.date == Number(devicePayload[0]) ){
           doc.plants[element].sowing.water.last_water = Number(devicePayload[1]) ;
         }
       }
       doc.save();
       debug(chalk.yellow(`after:`));
-      debug(chalk.green(doc.plants ));
+      debug(chalk.green(doc.plants[element].sowing.water ));
     });
   }
   if(packet.topic == "Huerta/update/light"){
@@ -154,21 +156,22 @@ server.on('published', async (packet, client) => {
 
       debug(chalk.yellow(`User found: `));
       for( const element in doc.plants){
-        debug(chalk.green(doc.plants[element] ));
+        debug(chalk.green(doc.plants[element].sowing.light ));
         if (doc.plants[element].info.date == Number(devicePayload[0]) ){
           doc.plants[element].sowing.light.status = Boolean(devicePayload[1]) ;
+          doc.plants[element].sowing.light.last_light = Math.round(new Date() / 1000) ;
         }
       }
       doc.save();
       debug(chalk.yellow(`after:`));
-      debug(chalk.green(doc.plants ));
+      debug(chalk.green(doc.plants[element].sowing.light ));
     });
   }
   if (packet.topic == "Huerta/Push/Digital") {
     
     try {
-      debug( chalk.yellow('Msg Dig: '));
-      debug( packet.payload.toString('utf-8') );
+      //debug( chalk.yellow('Msg Dig: '));
+      //debug( packet.payload.toString('utf-8') );
       let json_data = JSON.parse(packet.payload.toString('utf-8'));
       if(json_data != null){
 
@@ -190,8 +193,8 @@ server.on('published', async (packet, client) => {
   if (packet.topic == "Huerta/Push/Analog") {
     
     try {
-      debug( chalk.yellow('Msg Anag: '));
-      debug( packet.payload.toString('utf-8') );
+      //debug( chalk.yellow('Msg Anag: '));
+      //debug( packet.payload.toString('utf-8') );
       let json_data = JSON.parse(packet.payload.toString('utf-8'));
       if(json_data != null){
 

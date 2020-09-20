@@ -224,6 +224,58 @@ void updateUser(){
   SD.end();
 
 }
+
+bool userUpdateData (String newData){
+  bool userUpdate = false;
+  auto error = deserializeJson(localUser, newData);    
+
+  if( error == DeserializationError::Ok ){  
+    if(!SD.begin()){
+      // If we can't fount the user in local. Go to sleep
+      Serial.println("Card Mount Failed");
+      sisError(5);
+    }else{
+      listDir(SD, "/", 0);
+      if ( SD.exists(SD_path_user) ){
+        String UserLocalData = readFile(SD, SD_path_user);
+        String dataUpdated = "";
+
+        //we compare the user's local data and user's cloud data
+        if( newData != UserLocalData){
+          Serial.println("Different user both cloud and local");
+          DynamicJsonDocument newDataJson(2048);
+          auto error = deserializeJson(newDataJson, UserLocalData);    
+
+          if( error == DeserializationError::Ok ){ 
+            // if the same plant, update all, excepte this elements.
+            for( auto element:  localUser["plants"].as<JsonObject>() ){
+              if( newDataJson.containsKey( element.value().as<String>() ) ){
+                  newDataJson[element.value()]["water"]["last_water"] = localUser[element.value()]["water"]["last_water"];
+                  newDataJson[element.value()]["light"]["last_light"] = localUser[element.value()]["light"]["last_light"];
+                  newDataJson[element.value()]["light"]["status"] = localUser[element.value()]["light"]["status"];
+              }
+            }
+          }
+
+          deleteFile(SD, SD_path_user);
+          delay(100);
+          serializeJsonPretty(newDataJson, dataUpdated); 
+          userUpdate = true;   
+          writeFile(SD, SD_path_user, dataUpdated.c_str() );
+
+          if(debugging){
+            Serial.println("The data was updated:");    // Mostrar respuesta por serial
+            Serial.println(dataUpdated);                // Mostrar respuesta por serial
+          }
+        }else{
+          writeFile(SD, SD_path_user, newData.c_str() );
+        }
+      }
+    }
+    SD.end();
+  }
+  return userUpdate;
+}
 /* The getUser() function is used as a flag if a user is found or not.
 * Each device has a unique identification to connect to the internet (MAC)
 * This code is used as a uuid and each measurement reported by this divice
@@ -248,31 +300,7 @@ bool getUser(){
         if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
         
           String payload = http.getString();   // Obtener respuesta
-          auto error = deserializeJson(localUser, payload);
-        
-          if( error == DeserializationError::Ok ){  
-          
-            // If we can't fount the user in local. Go to sleep
-            if(!SD.begin()){
-              Serial.println("Card Mount Failed");
-              sisError(5);
-            }else{
-              listDir(SD, "/", 0);
-              if ( SD.exists(SD_path_user) ){
-                if( payload != readFile(SD, SD_path_user)){
-                  Serial.println("Different user both cloud and local");
-                  deleteFile(SD, SD_path_user);
-                  delay(100);
-                  writeFile(SD, SD_path_user, payload.c_str() );
-                }
-              }else{
-                writeFile(SD, SD_path_user, payload.c_str() );
-              }
-            }
-            SD.end();
-            if(debugging){ Serial.println(payload); };   // Mostrar respuesta por serial
-            UserFinded = true;
-          }
+          userUpdateData(payload);
         }else if(httpCode == 204){
           sisError (3); // 3: User don't exist
           Serial.print("search user: "); Serial.println(getMac());

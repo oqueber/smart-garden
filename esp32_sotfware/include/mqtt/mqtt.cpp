@@ -2,7 +2,8 @@
 #include <PubSubClient.h>
 
 PubSubClient client(espClient);
-
+time_t now;
+  
 // Try connecting to the Mqtt server
 void reconnect() {
   uint8_t intentos = 0;
@@ -12,7 +13,7 @@ void reconnect() {
     const String clientId = "device/"+getMac();
     // Attempt to connect
       if( client.connect(clientId.c_str()) ){
-        client.subscribe("device/get/task");
+        //client.subscribe("device/get/task");
         
         if(debugging_mqtt){
           Serial.println("connected");
@@ -37,8 +38,6 @@ bool send_mqtt(String msg_topic, String msg_payload, bool update){
   uint8_t intentos = 0;
   String json = "";
 
-  time_t now;
-  time(&now);
 
   if(update){
     json = msg_payload;
@@ -75,7 +74,7 @@ bool send_mqtt(String msg_topic, String msg_payload, bool update){
       intentos++;
       Serial.print("try send number: ");
       Serial.println(intentos);
-      delay(1000);
+      delay(2000);
     }
 
     if( intentos <= 10){ sendMsg = true;}
