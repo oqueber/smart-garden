@@ -17,7 +17,7 @@
   display: inline; 
 }
 
-#chart_lengend ul li span {
+#chart_lengend ul li {
   display: inline-block;
   width: 15px;
   height: 15px;

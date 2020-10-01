@@ -1,7 +1,10 @@
 mqtt pub -t "push" -h localhost -m '{"Analog":{"HumCap":{"rawData":253},"HumEC":{"rawData":300},"photocell1":{"Res":260.5212,"rawData":998},"photocell2":{"Res":470.3474,"rawData":978}},"BME280":{"Altitude":629.9742,"Pressure":93982.38,"Temp":27.06},"CCS811":{"CO2":0,"TVOC":0},"Si7021":{"Humi":38.30008,"Temp":26.83142},"TCS34725":{"B":15692,"C":37455,"ColorTemp":7764,"G":15670,"Lux":7488,"R":17739},"timestamp":1584106289208,"user":"Oqueber"}'
 
-mqtt pub -t "Huerta/Push/Digital" -h localhost -m '{"TCS34725" : { "R" : 5558, "G" : 4735, "B" : 4889, "C" : 13083, "ColorTemp" : 8475, "Lux" : 2090 }, "Si7021" : { "Temp" : 20.97552, "Humi" : 47.70712 }, "BME280" : { "Temp" : 21.45, "Pressure" : 94042.98, "Altitude" : 624.6133 }, "CCS811" : { "CO2" : 0, "TVOC" : 0 }, "Device" : "87:136:119:50:244:44" }' -i 'oqueber'
+mosquitto_pub -t "Huerta/Push/Digital" -h 192.168.1.136 -m '{"TCS34725" : { "R" : 5558, "G" : 4735, "B" : 4889, "C" : 13083, "ColorTemp" : 8475, "Lux" : 2090 }, "Si7021" : { "Temp" : 20.97552, "Humi" : 47.70712 }, "BME280" : { "Temp" : 21.45, "Pressure" : 94042.98, "Altitude" : 624.6133 }, "CCS811" : { "CO2" : 0, "TVOC" : 0 }, "Device" : "87:136:119:50:244:44" }' -i 'oqueber'
 
+mosquitto_pub -t "Huerta/Push/Digital" -h 192.168.1.136 -m '{"Si7021":{"Temp":29.8559,"Humi":52.66623},"BME280":{"Temp":30.24,"Pressure":94025.6,"Altitude":626.1498},"device":"28:92:37:18:207:164","timestamps":1600618174 }'
+mosquitto_pub -t "Huerta/Push/Digital" -h 192.168.1.136 -m '{"TCS34725":{"R":54,"G":47,"B":46,"C":107,"ColorTemp":6960,"Lux":22},"device":"28:92:37:18:207:164","timestamps":1600618174}'
+mosquitto_pub -t "Huerta/Push/Analog" -h 192.168.1.136 -m '{"plantId":"1598026512573","photocell1":{"rawData":352},"photocell2":{"rawData":442},"humCap":{"rawData":0},"humEC":{"rawData":0},"device":"28:92:37:18:207:164","timestamps":1600618294}'
 
 mqtt sub -t 'device/get/task' -h 'localhost' -i "Device/28:92:37:18:207:164 -v
 

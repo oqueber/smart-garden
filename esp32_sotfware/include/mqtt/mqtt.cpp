@@ -67,8 +67,8 @@ bool send_mqtt(String msg_topic, String msg_payload, bool update){
   }
 
   //Core 0 is already doing it.
-  //reconnect();
-
+  reconnect();
+  delay(100);
   if (client.connected()) {
     while((client.publish(msg_topic.c_str(), json.c_str(),false) != 1)&&(intentos <=10)){
       intentos++;
@@ -80,7 +80,7 @@ bool send_mqtt(String msg_topic, String msg_payload, bool update){
     if( intentos <= 10){ sendMsg = true;}
   }
 
-  // the message can not sent. so we store
+  // the message can not sent. reconnect() so we store
   if ( intentos > 10  || !client.connected() ){
     String dataSave = msg_topic + "-" + json + "\n";
     String pathSave = "/db/"+doc["timestamps"].as<String>()+".txt";

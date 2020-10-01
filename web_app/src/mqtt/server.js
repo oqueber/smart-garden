@@ -144,7 +144,7 @@ server.on('published', async (packet, client) => {
       }
       doc.save();
       debug(chalk.yellow(`after:`));
-      debug(chalk.green(doc.plants[element].sowing.water ));
+      debug(chalk.green(doc.plants ));
     });
   }
   if(packet.topic == "Huerta/update/light"){
@@ -159,19 +159,19 @@ server.on('published', async (packet, client) => {
         debug(chalk.green(doc.plants[element].sowing.light ));
         if (doc.plants[element].info.date == Number(devicePayload[0]) ){
           doc.plants[element].sowing.light.status = Boolean(devicePayload[1]) ;
-          doc.plants[element].sowing.light.last_light = Math.round(new Date() / 1000) ;
+          doc.plants[element].sowing.light.last_light = Number(devicePayload[2])  ;
         }
       }
       doc.save();
       debug(chalk.yellow(`after:`));
-      debug(chalk.green(doc.plants[element].sowing.light ));
+      debug(chalk.green(doc.plants));
     });
   }
   if (packet.topic == "Huerta/Push/Digital") {
     
     try {
-      //debug( chalk.yellow('Msg Dig: '));
-      //debug( packet.payload.toString('utf-8') );
+      debug( chalk.yellow('Msg Dig: '));
+      debug( packet.payload.toString('utf-8') );
       let json_data = JSON.parse(packet.payload.toString('utf-8'));
       if(json_data != null){
 

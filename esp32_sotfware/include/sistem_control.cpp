@@ -97,9 +97,9 @@ void taskSystem( JsonObject plant , String plant_id){
 
       if (!itsHardReboot){
         plant["light"]["status"] = true;
+        plant["light"]["last_light"] = timeinfo_2;
         //enviar mqtt con los cambios
-        send_mqtt("Huerta/update/light" , (plant_id+"/1"), true);
-
+        send_mqtt("Huerta/update/light" ,(plant_id+"/1/"+String(timeinfo_2)) , true);
       }
 
       taskLight( plant["light"]["led_start"].as<int>(), 
@@ -113,7 +113,7 @@ void taskSystem( JsonObject plant , String plant_id){
   }else{
     if ( plant["light"]["status"].as<bool>() == true  ){
       plant["light"]["status"] == false;
-      send_mqtt("Huerta/update/light" , (plant_id+"/0"), true);
+      send_mqtt("Huerta/update/light" , (plant_id+"/0/"+String(timeinfo_2)) , true);
     }
 
   }
@@ -203,7 +203,7 @@ void controlSystem( void ){
 void updateUser(){
   String msgUpdate = "";
   
-  serializeJsonPretty(localUser, msgUpdate);      
+  serializeJson(localUser, msgUpdate);      
   
   if(!SD.begin()){
     Serial.println("Card Mount Failed");
@@ -227,9 +227,9 @@ void updateUser(){
 
 bool userUpdateData (String newData){
   bool userUpdate = false;
-  auto error = deserializeJson(localUser, newData);    
+  auto error1 = deserializeJson(localUser, newData);    
 
-  if( error == DeserializationError::Ok ){  
+  if( error1 == DeserializationError::Ok ){  
     if(!SD.begin()){
       // If we can't fount the user in local. Go to sleep
       Serial.println("Card Mount Failed");
@@ -243,30 +243,39 @@ bool userUpdateData (String newData){
         //we compare the user's local data and user's cloud data
         if( newData != UserLocalData){
           Serial.println("Different user both cloud and local");
-          DynamicJsonDocument newDataJson(2048);
-          auto error = deserializeJson(newDataJson, UserLocalData);    
+          DynamicJsonDocument dataJsonSD(2048);
+          auto error2 = deserializeJson(dataJsonSD, UserLocalData);    
 
-          if( error == DeserializationError::Ok ){ 
+          Serial.println("Antes: ");
+          Serial.println(newData);
+          if( error2 == DeserializationError::Ok ){ 
             // if the same plant, update all, excepte this elements.
             for( auto element:  localUser["plants"].as<JsonObject>() ){
-              if( newDataJson.containsKey( element.value().as<String>() ) ){
-                  newDataJson[element.value()]["water"]["last_water"] = localUser[element.value()]["water"]["last_water"];
-                  newDataJson[element.value()]["light"]["last_light"] = localUser[element.value()]["light"]["last_light"];
-                  newDataJson[element.value()]["light"]["status"] = localUser[element.value()]["light"]["status"];
+              // If we already have the plant in local, we keep the old control data.
+              if( dataJsonSD["plants"].containsKey( element.key()) ){
+                  String plantId = element.key().c_str();
+                  //localUser in this cases is the new data from cloud
+                  localUser["plants"][plantId]["water"]["last_water"] = dataJsonSD["plants"][plantId]["water"]["last_water"];
+                  localUser["plants"][plantId]["light"]["last_light"] = dataJsonSD["plants"][plantId]["light"]["last_light"];
+                  localUser["plants"][plantId]["light"]["status"] = false;
+                  //localUser["plants"][plantId]["light"]["status"] = dataJsonSD["plants"][plantId]["light"]["status"];
+                  // Update the cloud data
+                  send_mqtt("Huerta/update/water" , (plantId+"/"+dataJsonSD["plants"][plantId]["light"]["last_light"].as<String>() ), true);
+                  send_mqtt("Huerta/update/light" , (plantId+"/0"), true);
               }
             }
           }
 
           deleteFile(SD, SD_path_user);
           delay(100);
-          serializeJsonPretty(newDataJson, dataUpdated); 
+          serializeJson(localUser, dataUpdated); 
           userUpdate = true;   
           writeFile(SD, SD_path_user, dataUpdated.c_str() );
 
-          if(debugging){
-            Serial.println("The data was updated:");    // Mostrar respuesta por serial
-            Serial.println(dataUpdated);                // Mostrar respuesta por serial
-          }
+          //if(debugging){
+          //  Serial.println("The data was updated:");    // Mostrar respuesta por serial
+          //  Serial.println(dataUpdated);                // Mostrar respuesta por serial
+          //}
         }else{
           writeFile(SD, SD_path_user, newData.c_str() );
         }

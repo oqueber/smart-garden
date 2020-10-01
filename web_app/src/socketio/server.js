@@ -5,12 +5,12 @@ const {io} = require('../utils/socketio.js');
 io.on('connection',   (socket)=>{
   console.log('[Smart-Garden-Socket] connected '+ socket.id)
   
-  socket.on('chart/getData/Digital', (Data)=>{
+  socket.on('chart/getData/digital', (Data)=>{
     console.log('Recibido al Servidor: ', Data);
     console.log('Del Usuario: ', socket.id);
     
     DigitaldB.find({ 
-          "Device": Data.Device,
+          "device": Data.Device,
           "timestamps": {     
             $gte: (new Date(`${Data.Date}T00:00:00.000Z`)),     
             $lt:  (new Date(`${Data.Date}T23:59:59.189Z`))
@@ -19,7 +19,7 @@ io.on('connection',   (socket)=>{
         .then( dataUser =>{
           console.log("We find this: ", dataUser.length);
           if(dataUser.length != 0){
-              socket.emit('chart/PostData/Digital', dataUser );  
+              socket.emit('chart/postData/digital', dataUser );  
           }else{
               socket.emit('chart/Err', {text: "empty Data", Data} ); 
           }
@@ -30,12 +30,12 @@ io.on('connection',   (socket)=>{
         });
   }); 
   
-  socket.on('chart/getData/Analog', (Data)=>{
+  socket.on('chart/getData/analog', (Data)=>{
     console.log('Recibido al Servidor: ', Data);
     console.log('Del Usuario: ', socket.id);
     
     AnalogdB.find({ 
-          "Device": Data.Device,
+          "device": Data.Device,
           "timestamps": {     
             $gte: (new Date(`${Data.Date}T00:00:00.000Z`)),     
             $lt:  (new Date(`${Data.Date}T23:59:59.189Z`))
@@ -44,7 +44,7 @@ io.on('connection',   (socket)=>{
         .then( dataUser =>{
           console.log("We find this: ", dataUser.length);
           if(dataUser.length != 0){
-              socket.emit('chart/PostData/Analog', dataUser );  
+              socket.emit('chart/postData/analog', dataUser );  
           }else{
               socket.emit('chart/Err', {text: "empty Data", Data} ); 
           }

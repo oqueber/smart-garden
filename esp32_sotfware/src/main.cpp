@@ -321,22 +321,21 @@ void setup(){
   if ( wifi_status() ){
     Serial.println("We connected to the wifi...");
 
-    // Try to get the user by SDs
-    if( !getUserSD() ){
-    // Try to get the user by the server
-      if( !getUser()  ){
-        //if we fount any user. we have nothing to do, go to sleep
-        sisError(0);
-      }
-    }
-    delay(100);
-
     // definimos el servidor y el puerto del MQTT
     client.setServer(mqtt_server, mqttPort);
     client.setCallback(callback);
 
     // get NTP time every time connect to wifi, not necessary but wont hurts
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+    
+    // Try to get the user by SDs
+    // Try to get the user by the server
+    if( !getUser() && !getUserSD() ){
+        //if we fount any user. we have nothing to do, go to sleep
+        sisError(0);
+    }
+    delay(100);
+
 
   }else if(!getUserSD()){
     //Nothing to do, reboot
@@ -437,6 +436,7 @@ void taskCore1( void * pvParameters){
     }
 
     Serial.println("Core 1 finished");
+    Serial.println(localUser.as<String>());
     Serial.flush();
     toSleep(TIME_TO_SLEEP);
   }
