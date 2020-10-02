@@ -19,6 +19,7 @@ let config = {
     deviceSmall: false,
     events: ['click'],
     responsive: true,
+    maintainAspectRatio: false,
     legend: {display: true},
     title: {
       display: true,
@@ -61,8 +62,8 @@ let config = {
       }
   }
 };
-let LocalDatabase_analog = {}; // Almacenamos las metricas temporalmente
-let LocalDatabase_digital = {}; // Almacenamos las metricas temporalmente
+let LocalDatabase_analog = []; // Almacenamos las metricas temporalmente
+let LocalDatabase_digital = []; // Almacenamos las metricas temporalmente
 let socket; // Aun no se inicializa el socket.io
 
 function updateData(){
@@ -123,8 +124,8 @@ function UpdateDate(){
   console.log(`the device: ${user_device} on the day :${user_date.value} `); 
   socket.emit('chart/getData/digital', {Device: user_device, Date: user_date.value });
   socket.emit('chart/getData/analog', {Device: user_device, Date: user_date.value });
-  LocalDatabase_analog = {};
-  LocalDatabase_digital = {};
+  LocalDatabase_analog = [];
+  LocalDatabase_digital = [];
   updateData();
 
 }
@@ -485,14 +486,20 @@ document.addEventListener('DOMContentLoaded', function () {
   window.myLineChart = new Chart(ctx, config);
 
   socket = io(); //Inicializamos los sockets
-  UpdateDate();  //Peticion de las metricas almacenadas en un dia en especifico
-
+  
   if (document.documentElement.clientWidth < 800){
-    config.options.legend.display = false;
+    //config.options.legend.display = false;
     config.options.scales.xAxes = false;
     config.options.scales.yAxes = false;
-    config.deviceSmall = true;
+    document.getElementById('myChart').style.height = '40vh';
+    document.getElementById('myChart').style.width = '100vw';
+    //config.deviceSmall = true;
+  }else{
+    //config.deviceSmall = false;
+    document.getElementById('myChart').style.height = '40vh';
+    document.getElementById('myChart').style.width = '100%';
   }
+  UpdateDate();  //Peticion de las metricas almacenadas en un dia en especifico
 
   // Socket que escucha las peticiones de recepcion de datos
   socket.on('chart/postData/digital', (Data)=>{
@@ -514,7 +521,15 @@ document.addEventListener('DOMContentLoaded', function () {
     updateData();
   });
 
-  socket.on('chart/NewData', (Data)=>{
+  socket.on('chart/newData/digital', (Data)=>{
+    document.getElementById("chart-erro").innerHTML = "";
+    console.log(socket.id);
+    console.log('Nueva Data disponible al cliente');
+    console.log(Data);
+    LocalDatabase_digital.push(Data);
+    updateData();
+  });
+  socket.on('chart/newData/analog', (Data)=>{
     document.getElementById("chart-erro").innerHTML = "";
     console.log(socket.id);
     console.log('Nueva Data disponible al cliente');
@@ -524,14 +539,14 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // Socket que escucha los posibles errores 
-  socket.on('chart/Err', (Data)=>{
+  socket.on('chart/err', (Data)=>{
     console.log("error, no hay datos");
     var element = document.getElementById("div-errors");
     element.innerHTML += `<div onclick="notificationDelete(this)" class="right alert show showAlert">
       <span class="fas fa-exclamation-circle"></span>
       <span class="msg">Para el Usuario ${Data.Data.Device} en el dia ${Data.Data.Date}, ${Data.text}</span>
       <div  class="close-btn">
-        <i class="material-icons">Close</i>
+        <i class="material-icons">X</i>
       </div>
     </div>`;
     clearData();

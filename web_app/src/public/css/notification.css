@@ -1,5 +1,6 @@
 #div-errors{
 	position: absolute;
+	z-index: 4;
 	width: 100%;
 
 }
@@ -72,7 +73,8 @@
 	top: 50%;
 	transform: translateY(-50%);
 	background: #ffd080;
-	padding: 20px 18px;
+	padding: 60px 0px;
+	width: 40px;
 	cursor: pointer;
 }
 .alert .close-btn:hover{

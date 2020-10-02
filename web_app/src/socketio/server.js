@@ -21,12 +21,12 @@ io.on('connection',   (socket)=>{
           if(dataUser.length != 0){
               socket.emit('chart/postData/digital', dataUser );  
           }else{
-              socket.emit('chart/Err', {text: "empty Data", Data} ); 
+              socket.emit('chart/err', {text: "empty Data to digital", Data} ); 
           }
         }).catch( (error )=>{
-            console.log("Error database mongo:");
+            console.log("Error database digitalmongo:");
             console.log(error);
-            socket.emit('chart/Err',{text: "Error dB", err: error});
+            socket.emit('chart/err',{text: "Error dB digital", err: error});
         });
   }); 
   
@@ -46,12 +46,12 @@ io.on('connection',   (socket)=>{
           if(dataUser.length != 0){
               socket.emit('chart/postData/analog', dataUser );  
           }else{
-              socket.emit('chart/Err', {text: "empty Data", Data} ); 
+              socket.emit('chart/err', {text: "empty Data to analog", Data} ); 
           }
         }).catch( (error )=>{
-            console.log("Error database mongo:");
+            console.log("Error database analog mongo:");
             console.log(error);
-            socket.emit('chart/Err',{text: "Error dB", err: error});
+            socket.emit('chart/err',{text: "Error dB analog", err: error});
         });
   });  
 });

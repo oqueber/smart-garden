@@ -1,15 +1,13 @@
-<div class="container">
-  <div class="row">
-    <div id="chart-erro" ></div>
-    <p>Añadir Metricas a la graficas para <span id="MAC">{{mac}}</span></p>
-  </div>
-  <div class="row">
-    <div class="col s12 center" >
-      <input style="width: 200px" type="date" id="user_date" name="user_date">
 
-      <div style="display:inline-block" role="group">
-        <button class="btn waves-effect waves-light" id="updateData">Update Data</button>
-        <button class="btn waves-effect waves-light" id="clearData">Clear Data</button>
+    <div id="chart-erro" ></div>
+    <p style="margin: 0px;">Añadir Metricas a la graficas para <span id="MAC">{{mac}}</span></p>
+  <div class="row">
+    <div class="col s12 m6 center"  >
+      <input style="width: 140px;display: inline-block;" type="date" id="user_date" name="user_date">
+      <div style="float: right;display: inline-block;">
+        <button class="btn waves-effect waves-light" id="updateData">Update</button>
+        <button class="btn waves-effect waves-light" id="clearData">Clear</button>
+
       </div>
     </div>
   </div>
@@ -17,33 +15,33 @@
   <div class="row">
     <div class="col s12 center">
 
-      <a href="#" class="dropdown-trigger btn" data-target="TCS34725">TCS34725</a>
+      <a href="#" style="padding:0px 8px" class="dropdown-trigger btn-small" data-target="TCS34725">TCS34725</a>
       <ul  class='dropdown-content' id="TCS34725"  >
         <li id="TCS34725_rgb" ><a href="#!" >RGB</a></li>
         <li id="TCS34725_lum"><a href="#!" >Lux</a></li>
         <li id="TCS34725_c"><a href="#!">Clear</a></li>
       </ul>
 
-      <a href="#" class="dropdown-trigger btn" data-target="Si7021">Si7021</a>
+      <a href="#" style="padding:0px 8px" class="dropdown-trigger btn-small" data-target="Si7021">Si7021</a>
       <ul  class='dropdown-content' id="Si7021"  >
         <li id="Si7021_temp" ><a href="#!" >Temperature</a></li>
         <li id="Si7021_hum"><a href="#!" >Humedity</a></li>
       </ul>
 
-      <a href="#" class="dropdown-trigger btn" data-target="CCS811">CCS811</a>
+      <a href="#" style="padding:0px 8px" class="dropdown-trigger btn-small" data-target="CCS811">CCS811</a>
       <ul  class='dropdown-content' id="CCS811"  >
         <li id="CCS811_CO2" ><a href="#!" >CO2</a></li>
         <li id="CCS811_TVOC"><a href="#!" >TVOC</a></li>
       </ul>
 
-      <a href="#" class="dropdown-trigger btn" data-target="BME280">BME280</a>
+      <a href="#" style="padding:0px 8px" class="dropdown-trigger btn-small" data-target="BME280">BME280</a>
       <ul  class='dropdown-content' id="BME280"  >
         <li id="BME280_alt" ><a href="#!" >Altitude</a></li>
         <li id="BME280_pre"><a href="#!" >Pressure</a></li>
         <li id="BME280_temp"><a href="#!">Temperature</a></li>
       </ul>
 
-      <a href="#!" class="dropdown-trigger btn" data-target="Analog">Analog</a>
+      <a href="#!" style="padding:0px 8px" class="dropdown-trigger btn-small" data-target="Analog">Analog</a>
       <ul  class='dropdown-content' id="Analog"  >
         <li id="Analog_photocell1" ><a href="#!" >Photocell1</a></li>
         <li id="Analog_photocell2"><a href="#!" >Photocell2</a></li>
@@ -52,12 +50,12 @@
       </ul>
     </div>
   </div>
-  <div class="row">
-    <div class="col s12">
-      <div id="chart_lengend"></div>
-      <canvas id="myChart"></canvas>
-      <progress id="animationProgress" max="1" value="0" style="width: 100%"></progress>
-    </div>
+
+<div class="row">
+  <div class="col s12 m10 offset-m1">
+    <div id="chart_lengend"></div>
+    <canvas id="myChart"></canvas>
+    <progress id="animationProgress" max="1" value="0" style="width: 100%"></progress>
   </div>
 </div>
 

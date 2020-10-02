@@ -178,7 +178,7 @@ server.on('published', async (packet, client) => {
         json_data.timestamps = json_data.timestamps *1000;
         
         const newData = new DigitaldB(json_data);
-        io.emit('chart/NewData', newData );
+        io.emit('chart/newData/digital', newData );
         
         await newData.save().then(()=>{
           debug('save :');
@@ -201,7 +201,7 @@ server.on('published', async (packet, client) => {
         json_data.timestamps = json_data.timestamps *1000;
         
         const newData = new AnalogdB(json_data);
-        io.emit('chart/NewData', newData );
+        io.emit('chart/newData/analog', newData );
         
         await newData.save().then(()=>{
           debug('save :');

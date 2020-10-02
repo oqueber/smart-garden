@@ -15,9 +15,10 @@
 
 #chart_lengend ul li {
   display: inline; 
+  padding: 2px 5px;
 }
 
-#chart_lengend ul li {
+#chart_lengend ul li span {
   display: inline-block;
   width: 15px;
   height: 15px;
