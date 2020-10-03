@@ -59,28 +59,46 @@
     </div>
     <div style="position:relative;overflow:hidden"class="row">
       <div class="col m3 s5 offset-s1 offset-m0">  
-        <input type="checkbox" id="BME280" name="BME280"/>
-        <label for="BME280">BME280</label>
+        <label>
+          <input type="checkbox" id="BME280" name="BME280" {{BME280}} />
+          <span>
+            BME280
+          </span> 
+        </label>
       </div>
       <div class="col m3 s6">    
-        <input type="checkbox" id="CCS811" name="CCS811"/>
-        <label for="CCS811">CCS811</label>
+        <label>
+          <input type="checkbox" id="CCS811" name="CCS811" {{CCS811}}/>
+          <span>
+            CCS811
+          </span>
+        </label>
       </div>
       <div class="col m3 s5 offset-s1 offset-m0" >
-        <input type="checkbox" id="Si7021" name="Si7021"/>
-        <label for="Si7021">Si7021</label>
+        <label>
+          <input type="checkbox" id="Si7021" name="Si7021" {{Si7021}} />
+          <span>
+            Si7021
+          </span>  
+        </label>
       </div>
       <div class="col m3 s6">
-        <input type="checkbox" id="TCS34725" name="TCS34725"/>
-        <label for="TCS34725">TCS34725</label>
+        <label >
+          <input type="checkbox" id="TCS34725" name="TCS34725" {{TCS34725}}/>
+          <span>TCS34725</span>        
+        </label>
       </div>
     </div> 
     <div class="row"> 
       <div class="input-field col s12">
-        <input type="checkbox" id="test5" />
-        <label for="test5">Agree to terms and conditions</label>
+        <label>
+          <input type="checkbox" name="conditions"/>
+          <span>
+            Agree to terms and conditions</label>
+          </span>
       </div>
-        
+    </div> 
+    <div class="row"> 
       <button class="input-field col s12 btn waves-effect waves-light" type="submit">
         Submit 
         <i class="material-icons">send</i>

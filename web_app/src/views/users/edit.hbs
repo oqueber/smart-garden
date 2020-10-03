@@ -62,30 +62,36 @@
         </div>
       </div>
       <div class="row">
-          <div class="col s3">
-            <p> 
-              <input type="checkbox" id="BME280" name="BME280" {{BME280}} />
-              <label for="BME280">BME280</label>
-            </p>
-          </div>
-          <div class="col s3">
-            <p>
-              <input type="checkbox" id="CCS811" name="CCS811" {{CCS811}}/>
-              <label for="CCS811">CCS811</label>
-            </p>
-          </div>
-          <div class="col s3">
-            <p>
-              <input type="checkbox" id="Si7021" name="Si7021" {{Si7021}}/>
-              <label for="Si7021">Si7021</label>
-            </p>
-          </div>
-          <div class="col s3">
-            <p> 
-              <input type="checkbox" id="TCS34725" name="TCS34725" {{TCS34725}}/>
-              <label for="TCS34725">TCS34725</label>
-            </p>
-          </div>
+          <div class="col m3 s5 offset-s1 offset-m0">  
+        <label>
+          <input type="checkbox" id="BME280" name="BME280" {{BME280}} />
+          <span>
+            BME280
+          </span> 
+        </label>
+      </div>
+      <div class="col m3 s6">    
+        <label>
+          <input type="checkbox" id="CCS811" name="CCS811" {{CCS811}}/>
+          <span>
+            CCS811
+          </span>
+        </label>
+      </div>
+      <div class="col m3 s5 offset-s1 offset-m0" >
+        <label>
+          <input type="checkbox" id="Si7021" name="Si7021" {{Si7021}} />
+          <span>
+            Si7021
+          </span>  
+        </label>
+      </div>
+      <div class="col m3 s6">
+        <label >
+          <input type="checkbox" id="TCS34725" name="TCS34725" {{TCS34725}}/>
+          <span>TCS34725</span>        
+        </label>
+      </div>
       </div>      
         <button class="col s12 btn waves-effect waves-light" type="submit">
         Save changes 
