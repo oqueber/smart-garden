@@ -65,8 +65,8 @@ const char* SD_path_measure = "/measures.txt";
 // --------------------------------------------------------------------- 
 
 // API url to Users finding
-//const String IP = "35.224.59.94"; // google server
-const String IP = "192.168.1.136"; //Server local
+const String IP = "34.105.251.62"; // google server
+//const String IP = "192.168.2.132"; //Server local
 const String urlGetUser = "http://"+ IP +":3000/Users/GetData/";
 
 // ---------------------------------------------------------------------
@@ -75,7 +75,7 @@ const String urlGetUser = "http://"+ IP +":3000/Users/GetData/";
 
 #define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
 #define S_TO_M_FACTOR  60  /* Conversion factor for  seconds to minuts */
-#define TIME_TO_SLEEP  (1*S_TO_M_FACTOR* uS_TO_S_FACTOR)         /* Time ESP32 will go to sleep (in Min) */
+#define TIME_TO_SLEEP  (10*S_TO_M_FACTOR* uS_TO_S_FACTOR)         /* Time ESP32 will go to sleep (in Min) */
 
 // Sleep time while the micro does nothing
 const unsigned int time_1S = 1000000;

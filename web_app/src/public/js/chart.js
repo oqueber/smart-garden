@@ -122,8 +122,9 @@ function clearData(){
 }
 function UpdateDate(){
   console.log(`the device: ${user_device} on the day :${user_date.value} `); 
+  let select_plant = document.getElementById("select_plant").value;
+  socket.emit('chart/getData/analog', {Plant: select_plant,Device: user_device, Date: user_date.value });
   socket.emit('chart/getData/digital', {Device: user_device, Date: user_date.value });
-  socket.emit('chart/getData/analog', {Device: user_device, Date: user_date.value });
   LocalDatabase_analog = [];
   LocalDatabase_digital = [];
   updateData();

@@ -31,7 +31,7 @@ io.on('connection',   (socket)=>{
   }); 
   
   socket.on('chart/getData/analog', (Data)=>{
-    console.log('Recibido al Servidor: ', Data);
+    console.log('Recibido al Servidor analog: ', Data);
     console.log('Del Usuario: ', socket.id);
     
     AnalogdB.find({ 
@@ -42,16 +42,33 @@ io.on('connection',   (socket)=>{
           }
         }).sort({timestamps: 1})
         .then( dataUser =>{
+          let plant_select;
+          if ( Data.Plant ){
+            plant_select = Data.Plant;
+          }else{
+            plant_select = 0
+          }
           console.log("We find this: ", dataUser.length);
-          if(dataUser.length != 0){
+          if(dataUser.length != 0){ 
+            console.log(dataUser);
+            console.log("plant_select: ", plant_select);
+            
+            dataUser = dataUser.filter(function (a) {
+              return a.plantId === plant_select;
+            });
+            console.log(dataUser);
+            if(dataUser.length != 0){ 
               socket.emit('chart/postData/analog', dataUser );  
+            }else {
+              socket.emit('chart/err', {text: "empty Data to analog", Data} );
+            }
           }else{
               socket.emit('chart/err', {text: "empty Data to analog", Data} ); 
           }
         }).catch( (error )=>{
             console.log("Error database analog mongo:");
             console.log(error);
-            socket.emit('chart/err',{text: "Error dB analog", err: error});
+            socket.emit('chart/fatal/err',{text: "Error dB analog", err: error});
         });
   });  
 });

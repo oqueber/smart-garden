@@ -1,18 +1,18 @@
 const express = require('express');
 const router = express.Router();
+const User = require('../models/User');
 const { isAuthenticated } = require("../helpers/auth")
 
-router.get('/chart', isAuthenticated, (req,res)=>{
+router.get('/chart', isAuthenticated, async (req,res)=>{
     const mac = req.user.MAC;
-    console.log(`sending ${mac}`);
-    res.render('charts/main_chart', {mac} );
+    var user = await User.findOne({"MAC":mac});
+    var plants = [];
+    user.plants.forEach((plant,index )=> {     
+        plants.push( {Id: plant.info.date, Number: index} )
+    });
+    
+    res.render('charts/main_chart', {mac,plants} );
 });
 
-
-router.get('/notes', isAuthenticated,async (req,res)=>{
-    const notes = await Note.find().sort({date: 'desc'});
-   console.log(notes);
-   res.render('notes/all-notes',{ notes });
-});
 
 module.exports= router;

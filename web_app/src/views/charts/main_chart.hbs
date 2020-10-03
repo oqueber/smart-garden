@@ -1,14 +1,24 @@
 
     <div id="chart-erro" ></div>
     <p style="margin: 0px;">Añadir Metricas a la graficas para <span id="MAC">{{mac}}</span></p>
-  <div class="row">
-    <div class="col s12 m6 center"  >
-      <input style="width: 140px;display: inline-block;" type="date" id="user_date" name="user_date">
-      <div style="float: right;display: inline-block;">
-        <button class="btn waves-effect waves-light" id="updateData">Update</button>
-        <button class="btn waves-effect waves-light" id="clearData">Clear</button>
-
-      </div>
+  <div class="row center">
+    <div class="col s4 "  >
+      <input style="font-size: 12px;" type="date" id="user_date" name="user_date">
+    </div>
+    {{#if plants}}
+    <div class="input-field col s4">
+      <select  id="select_plant" >
+        <option value="" disabled selected>Choose plant</option>
+        {{#each plants}}
+          <option value="{{Id}}">Plant {{Number}}</option>
+        {{/each}}
+      </select>
+      <label>Plant Select</label>
+    </div>
+    {{/if}}
+    <div class="col s4 m3 "  >
+      <button class="btn waves-effect waves-light" id="updateData">Update</button>
+      <button class="btn waves-effect waves-light" id="clearData">Clear</button>
     </div>
   </div>
   <hr class="my-1">
