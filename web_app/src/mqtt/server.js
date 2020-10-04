@@ -158,8 +158,10 @@ server.on('published', async (packet, client) => {
       for( const element in doc.plants){
         debug(chalk.green(doc.plants[element].sowing.light ));
         if (doc.plants[element].info.date == Number(devicePayload[0]) ){
+          if( Boolean(devicePayload[1]) ){
+            doc.plants[element].sowing.light.last_light =  Number(devicePayload[2])  ;
+          }
           doc.plants[element].sowing.light.status = Boolean(devicePayload[1]) ;
-          doc.plants[element].sowing.light.last_light = Date.now()/1000  ;
         }
         debug(chalk.yellow(`after:`));
         debug(chalk.green(doc.plants[element].sowing.light ));

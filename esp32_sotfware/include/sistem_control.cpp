@@ -113,7 +113,7 @@ void taskSystem( JsonObject plant , String plant_id){
   }else{
     if ( plant["light"]["status"].as<bool>() == true  ){
       plant["light"]["status"] == false;
-      send_mqtt("Huerta/update/light" , (plant_id+"/0/"+String(timeinfo_2)) , true);
+      send_mqtt("Huerta/update/light" , (plant_id+"/0") , true);
     }
 
   }
