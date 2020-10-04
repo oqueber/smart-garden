@@ -41,6 +41,8 @@ bool finishedCore1 = false;
 bool finishedCore0 = false;
 
 void swichs_on_off(int io){
+  Serial.print("\nSwitch mode: ");
+  Serial.println(io);
   digitalWrite(SW1, io);
   delay(5000);
 }

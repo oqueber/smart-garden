@@ -17,7 +17,7 @@ const settings = {
 }
 const server = new mosca.Server(settings)
 
-let userTask = new Map();
+let userTask = new Map();frequency_water
 
 /*
 eventEmitter.on('client/set/connection', async function( id ){
@@ -159,12 +159,13 @@ server.on('published', async (packet, client) => {
         debug(chalk.green(doc.plants[element].sowing.light ));
         if (doc.plants[element].info.date == Number(devicePayload[0]) ){
           doc.plants[element].sowing.light.status = Boolean(devicePayload[1]) ;
-          doc.plants[element].sowing.light.last_light = Number(devicePayload[2])  ;
+          doc.plants[element].sowing.light.last_light = Date.now()/1000  ;
         }
+        debug(chalk.yellow(`after:`));
+        debug(chalk.green(doc.plants[element].sowing.light ));
       }
       doc.save();
-      debug(chalk.yellow(`after:`));
-      debug(chalk.green(doc.plants));
+      //debug(chalk.green(doc.plants));
     });
   }
   if (packet.topic == "Huerta/Push/Digital") {

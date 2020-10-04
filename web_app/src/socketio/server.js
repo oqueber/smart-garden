@@ -44,7 +44,7 @@ io.on('connection',   (socket)=>{
         .then( dataUser =>{
           let plant_select;
           if ( Data.Plant ){
-            plant_select = Data.Plant;
+            plant_select = Data.Plantc;
           }else{
             plant_select = 0
           }
