@@ -135,16 +135,16 @@ server.on('published', async (packet, client) => {
     console.log(packet.payload.toString('utf-8'));
     await Users.findOne( {MAC: deviceMAC }).then(doc => {
 
-      debug(chalk.yellow(`User found: `));
+      //debug(chalk.yellow(`User found: `));
       for( const element in doc.plants){
-        debug(chalk.green(doc.plants[element].sowing.water ));
+        //debug(chalk.green(doc.plants[element].sowing.water ));
         if (doc.plants[element].info.date == Number(devicePayload[0]) ){
           doc.plants[element].sowing.water.last_water = Number(devicePayload[1]) ;
         }
       }
       doc.save();
-      debug(chalk.yellow(`after:`));
-      debug(chalk.green(doc.plants ));
+      //debug(chalk.yellow(`after:`));
+      //debug(chalk.green(doc.plants ));
     });
   }
   if(packet.topic == "Huerta/update/light"){
@@ -154,17 +154,17 @@ server.on('published', async (packet, client) => {
     console.log(packet.payload.toString('utf-8'));
     await Users.findOne( {MAC: deviceMAC }).then(doc => {
 
-      debug(chalk.yellow(`User found: `));
+      //debug(chalk.yellow(`User found: `));
       for( const element in doc.plants){
-        debug(chalk.green(doc.plants[element].sowing.light ));
+        //debug(chalk.green(doc.plants[element].sowing.light ));
         if (doc.plants[element].info.date == Number(devicePayload[0]) ){
           if( Boolean(devicePayload[1]) ){
             doc.plants[element].sowing.light.last_light =  Number(devicePayload[2])  ;
           }
           doc.plants[element].sowing.light.status = Boolean(devicePayload[1]) ;
         }
-        debug(chalk.yellow(`after:`));
-        debug(chalk.green(doc.plants[element].sowing.light ));
+        //debug(chalk.yellow(`after:`));
+        //debug(chalk.green(doc.plants[element].sowing.light ));
       }
       doc.save();
       //debug(chalk.green(doc.plants));

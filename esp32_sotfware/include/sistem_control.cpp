@@ -95,12 +95,12 @@ void taskSystem( JsonObject plant , String plant_id){
     //Si es la primera vez, encendemos la luz
     if( plant["light"]["status"].as<bool>() == false || itsHardReboot ){
 
-      if (!itsHardReboot){
-        plant["light"]["status"] = true;
-        plant["light"]["last_light"] = timeinfo_2;
-        //enviar mqtt con los cambios
-        send_mqtt("Huerta/update/light" ,(plant_id+"/1/"+String(timeinfo_2)) , true);
-      }
+      
+      plant["light"]["status"] = true;
+      plant["light"]["last_light"] = timeinfo_2;
+      //enviar mqtt con los cambios
+      send_mqtt("Huerta/update/light" ,(plant_id+"/1/"+String(timeinfo_2)) , true);
+      
 
       taskLight( plant["light"]["led_start"].as<int>(), 
                 plant["light"]["led_end"].as<int>(),
@@ -115,7 +115,11 @@ void taskSystem( JsonObject plant , String plant_id){
       plant["light"]["status"] == false;
       send_mqtt("Huerta/update/light" , (plant_id+"/0") , true);
     }
-
+    taskLight( plant["light"]["led_start"].as<int>(), 
+                plant["light"]["led_end"].as<int>(),
+                0,
+                0,
+                0);
   }
 
   if( debugging ){
