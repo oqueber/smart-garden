@@ -17,7 +17,7 @@ const settings = {
 }
 const server = new mosca.Server(settings)
 
-let userTask = new Map();frequency_water
+let userTask = new Map();
 
 /*
 eventEmitter.on('client/set/connection', async function( id ){
@@ -150,7 +150,7 @@ server.on('published', async (packet, client) => {
   if(packet.topic == "Huerta/update/light"){
     let deviceMAC = (client.id).split('/')[1]; 
     let devicePayload = packet.payload.toString('utf-8').split('/');
-    debug(chalk.yellow(`Update plant water ${Number(devicePayload[0])} in the user ${deviceMAC} with value ${Number(devicePayload[1])}`));
+    debug(chalk.yellow(`Update plant light ${Number(devicePayload[0])} in the user ${deviceMAC} with value ${Number(devicePayload[1])}`));
     console.log(packet.payload.toString('utf-8'));
     await Users.findOne( {MAC: deviceMAC }).then(doc => {
 
@@ -158,7 +158,7 @@ server.on('published', async (packet, client) => {
       for( const element in doc.plants){
         //debug(chalk.green(doc.plants[element].sowing.light ));
         if (doc.plants[element].info.date == Number(devicePayload[0]) ){
-          if( Boolean(devicePayload[1]) ){
+          if( Boolean(devicePayload[1]) === 1){
             doc.plants[element].sowing.light.last_light =  Number(devicePayload[2])  ;
           }
           doc.plants[element].sowing.light.status = Boolean(devicePayload[1]) ;

@@ -17,7 +17,7 @@ io.on('connection',   (socket)=>{
           }
         }).sort({timestamps: 1})
         .then( dataUser =>{
-          console.log("We find this: ", dataUser.length);
+          //console.log("We find this: ", dataUser.length);
           if(dataUser.length != 0){
               socket.emit('chart/postData/digital', dataUser );  
           }else{
@@ -44,19 +44,19 @@ io.on('connection',   (socket)=>{
         .then( dataUser =>{
           let plant_select;
           if ( Data.Plant ){
-            plant_select = Data.Plantc;
+            plant_select = Data.Plant;
           }else{
             plant_select = 0
           }
           console.log("We find this: ", dataUser.length);
           if(dataUser.length != 0){ 
-            console.log(dataUser);
-            console.log("plant_select: ", plant_select);
+            //console.log(dataUser);
+            //console.log("plant_select: ", plant_select);
             
             dataUser = dataUser.filter(function (a) {
               return a.plantId === plant_select;
             });
-            console.log(dataUser);
+            //console.log(dataUser);
             if(dataUser.length != 0){ 
               socket.emit('chart/postData/analog', dataUser );  
             }else {
