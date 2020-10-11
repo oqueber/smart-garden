@@ -8,8 +8,8 @@ const path = require('path');
 const exphbs = require('express-handlebars');
 const methodOverride= require('method-override');
 const session = require('express-session');
-const ip = "192.168.2.132";
-//const ip = "127.0.0.1";
+//const ip = "192.168.2.132";
+const ip = "127.0.0.1";
 //const ip = '0.0.0.0';
 
 //Initializations
@@ -89,6 +89,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 //-----------------------------------------
 //------------ Server is listenning -------
 //-----------------------------------------
-server.listen(port, ip, () =>{
-    console.log(`[Smart-Garden-Server]: Server on port ${port} and ip ${ip}`);
+//server.listen(port, ip, () =>{
+server.listen(port, () =>{
+        console.log(`[Smart-Garden-Server]: Server on port ${port} and ip ${ip}`);
 });
