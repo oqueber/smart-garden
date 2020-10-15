@@ -10,7 +10,7 @@ router.get('/my-plants',isAuthenticated, async(req,res)=>{
     const user = await User.findOne({email: req.user.email});
 
     user.plants.forEach(plant => {
-        console.log(plant);
+        //console.log(plant);
     
         if (plant.info.type == "aromatic"){
             plant.info.image = Aromatics[plant.info.index].info.image;
@@ -54,7 +54,6 @@ router.get('/edit-plant/:index/',isAuthenticated, async(req,res) =>{
     
     const index = parseInt(req.params.index,10);
     const user = await User.findOne({email: req.user.email});
-    //const user = await User.findOne({email: "luis@gmail.com"});
     let plant = user.plants[index];
     plant["pinout/adc1"]=plant["pinout/photocell1"];
     plant["pinout/adc2"]=plant["pinout/photocell2"];
@@ -82,7 +81,7 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
             color_red, color_blue,color_green, led_start,led_end, time_start, time_stop,
             adc1,adc2,adc3,adc4,
             name} = req.body;
-    console.log(req.body);
+    //console.log(req.body);
     if( !Number.isInteger( parseInt(adc1,10) ) ){errors.push({text: "ADC1 neeeds to be a number"})}
     if( !Number.isInteger( parseInt(adc2,10) ) ){errors.push({text: "ADC2 neeeds to be a number"})}
     if( !Number.isInteger( parseInt(adc3,10) ) ){errors.push({text: "ADC3 neeeds to be a number"})}
@@ -126,7 +125,7 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
     if(errors.length >= 1){
         res.render('plants/edit', {plant ,index,Type, errors});
     }else{
-        console.log(plant.sowing);
+        //console.log(plant.sowing);
         await User.findByIdAndUpdate(req.user.id, {'$push': {plants: plant } },{ new: true });
         req.flash("success_msg","Data update succefully");
         res.redirect('/my-plants');
@@ -155,7 +154,7 @@ router.post('/edit-plant/:index/save',isAuthenticated, async(req,res)=>{
         plant.pinout.photocell2 = parseInt(adc2,10);
         plant.pinout.humCap = parseInt(adc3,10);
         plant.pinout.humEC = parseInt(adc4,10);
-        console.log(plant.sowing); 
+        //console.log(plant.sowing); 
         doc.save();
       
         //sent respnse to client

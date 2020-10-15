@@ -11,6 +11,7 @@ const UserSchema = new Schema({
     city: { type: String},
     MAC: { type: String, required:true },
     devices: {type: String},
+    indoor: {type: Boolean},
     plants: [{
         info: {
             name: {type: String},

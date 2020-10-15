@@ -44,7 +44,7 @@ router.get("/Users/GetData/:Mac",async (req,res)=>{
     if(_user != null){
         if(_user.plants.length >= 1){
             
-            console.log("Exits plants");
+            //console.log("Exits plants");
             
             _user.plants.forEach( (element, index) => {
                 plants[element.info.date] = {
@@ -55,7 +55,7 @@ router.get("/Users/GetData/:Mac",async (req,res)=>{
                                             };
             }); 
 
-            console.log( `Send `,{Measurements: _user.devices,plants:plants});
+            //console.log( `Send `,{Measurements: _user.devices,plants:plants});
             res.json({Measurements: _user.devices,plants:plants});
         }else{
             res.json({Measurements: "1111"});

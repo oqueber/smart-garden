@@ -6,8 +6,8 @@ io.on('connection',   (socket)=>{
   console.log('[Smart-Garden-Socket] connected '+ socket.id)
   
   socket.on('chart/getData/digital', (Data)=>{
-    console.log('Recibido al Servidor: ', Data);
-    console.log('Del Usuario: ', socket.id);
+    //console.log('Recibido al Servidor: ', Data);
+    //console.log('Del Usuario: ', socket.id);
     
     DigitaldB.find({ 
           "device": Data.Device,
@@ -31,8 +31,8 @@ io.on('connection',   (socket)=>{
   }); 
   
   socket.on('chart/getData/analog', (Data)=>{
-    console.log('Recibido al Servidor analog: ', Data);
-    console.log('Del Usuario: ', socket.id);
+    //console.log('Recibido al Servidor analog: ', Data);
+    //console.log('Del Usuario: ', socket.id);
     
     AnalogdB.find({ 
           "device": Data.Device,

@@ -61,6 +61,16 @@
           <input class="validate" type="text" maxlength="3" value="{{MAC5}}" onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 13) ? null : event.charCode >= 48 && event.charCode <= 57" name="MAC5"/>
         </div>
       </div>
+      <div class="row center">
+        <div class="switch">
+          <label>
+            outdoor
+            <input type="checkbox" id="indoor" name="indoor" {{indoor}} >
+            <span class="lever"></span>
+            indoor
+          </label>
+        </div>
+      </div>
       <div class="row">
           <div class="col m3 s5 offset-s1 offset-m0">  
         <label>
