@@ -160,11 +160,13 @@ server.on('published', async (packet, client) => {
       for( const element in doc.plants){
         if (doc.plants[element].info.date == Number(devicePayload[0]) ){
           
-          if( Boolean(devicePayload[1]) ){ // Si esta activo, guardamos la fecha acualizada
+          if( Number(devicePayload[1]) == 1){ // Si esta activo, guardamos la fecha acualizada
             doc.plants[element].sowing.light.last_light =  Number(devicePayload[2])  ;
+            doc.plants[element].sowing.light.status = true;
           }
-          
-          doc.plants[element].sowing.light.status = Boolean(devicePayload[1]) ;
+          else{
+            doc.plants[element].sowing.light.status = false  ;
+          }
           
           debug(chalk.green(doc.plants[element].sowing.light ));
         }
