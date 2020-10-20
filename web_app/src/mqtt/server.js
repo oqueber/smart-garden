@@ -137,13 +137,15 @@ server.on('published', async (packet, client) => {
 
       //debug(chalk.yellow(`User found: `));
       for( const element in doc.plants){
-        //debug(chalk.green(doc.plants[element].sowing.water ));
+
         if (doc.plants[element].info.date == Number(devicePayload[0]) ){
           doc.plants[element].sowing.water.last_water = Number(devicePayload[1]) ;
+          debug(chalk.green(doc.plants[element].sowing.water ));
         }
+
       }
       doc.save();
-      //debug(chalk.yellow(`after:`));
+      debug(chalk.green("plant save"));
       //debug(chalk.green(doc.plants ));
     });
   }
@@ -156,15 +158,16 @@ server.on('published', async (packet, client) => {
 
       //debug(chalk.yellow(`User found: `));
       for( const element in doc.plants){
-        debug(chalk.green(doc.plants[element].sowing.light ));
         if (doc.plants[element].info.date == Number(devicePayload[0]) ){
-          if( Boolean(devicePayload[1]) === 1){
+          
+          if( Boolean(devicePayload[1]) ){ // Si esta activo, guardamos la fecha acualizada
             doc.plants[element].sowing.light.last_light =  Number(devicePayload[2])  ;
           }
+          
           doc.plants[element].sowing.light.status = Boolean(devicePayload[1]) ;
+          
+          debug(chalk.green(doc.plants[element].sowing.light ));
         }
-        debug(chalk.yellow(`after:`));
-        debug(chalk.green(doc.plants[element].sowing.light ));
       }
       doc.save();
       debug(chalk.green("plant save"));
