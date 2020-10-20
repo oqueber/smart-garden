@@ -245,13 +245,16 @@ bool userUpdateData (String newData){
         String dataUpdated = "";
 
         //we compare the user's local data and user's cloud data
-        if( newData != UserLocalData){
+        if(  !UserLocalData.equals(newData) ){
           Serial.println("Different user both cloud and local");
           DynamicJsonDocument dataJsonSD(2048);
           auto error2 = deserializeJson(dataJsonSD, UserLocalData);    
 
-          Serial.println("Antes: ");
+          Serial.println("New_Data: ");
           Serial.println(newData);
+          Serial.println("old_Data: ");
+          Serial.println(UserLocalData);
+
           if( error2 == DeserializationError::Ok ){ 
             // if the same plant, update all, excepte this elements.
             for( auto element:  localUser["plants"].as<JsonObject>() ){

@@ -156,18 +156,18 @@ server.on('published', async (packet, client) => {
 
       //debug(chalk.yellow(`User found: `));
       for( const element in doc.plants){
-        //debug(chalk.green(doc.plants[element].sowing.light ));
+        debug(chalk.green(doc.plants[element].sowing.light ));
         if (doc.plants[element].info.date == Number(devicePayload[0]) ){
           if( Boolean(devicePayload[1]) === 1){
             doc.plants[element].sowing.light.last_light =  Number(devicePayload[2])  ;
           }
           doc.plants[element].sowing.light.status = Boolean(devicePayload[1]) ;
         }
-        //debug(chalk.yellow(`after:`));
-        //debug(chalk.green(doc.plants[element].sowing.light ));
+        debug(chalk.yellow(`after:`));
+        debug(chalk.green(doc.plants[element].sowing.light ));
       }
       doc.save();
-      //debug(chalk.green(doc.plants));
+      debug(chalk.green("plant save"));
     });
   }
   if (packet.topic == "Huerta/Push/Digital") {
