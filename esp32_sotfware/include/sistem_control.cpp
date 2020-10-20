@@ -267,7 +267,7 @@ bool userUpdateData (String newData){
                   localUser["plants"][plantId]["light"]["status"] = false;
                   //localUser["plants"][plantId]["light"]["status"] = dataJsonSD["plants"][plantId]["light"]["status"];
                   // Update the cloud data
-                  send_mqtt("Huerta/update/water" , (plantId+"/"+dataJsonSD["plants"][plantId]["light"]["last_light"].as<String>() ), true);
+                  send_mqtt("Huerta/update/water" , (plantId+"/"+dataJsonSD["plants"][plantId]["water"]["last_water"].as<String>() ), true);
                   send_mqtt("Huerta/update/light" , (plantId+"/0"), true);
               }
             }
