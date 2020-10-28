@@ -39,6 +39,7 @@ void callback_touch(){};
 
 bool finishedCore1 = false;
 bool finishedCore0 = false;
+uint8_t iServerMqtt = 0;
 
 void swichs_on_off(int io){
   Serial.print("\nSwitch mode: ");
@@ -288,18 +289,29 @@ void setup(){
   switch(wakeup_reason){
     case ESP_SLEEP_WAKEUP_TIMER :
       
-      Serial.println("Wakeup caused by timer"); break;
+      Serial.println(""); 
+      Serial.print("Wakeup caused by timer:");
+      Serial.println(counterSleep);  
       digitalWrite(LED_GREEN,HIGH);
       delay(1000);
+      
+      if(counterSleep++ >= 48){
+        Serial.println("reset preventivo.");
+        ESP.restart();
+      }
+
+      break;
 
     case ESP_SLEEP_WAKEUP_TOUCHPAD : 
-      Serial.println("Wakeup caused by touchpad"); break;
+      Serial.println("Wakeup caused by touchpad");
       for(int i = 0; i<10; i++){
         digitalWrite(LED_GREEN,LOW);
         delay(1000);
         digitalWrite(LED_GREEN,HIGH);
         delay(1000);
-      }  
+      } 
+      break;
+
     default : 
       counterSleep = 0;
       itsHardReboot = true;
@@ -308,7 +320,8 @@ void setup(){
 
       reg_b = READ_PERI_REG(SENS_SAR_READ_CTRL2_REG);
       Serial.println("Reading reg b.....");
-      Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); break;
+      Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); 
+      break;
   }
     
   //Setup interrupt on Touch Pad 3 (GPIO15)
@@ -358,6 +371,19 @@ void setup(){
     Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) +" Seconds");
     printLocalTime();
     Serial.println("----------------------------------------------------------");
+  }
+
+  do
+  {
+    reconnect();
+    delay(5000);
+    iServerMqtt++;
+  }while((!client.connected()) && (iServerMqtt <= 10 ));
+
+  if( iServerMqtt >= 10)
+  {
+    ESP.restart();
+    Serial.println("server unreach, power off uC");
   }
 
   if (wakeup_reason == ESP_SLEEP_WAKEUP_TOUCHPAD){
@@ -438,7 +464,6 @@ void taskCore1( void * pvParameters){
     }
 
     Serial.println("Core 1 finished");
-    Serial.println(localUser.as<String>());
     Serial.flush();
     toSleep(TIME_TO_SLEEP);
   }

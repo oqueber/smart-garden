@@ -75,7 +75,7 @@ const String urlGetUser = "http://"+ IP +":3000/Users/GetData/";
 
 #define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
 #define S_TO_M_FACTOR  60  /* Conversion factor for  seconds to minuts */
-#define TIME_TO_SLEEP  (10*S_TO_M_FACTOR* uS_TO_S_FACTOR)         /* Time ESP32 will go to sleep (in Min) */
+#define TIME_TO_SLEEP  (30*S_TO_M_FACTOR* uS_TO_S_FACTOR)         /* Time ESP32 will go to sleep (in Min) */
 
 // Sleep time while the micro does nothing
 const unsigned int time_1S = 1000000;
@@ -105,6 +105,6 @@ const int   daylightOffset_sec = 3600;
 // --------------------------------------------------------------------- 
 
 // Debugging flag for printing in monitor serial
-const bool debugging = true;
-const bool debugging_mqtt = true;
+const bool debugging = false;
+const bool debugging_mqtt = false;
 const bool debugging_SD = false;

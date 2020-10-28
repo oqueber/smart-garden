@@ -41,7 +41,7 @@ app.engine('.hbs', exphbs({
             if ( date == 0){
                 return "never";
             }else{
-                return (new Date(date)).toDateString();
+                return (new Date(date*1000)).toDateString();
             }
         },
         isVegetable: function (value) {
