@@ -74,7 +74,7 @@ router.post('/Users/update-user', async(req,res) =>{
 
         //console.log("Updated...:"+ devices);
         password = await req.user.encryptPassword(password);
-        await User.findByIdAndUpdate(req.user.id, { name, email,MAC,city,state, zip,password, devices:devices,indoor});
+        await User.findByIdAndUpdate(req.user.id, { name, email,MAC,city,state, zip,password, devices:devices,indoor, update:true});
         req.flash("success_msg","Data update succefully");
         res.redirect('/');
         

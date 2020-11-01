@@ -6,15 +6,12 @@
   clock_prescale_set(clock_div_1);
 #endif
 
-bool userLocalFlag = false;
 
 Adafruit_NeoPixel pixels(num_pixels, pin_pixel, NEO_GRB + NEO_KHZ800);
 DynamicJsonDocument doc (200);
-DynamicJsonDocument localUser (2048);
 JsonArray userTasks = doc.to<JsonArray>();
 
 
-void updateUser();
 void receptionSystem( String topic, String message){
   if ( topic == "device/get/task" ) {
     userTasks.add(message);
@@ -85,9 +82,6 @@ void taskSystem( JsonObject plant , String plant_id){
     Serial.println(plant["water"]["last_water"].as<String>());
     //enviar mqtt con los cambios
     send_mqtt("Huerta/update/water" , (plant_id+"/"+String(timeinfo_2)), true);
-    // actualizar el usuario local
-    //updateUser();
-
   }
   
   if( (rightNow >= (hourStart_hour + hourStart_min)) &&  (rightNow <= (hourStop_hour + hourStop_min)) ){
@@ -115,7 +109,7 @@ void taskSystem( JsonObject plant , String plant_id){
       plant["light"]["status"] == false;
       send_mqtt("Huerta/update/light" , (plant_id+"/0") , true);
     }
-    taskLight( plant["light"]["led_start"].as<int>(), 
+    taskLight(  plant["light"]["led_start"].as<int>(), 
                 plant["light"]["led_end"].as<int>(),
                 0,
                 0,
@@ -204,93 +198,245 @@ void controlSystem( void ){
   } 
 }
 
-void updateUser(){
-  String msgUpdate = "";
-  
-  serializeJson(localUser, msgUpdate);      
-  
-  if(!SD.begin()){
+bool getUserSD( bool update = false ){
+  bool fl_SD = false;
+
+  // If we can't fount the user in local. Go to sleep
+  if(!SD.begin())
+  {
     Serial.println("Card Mount Failed");
     sisError(5);
-  }else{
+  }
+  else
+  {
     listDir(SD, "/", 0);
-    if ( SD.exists(SD_path_user) ){
-      if( msgUpdate != readFile(SD, SD_path_user)){
-        Serial.println("Different user both update and local");
+    // Check to see if the file exists:
+    if (SD.exists(SD_path_user)) 
+    {
+      
+      if( debugging_SD )
+      {
+        Serial.println("Datos eliminados desde SD");
         deleteFile(SD, SD_path_user);
         delay(100);
-        writeFile(SD, SD_path_user, msgUpdate.c_str());
+        
       }
-    }else{
-        writeFile(SD, SD_path_user, msgUpdate.c_str());
-    }
-  }
-  SD.end();
+      else if(update == true)
+      {
+        String msg = "";
+        deleteFile(SD, SD_path_user);
+        delay(100);
+        serializeJson(localUser, msg); 
+        writeFile(SD, SD_path_user, msg.c_str() );
+      }
+      else
+      {
+        String stringUser = readFile(SD, SD_path_user);
 
+        auto error = deserializeJson(localUser, stringUser );
+        if( error == DeserializationError::Ok )
+        {  
+          fl_SD = true;
+          Serial.println("Datos Actualizados desde SD");
+        }
+      }
+
+    }
+    else if( update )
+    {
+        String msg = "";
+        serializeJson(localUser, msg); 
+        writeFile(SD, SD_path_user, msg.c_str() );
+    }
+    else 
+    {
+      Serial.println("userData.txt doesn't exist.");
+    }
+
+  }  
+  SD.end();
+  return fl_SD;
 }
 
 bool userUpdateData (String newData){
+  String userLocalData;
+  String userDataUpdated;
   bool userUpdate = false;
-  auto error1 = deserializeJson(localUser, newData);    
+  DynamicJsonDocument newDataUser(2048);
+  auto error_newUser = deserializeJson(newDataUser, newData);  
 
-  if( error1 == DeserializationError::Ok ){  
-    if(!SD.begin()){
-      // If we can't fount the user in local. Go to sleep
-      Serial.println("Card Mount Failed");
-      sisError(5);
-    }else{
-      listDir(SD, "/", 0);
-      if ( SD.exists(SD_path_user) ){
-        String UserLocalData = readFile(SD, SD_path_user);
-        String dataUpdated = "";
+  if( error_newUser == DeserializationError::Ok )
+  {
+    // Checkout if data change o the SD is Empty
+    if ( newDataUser["update"].as<bool>() || ( localUser.size() == 0 ))
+    {
+      Serial.println("Hay cambios del usuario en el sevidor o fallo la SD");
+      if(!SD.begin())
+      {
+        Serial.println("Card Mount Failed");
+        sisError(5);
 
-        //we compare the user's local data and user's cloud data
-        if(  !UserLocalData.equals(newData) ){
-          Serial.println("Different user both cloud and local");
-          DynamicJsonDocument dataJsonSD(2048);
-          auto error2 = deserializeJson(dataJsonSD, UserLocalData);    
+        // Update only the userLocal in ROM
+        error_newUser = deserializeJson(localUser, newData);
+        if( error_newUser == DeserializationError::Ok )
+        {
+          userUpdate = true;
+        }
 
-          Serial.println("New_Data: ");
-          Serial.println(newData);
-          Serial.println("old_Data: ");
-          Serial.println(UserLocalData);
-
-          if( error2 == DeserializationError::Ok ){ 
-            // if the same plant, update all, excepte this elements.
-            for( auto element:  localUser["plants"].as<JsonObject>() ){
-              // If we already have the plant in local, we keep the old control data.
-              if( dataJsonSD["plants"].containsKey( element.key()) ){
-                  String plantId = element.key().c_str();
-                  //localUser in this cases is the new data from cloud
-                  localUser["plants"][plantId]["water"]["last_water"] = dataJsonSD["plants"][plantId]["water"]["last_water"];
-                  localUser["plants"][plantId]["light"]["last_light"] = dataJsonSD["plants"][plantId]["light"]["last_light"];
-                  localUser["plants"][plantId]["light"]["status"] = false;
-                  //localUser["plants"][plantId]["light"]["status"] = dataJsonSD["plants"][plantId]["light"]["status"];
-                  // Update the cloud data
-                  send_mqtt("Huerta/update/water" , (plantId+"/"+dataJsonSD["plants"][plantId]["water"]["last_water"].as<String>() ), true);
-                  send_mqtt("Huerta/update/light" , (plantId+"/0"), true);
-              }
+      }
+      else
+      {
+    
+        //listDir(SD, "/", 0);
+        if ( SD.exists(SD_path_user) )
+        {
+          Serial.println("Actualizando los datos nuevos con la ultima imagen");
+          
+          newDataUser["update"]= false;
+          
+          // if the same plant, update all, excepte this elements.
+          for( auto element:  localUser["plants"].as<JsonObject>() )
+          {
+            // If we already have the plant in local, we keep the old control data.
+            if( newDataUser["plants"].containsKey( element.key()) )
+            {
+              String plantId = element.key().c_str();
+              //We save the last user image 
+              newDataUser["plants"][plantId]["water"]["last_water"] = localUser["plants"][plantId]["water"]["last_water"];
+              newDataUser["plants"][plantId]["light"]["last_light"] = localUser["plants"][plantId]["light"]["last_light"];
+              newDataUser["plants"][plantId]["light"]["status"] = localUser["plants"][plantId]["light"]["status"];
+              newDataUser["plants"][plantId]["water"]["status"] = localUser["plants"][plantId]["water"]["status"];
+              // Update the cloud data
+              send_mqtt("Huerta/update/water" , (plantId+"/"+newDataUser["plants"][plantId]["water"]["last_water"].as<String>() ), true);
+              send_mqtt("Huerta/update/light" , (plantId+"/"+newDataUser["plants"][plantId]["light"]["status"].as<String>()+"/"+newDataUser["plants"][plantId]["light"]["last_light"].as<String>()), true);
             }
           }
 
           deleteFile(SD, SD_path_user);
           delay(100);
-          serializeJson(localUser, dataUpdated); 
-          userUpdate = true;   
-          writeFile(SD, SD_path_user, dataUpdated.c_str() );
+          serializeJson(newDataUser, userDataUpdated); 
+          writeFile(SD, SD_path_user, userDataUpdated.c_str() );
 
-          //if(debugging){
-          //  Serial.println("The data was updated:");    // Mostrar respuesta por serial
-          //  Serial.println(dataUpdated);                // Mostrar respuesta por serial
-          //}
-        }else{
+          if ( deserializeJson(localUser, userDataUpdated) == DeserializationError::Ok  )
+          {
+            userUpdate = true;   
+          }
+        
+
+        }
+        else
+        {
+          Serial.println(" The SD its empty");
           writeFile(SD, SD_path_user, newData.c_str() );
+
+          auto error1 = deserializeJson(localUser, newData);    
+          if( error1 == DeserializationError::Ok )
+          {
+            userUpdate = true;
+          } 
         }
       }
+
     }
-    SD.end();
+    else
+    {
+      Serial.println("No hay datos que actualizar");
+      userUpdate = true;
+    }
+
   }
+  
+  SD.end();
   return userUpdate;
+}
+
+void updateLastData (){
+  bool find_plant[MAX_PLANTS];
+  
+  //implementar que si el valor de now es malo, coger el del estadoa anterior
+  // Inicializamos los valores por defecto para poder encontrar cuales plantas siguen con el usuario
+  for (int i = 0 ; i< MAX_PLANTS; i++)
+  {
+    find_plant[i] = false;
+  }
+
+  for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
+    
+    String Id_plant = kvp.key().c_str();
+
+    for (int i = 0; i < MAX_PLANTS; i++)
+    {
+      if( plantStatus[i].Id == strtoll(kvp.key().c_str(), (char **) NULL, 10))
+      {
+        find_plant[i] = true;
+
+        printf("\n ---before---- \n");
+        printf("  Id: %lld in indice:%d \n", plantStatus[i].Id, i);
+        printf("  water: %d \n", localUser["plants"][Id_plant]["water"]["status"].as<bool>());
+        printf(" last_time_water: %ld \n", localUser["plants"][Id_plant]["water"]["last_water"].as<unsigned long>() );
+        printf(" light: %d \n", localUser["plants"][Id_plant]["light"]["status"].as<bool>());
+        printf(" last_time_light: %ld \n",  localUser["plants"][Id_plant]["light"]["last_light"].as<unsigned long>() );
+
+        localUser["plants"][Id_plant]["water"]["status"] = plantStatus[i].water;
+        localUser["plants"][Id_plant]["water"]["last_water"] = plantStatus[i].last_time_water;
+        localUser["plants"][Id_plant]["light"]["status"] = plantStatus[i].light;
+        localUser["plants"][Id_plant]["light"]["last_light"] = plantStatus[i].last_time_light;
+
+        printf("\n ---after---- \n");
+        printf("  Id: %lld in indice:%d \n", plantStatus[i].Id, i);
+        printf("  water: %d \n", localUser["plants"][Id_plant]["water"]["status"].as<bool>());
+        printf(" last_time_water: %ld \n", localUser["plants"][Id_plant]["water"]["last_water"].as<unsigned long>() );
+        printf(" light: %d \n", localUser["plants"][Id_plant]["light"]["status"].as<bool>());
+        printf(" last_time_light: %ld \n",  localUser["plants"][Id_plant]["light"]["last_light"].as<unsigned long>() );
+        Serial.println("");
+      }
+    }
+  }
+
+  for (int i = 0; i < MAX_PLANTS; i++)
+  {
+    if( find_plant[i] == false)
+    {
+      Serial.printf("No se a encontrdo a la planta id:%lld en el indice %d",plantStatus[i].Id, i );
+      plantStatus[i].Id = 0;
+      plantStatus[i].water = 0;
+      plantStatus[i].last_time_water= 0;
+      plantStatus[i].light = 0;
+      plantStatus[i].last_time_light= 0;
+    }
+  }
+}
+void saveUser()
+{
+
+  Serial.println("\n Guardando datos en local: ");
+  //serializeJson(localUser, localUser_string );
+  //Serial.println(localUser_string);
+  int indice = 0;
+
+  timeSystem = now;
+  // Guardamos todas las plantas actuales para reestablecer su valore al reinicio.
+  for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
+    
+    String Id_plant = kvp.key().c_str();
+    if ( indice < MAX_PLANTS)
+    {
+      plantStatus[indice].Id = strtoll(kvp.key().c_str(), (char **) NULL, 10); 
+      plantStatus[indice].water = localUser["plants"][Id_plant]["water"]["status"].as<bool>();
+      plantStatus[indice].last_time_water= localUser["plants"][Id_plant]["water"]["last_water"].as<unsigned long>();
+      plantStatus[indice].light = localUser["plants"][Id_plant]["light"]["status"].as<bool>();
+      plantStatus[indice].last_time_light= localUser["plants"][Id_plant]["light"]["last_light"].as<unsigned long>();
+
+      printf("\n ------- \n");
+      printf("  Id: %lld (%s) in indice:%d \n", plantStatus[indice].Id, kvp.key().c_str(), indice);
+      printf(" water: %d (%s) \n",              plantStatus[indice].water, localUser["plants"][Id_plant]["water"]["status"].as<String>());
+      printf(" last_time_light: %lu (%s) \n",   plantStatus[indice].last_time_water, localUser["plants"][Id_plant]["water"]["last_water"].as<String>());
+      printf(" light: %d (%s) \n",              plantStatus[indice].light, localUser["plants"][Id_plant]["light"]["status"].as<String>());
+      printf(" last_time_light: %lu (%s)\n",     plantStatus[indice].last_time_light, localUser["plants"][Id_plant]["light"]["last_light"].as<String>());
+      
+      indice++;
+    } 
+  }
 }
 /* The getUser() function is used as a flag if a user is found or not.
 * Each device has a unique identification to connect to the internet (MAC)
@@ -302,6 +448,9 @@ bool getUser(){
 
   bool UserFinded= false;
 
+  getUserSD();
+  
+  //And then check if we have update
   if( wifi_status() ){
     HTTPClient http;
 
@@ -316,7 +465,7 @@ bool getUser(){
         if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
         
           String payload = http.getString();   // Obtener respuesta
-          userUpdateData(payload);
+          UserFinded =  userUpdateData(payload);
         }else if(httpCode == 204){
           sisError (3); // 3: User don't exist
           Serial.print("search user: "); Serial.println(getMac());
@@ -334,6 +483,15 @@ bool getUser(){
       Serial.printf("[HTTP} Unable to connect\n");
     }
   }
+
+  Serial.printf( "Tamaño del localUser %d \n", localUser.size() );
+  if ( localUser.size() != 0 )
+  {
+    UserFinded = true;
+    Serial.println("localUSER: ");
+    Serial.println( localUser.as<String>() );
+  }
+
   return UserFinded;  
 }
 

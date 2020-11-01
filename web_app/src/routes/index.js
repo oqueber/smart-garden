@@ -39,30 +39,47 @@ router.get('/act/:date', (req,res)=>{
 router.get("/Users/GetData/:Mac",async (req,res)=>{
     var plants = {};
     var _mac = req.params.Mac
-    var _user = await User.findOne({"MAC":_mac});
+    var fl_update = 0;
 
-    if(_user != null){
+    await User.findOne( {"MAC":_mac} ).then( _user => {
+        
+        //Update the flag to false
+        if ( _user.update == true) {
+            console.log("Habia datos por actualizar");
+            fl_update = 1;
+            _user.update = false;
+            _user.save();
+        }
+
         if(_user.plants.length >= 1){
             
             //console.log("Exits plants");
             
-            _user.plants.forEach( (element, index) => {
+            _user.plants.forEach( (element) => {
                 plants[element.info.date] = {
                                             light: element.sowing.light,
                                             water: element.sowing.water,
-                                            temperatue: element.sowing.temperatue,
+                                            temperature: element.sowing.temperature,
                                             pinout: element.pinout
                                             };
             }); 
 
+
+            //console.log(plants);
             //console.log( `Send `,{Measurements: _user.devices,plants:plants});
-            res.json({Measurements: _user.devices,plants:plants});
+            res.json({Measurements: _user.devices, update:fl_update, plants:plants});
         }else{
             res.json({Measurements: "1111"});
         }
-    }else{
-        res.sendStatus(204);
-    }
+      
+    //sent respnse to client
+    }).catch(err => {
+        console.log(err);
+        console.log('Oh! Dark')
+        res.send(err);
+    });
+
+    //res.sendStatus(204);
 });
 
 

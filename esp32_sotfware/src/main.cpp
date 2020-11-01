@@ -9,10 +9,15 @@
 
 #include "soc/sens_reg.h" // needed for manipulating ADC2 control register
 
-static RTC_NOINIT_ATTR int reg_b; // place in RTC slow memory so available after deepsleep
-static RTC_NOINIT_ATTR int counterSleep; 
 
 #include "config.h"
+
+static RTC_NOINIT_ATTR int reg_b; // place in RTC slow memory so available after deepsleep
+static RTC_NOINIT_ATTR int counterSleep; 
+static RTC_DATA_ATTR time_t timeSystem;;
+DynamicJsonDocument localUser (2048);
+static RTC_DATA_ATTR struct Plant_status plantStatus[MAX_PLANTS];
+
 #include <sistem_error.cpp>
 
 #include <./wifi/wifi.h>
@@ -215,40 +220,6 @@ void getDataAnalog(JsonObjectConst User, String plant, bool send = true ){
     Serial.println(json);
   }
 }
-bool getUserSD(){
-    userLocalFlag = false;
-    
-    // If we can't fount the user in local. Go to sleep
-    if(!SD.begin()){
-      Serial.println("Card Mount Failed");
-      sisError(5);
-    }else{
-      listDir(SD, "/", 0);
-      // Check to see if the file exists:
-      if (SD.exists(SD_path_user)) {
-        
-        if( debugging_SD){
-          deleteFile(SD, SD_path_user);
-          delay(100);
-        }else{
-          String stringUser = readFile(SD, SD_path_user);
-
-          auto error = deserializeJson(localUser, stringUser );
-          if( error == DeserializationError::Ok ){  
-            userLocalFlag = true ;
-            Serial.print("Read from file: ");
-            Serial.println(stringUser);
-          }
-        }
-
-      } else {
-        Serial.println("userData.txt doesn't exist.");
-      }
-
-    }  
-    SD.end();
-    return userLocalFlag;
-}
 void printLocalTime(){
   struct tm timeinfo;
   if(!getLocalTime(&timeinfo)){
@@ -295,8 +266,14 @@ void setup(){
       digitalWrite(LED_GREEN,HIGH);
       delay(1000);
       
-      if(counterSleep++ >= 48){
+      if(counterSleep++ >= 4){
         Serial.println("reset preventivo.");
+        //Traer la ultima version del usuario
+        getUser();
+        //Introducirle los datos almacenados en local
+        updateLastData();
+        //Guardarlos en la SD, antes de reinicio preventivo
+        getUserSD( true );
         ESP.restart();
       }
 
@@ -343,12 +320,15 @@ void setup(){
     // get NTP time every time connect to wifi, not necessary but wont hurts
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
     
-    // Try to get the user by SDs
     // Try to get the user by the server
-    if( !getUser() && !getUserSD() ){
-        //if we fount any user. we have nothing to do, go to sleep
-        sisError(0);
+    // True: updated or same data
+    // false: bad json was send
+    if( !getUser())
+    { 
+      //if we fount any user. we have nothing to do, go to sleep
+      sisError(0);
     }
+    
     delay(100);
 
 
@@ -357,6 +337,8 @@ void setup(){
     sisError(0);
   }
 
+  updateLastData();
+
   if (debugging || debugging_mqtt){
     Serial.println("----------------------------------------------------------");
     Serial.println("--------------------- SETUP END --------------------------");
@@ -364,8 +346,6 @@ void setup(){
     Serial.println(WiFi.localIP());
     Serial.print("User mac: ");
     Serial.println(getMac());
-    Serial.print("LocalUser: ");
-    Serial.println(userLocalFlag ? "Yes" : "No");
     Serial.print("HardReboot: ");
     Serial.println(itsHardReboot ? "Yes" : "No");
     Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) +" Seconds");
@@ -443,7 +423,6 @@ void taskCore1( void * pvParameters){
       taskSystem(kvp.value(), kvp.key().c_str() ); 
 
     }
-    updateUser();
     /* 
     *  Each User has max 4 measurements ( TCS34725, BME280, CCS811 and Si7021 )
     *  and this is send to database for store it.
@@ -463,8 +442,7 @@ void taskCore1( void * pvParameters){
       delay(1000);
     }
 
-    Serial.println("Core 1 finished");
-    Serial.flush();
+    saveUser();
     toSleep(TIME_TO_SLEEP);
   }
 }

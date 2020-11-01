@@ -12,6 +12,7 @@ const UserSchema = new Schema({
     MAC: { type: String, required:true },
     devices: {type: String},
     indoor: {type: Boolean},
+    update: {type: Boolean, default: false },
     plants: [{
         info: {
             name: {type: String},
@@ -36,7 +37,8 @@ const UserSchema = new Schema({
                 frequency:{ type:Number},
                 supply: {type: Number},
                 limit: {type: Number},
-                pinout: {type: Number}
+                pinout: {type: Number},
+                status: {type: Boolean, default: false }
             },
             temperature:{
                 min:{type: Number}

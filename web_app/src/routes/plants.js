@@ -87,6 +87,7 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
     if( !Number.isInteger( parseInt(adc3,10) ) ){errors.push({text: "ADC3 neeeds to be a number"})}
     if( !Number.isInteger( parseInt(adc4,10) ) ){errors.push({text: "ADC4 neeeds to be a number"})}
     let plant = {
+        update: true,
         info:{
             name: name,
             type: Type,
@@ -137,7 +138,8 @@ router.post('/edit-plant/:index/save',isAuthenticated, async(req,res)=>{
     const { waterF, waterU,time_start,time_stop, led_start, led_end,color_red,waterPin, color_blue,color_green ,adc1,adc2,adc3,adc4} = req.body;
     const index = parseInt(req.params.index);
     await User.findOne( {_id:req.user.id }).then(doc => {
-
+        
+        doc.update = true;
         let plant = doc.plants[index];
         plant.sowing.light.color_red = parseInt(color_red,10);
         plant.sowing.light.color_green = parseInt(color_green,10);
