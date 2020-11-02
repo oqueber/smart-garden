@@ -46,6 +46,15 @@ bool finishedCore1 = false;
 bool finishedCore0 = false;
 uint8_t iServerMqtt = 0;
 
+uint8_t iMsgMqtt = 0;
+
+struct SendMqttMsg {
+  bool send;
+  String msg;
+};
+struct SendMqttMsg SendMqttMsg[MAX_PLANTS];
+
+
 void swichs_on_off(int io){
   Serial.print("\nSwitch mode: ");
   Serial.println(io);
@@ -182,7 +191,6 @@ void getDataDig(String select , bool send = true){
   }
 }
 void getDataAnalog(JsonObjectConst User, String plant, bool send = true ){
-  String json = "";
   DynamicJsonDocument analog(1024);
   //JsonObject analog = doc.createNestedObject("Analog");
   analog["plantId"] = plant;
@@ -212,13 +220,13 @@ void getDataAnalog(JsonObjectConst User, String plant, bool send = true ){
     SumaAnalog = 0;
   }
 
-  serializeJson(analog, json);
+  serializeJson(analog, SendMqttMsg[iMsgMqtt].msg);
   if(send) {
-    send_mqtt("Huerta/Push/Analog" ,json);
+    SendMqttMsg[iMsgMqtt].send = true;
   }else{
-    Serial.println("Enviando a mqtt");
-    Serial.println(json);
+    SendMqttMsg[iMsgMqtt].send = false;
   }
+
 }
 void printLocalTime(){
   struct tm timeinfo;
@@ -244,6 +252,10 @@ void setup(){
     delay(100);
   }
 
+  //Inicializacion de variables
+  iMsgMqtt = 0;
+
+
   //pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
   pinMode(LED_GREEN, OUTPUT);
   pinMode(SW1, OUTPUT);
@@ -266,7 +278,7 @@ void setup(){
       digitalWrite(LED_GREEN,HIGH);
       delay(1000);
       
-      if(counterSleep++ >= 4){
+      if(counterSleep++ >= 48){
         Serial.println("reset preventivo.");
         //Traer la ultima version del usuario
         getUser();
@@ -407,11 +419,19 @@ void taskCore1( void * pvParameters){
   //Serial.print("Task of the core 1:");
   //Serial.println(xPortGetCoreID());
   for(;;){
+
+    //Led indicador que esta en funcionamiento
     
     digitalWrite(LED_GREEN, HIGH);
-    swichs_on_off(HIGH);
 
+    /* 
+    *  Each User has max 4 measurements ( TCS34725, BME280, CCS811 and Si7021 )
+    *  and this is send to database for store it.
+    */
     getDataDig(  localUser["Measurements"] );
+
+    //Damos electricidad a los sensores analogicos
+    swichs_on_off(HIGH);
     /* 
     *  Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
     *  and this is send to database for store it.
@@ -420,15 +440,29 @@ void taskCore1( void * pvParameters){
       
       //Definir los datos analogicos y los datos de riego y de iluminacion para ser activados
       getDataAnalog(kvp.value(), kvp.key().c_str() ); 
-      taskSystem(kvp.value(), kvp.key().c_str() ); 
-
+      iMsgMqtt++;
     }
-    /* 
-    *  Each User has max 4 measurements ( TCS34725, BME280, CCS811 and Si7021 )
-    *  and this is send to database for store it.
-    */
-    
+    //Apagamos los sensores analogicos
     swichs_on_off(LOW);
+    
+    //Por cada planta, enviamos cada mensaje analogico
+    for(iMsgMqtt = 0; iMsgMqtt< MAX_PLANTS; iMsgMqtt++)
+    {
+      Serial.printf("\n Enviando a mqtt: %d \n", SendMqttMsg[iMsgMqtt].send );
+      Serial.println(SendMqttMsg[iMsgMqtt].msg);
+
+      if (SendMqttMsg[iMsgMqtt].send == true )
+      {
+        send_mqtt("Huerta/Push/Analog" ,SendMqttMsg[iMsgMqtt].msg);
+      }
+    }
+
+    //por cada planta, realizamos la rutina de tareas (Riego y/o iluminacion)
+    for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
+      
+      //Definir los datos analogicos y los datos de riego y de iluminacion para ser activados
+      taskSystem(kvp.value(), kvp.key().c_str() ); 
+    }
     
     Serial.println("re send the mqtt messages");
     //sendPedientingMessage();

@@ -1,4 +1,6 @@
 #include <Adafruit_NeoPixel.h>
+#include <ESP32Servo.h>
+
 #ifdef __AVR__
  #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
@@ -11,6 +13,7 @@ Adafruit_NeoPixel pixels(num_pixels, pin_pixel, NEO_GRB + NEO_KHZ800);
 DynamicJsonDocument doc (200);
 JsonArray userTasks = doc.to<JsonArray>();
 
+Servo myservo;  // create servo object to control a servo
 
 void receptionSystem( String topic, String message){
   if ( topic == "device/get/task" ) {
@@ -19,7 +22,17 @@ void receptionSystem( String topic, String message){
 }
 
 
-void taskWater( int pin_humCap, int pin_humEc,int limit, int pinout){  Serial.println("Activado el sistema de riego"); };
+void taskWater( int pin_humCap, int pin_humEc,int limit, int pinout)
+{  
+  Serial.printf("\n Activado el sistema de riego pin %d \n", pinout); 
+  myservo.attach(pinout);
+
+  myservo.write(180); 
+  delay(2000);
+  myservo.write(0); 
+
+
+};
 void taskLight( int led_start,  int led_end, int r, int g, int b){ 
 
     Serial.println("Activado el sistema de iluminacion"); 
@@ -429,10 +442,10 @@ void saveUser()
 
       printf("\n ------- \n");
       printf("  Id: %lld (%s) in indice:%d \n", plantStatus[indice].Id, kvp.key().c_str(), indice);
-      printf(" water: %d (%s) \n",              plantStatus[indice].water, localUser["plants"][Id_plant]["water"]["status"].as<String>());
-      printf(" last_time_light: %lu (%s) \n",   plantStatus[indice].last_time_water, localUser["plants"][Id_plant]["water"]["last_water"].as<String>());
-      printf(" light: %d (%s) \n",              plantStatus[indice].light, localUser["plants"][Id_plant]["light"]["status"].as<String>());
-      printf(" last_time_light: %lu (%s)\n",     plantStatus[indice].last_time_light, localUser["plants"][Id_plant]["light"]["last_light"].as<String>());
+      printf(" water: %d (%s) \n",              plantStatus[indice].water, localUser["plants"][Id_plant]["water"]["status"].as<String>().c_str());
+      printf(" last_time_light: %lu (%s) \n",   plantStatus[indice].last_time_water, localUser["plants"][Id_plant]["water"]["last_water"].as<String>().c_str());
+      printf(" light: %d (%s) \n",              plantStatus[indice].light, localUser["plants"][Id_plant]["light"]["status"].as<String>().c_str());
+      printf(" last_time_light: %lu (%s)\n",     plantStatus[indice].last_time_light, localUser["plants"][Id_plant]["light"]["last_light"].as<String>().c_str());
       
       indice++;
     } 

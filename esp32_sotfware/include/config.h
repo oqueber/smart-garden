@@ -37,7 +37,7 @@
 // Light pin
 #define neoPin 17
 // led pin
-#define LED_GREEN 1
+#define LED_GREEN 2
 
 // Water pin
 #define waterPin0 4
@@ -75,7 +75,7 @@ const String urlGetUser = "http://"+ IP +":3000/Users/GetData/";
 
 #define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
 #define S_TO_M_FACTOR  60  /* Conversion factor for  seconds to minuts */
-#define TIME_TO_SLEEP  (2*S_TO_M_FACTOR* uS_TO_S_FACTOR)         /* Time ESP32 will go to sleep (in Min) */
+#define TIME_TO_SLEEP  (30*S_TO_M_FACTOR* uS_TO_S_FACTOR)         /* Time ESP32 will go to sleep (in Min) */
 
 // Sleep time while the micro does nothing
 const unsigned int time_1S = 1000000;
