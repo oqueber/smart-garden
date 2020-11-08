@@ -1,4 +1,5 @@
 #include <Adafruit_NeoPixel.h>
+#include <FastLED.h>
 #include <ESP32Servo.h>
 
 #ifdef __AVR__
@@ -8,6 +9,7 @@
   clock_prescale_set(clock_div_1);
 #endif
 
+CRGB leds[num_pixels];
 
 Adafruit_NeoPixel pixels(num_pixels, pin_pixel, NEO_GRB + NEO_KHZ800);
 DynamicJsonDocument doc (200);
@@ -44,9 +46,24 @@ void taskLight( int led_start,  int led_end, int r, int g, int b){
 
       // pixels.Color() takes RGB values, from 0,0,0 up to 255,255,255
       // Here we're using a moderately bright green color:
-      pixels.setPixelColor(i, pixels.Color(r, g, b));
-      pixels.show();   // Send the updated pixel colors to the hardware.
-      delay(DELAYVAL); // Pause before next pass through loop
+      //pixels.setPixelColor(i, pixels.Color(r, g, b));
+      //pixels.show();   // Send the updated pixel colors to the hardware.
+      //delay(DELAYVAL); // Pause before next pass through loop
+
+      leds[i].r = r;
+      leds[i].g = g;
+      leds[i].b = b; 
+
+      leds[53-i].r = r;
+      leds[53-i].g = g;
+      leds[53-i].b = b; 
+
+      leds[54+i].r = r;
+      leds[54+i].g = g;
+      leds[54+i].b = b; 
+
+      FastLED.show(); 
+      delay(30); 
     }
 
 };

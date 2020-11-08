@@ -89,7 +89,7 @@ bool itsHardReboot = false;
 // Which pin on the Arduino is connected to the NeoPixels?
 #define pin_pixel 17 
 // How many NeoPixels are attached to the Arduino?
-#define num_pixels 27 
+#define num_pixels 81 
 #define DELAYVAL 500 // Time (in milliseconds) to pause between pixels
 
 

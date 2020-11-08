@@ -247,6 +247,8 @@ void setup(){
   // END of Trinket-specific code.
   pixels.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
 
+  FastLED.addLeds<NEOPIXEL, pin_pixel>(leds, num_pixels);
+
   if (debugging || debugging_mqtt){
     Serial.begin(115200);
     delay(100);
