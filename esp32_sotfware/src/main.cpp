@@ -241,11 +241,11 @@ void setup(){
 
   // These lines are specifically to support the Adafruit Trinket 5V 16 MHz.
   // Any other board, you can remove this part (but no harm leaving it):
-  #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
-    clock_prescale_set(clock_div_1);
-  #endif
+  //#if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
+  //  clock_prescale_set(clock_div_1);
+  //#endif
   // END of Trinket-specific code.
-  pixels.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
+  //pixels.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
 
   FastLED.addLeds<NEOPIXEL, pin_pixel>(leds, num_pixels);
 
@@ -306,8 +306,8 @@ void setup(){
     default : 
       counterSleep = 0;
       itsHardReboot = true;
-      pixels.clear();
-      pixels.show();
+      //pixels.clear();
+      //pixels.show();
 
       reg_b = READ_PERI_REG(SENS_SAR_READ_CTRL2_REG);
       Serial.println("Reading reg b.....");

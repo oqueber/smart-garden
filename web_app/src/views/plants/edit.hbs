@@ -67,6 +67,14 @@
         <input placeholder="Water pin" id="waterPin" name="waterPin" type="number" class="validate">
         <label for="waterPin">Water pin</label>
       </div>
+      <div class="input-field col s4">
+        <input placeholder="Position open" id="waterOpen" name="waterOpen" type="number" class="validate">
+        <label for="waterOpen">Position open</label>
+      </div>
+      <div class="input-field col s4">
+        <input placeholder="Position close" id="waterClose" name="waterClose" type="number" class="validate">
+        <label for="waterClose">Position close</label>
+      </div>
     </div>
   </div>
 
@@ -230,6 +238,8 @@
       document.getElementById("time_start").value =  localPlant.sowing.light.time_start;
       document.getElementById("time_stop").value =   localPlant.sowing.light.time_stop;
       document.getElementById("waterPin").value =   localPlant.sowing.water.pinout;
+      document.getElementById("waterOpen").value =   localPlant.sowing.water.open;
+      document.getElementById("waterClose").value =   localPlant.sowing.water.close;
 
       const red = document.getElementById("red");
       red.noUiSlider.set(localPlant.sowing.light.color_red ); 

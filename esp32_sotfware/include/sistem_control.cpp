@@ -1,21 +1,26 @@
-#include <Adafruit_NeoPixel.h>
+//#include <Adafruit_NeoPixel.h>
 #include <FastLED.h>
 #include <ESP32Servo.h>
 
-#ifdef __AVR__
- #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
-#endif
-#if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
-  clock_prescale_set(clock_div_1);
-#endif
+//#ifdef __AVR__
+// #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
+//#endif
+//#if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
+//  clock_prescale_set(clock_div_1);
+//#endif
 
 CRGB leds[num_pixels];
 
-Adafruit_NeoPixel pixels(num_pixels, pin_pixel, NEO_GRB + NEO_KHZ800);
+//Adafruit_NeoPixel pixels(num_pixels, pin_pixel, NEO_GRB + NEO_KHZ800);
 DynamicJsonDocument doc (200);
 JsonArray userTasks = doc.to<JsonArray>();
 
-Servo myservo;  // create servo object to control a servo
+
+#define waterOpen 0
+#define waterMiddle 90
+#define waterClose 180
+#define timeOpen  2000
+
 
 void receptionSystem( String topic, String message){
   if ( topic == "device/get/task" ) {
@@ -24,14 +29,25 @@ void receptionSystem( String topic, String message){
 }
 
 
-void taskWater( int pin_humCap, int pin_humEc,int limit, int pinout)
+void taskWater( int pin_humCap, int pin_humEc,int limit, int pinout, int open, int close)
 {  
-  Serial.printf("\n Activado el sistema de riego pin %d \n", pinout); 
-  myservo.attach(pinout);
+  Serial.printf("\n Activado el sistema de riego pin %d open:%d close:%d \n", pinout,open, close); 
+  
+  Servo servo;  // create servo object to control a servo
+  
+  servo.attach(pinout);
 
-  myservo.write(180); 
-  delay(2000);
-  myservo.write(0); 
+	for (int pos = close; pos <= open; pos += 1) { // sweep from 0 degrees to 180 degrees
+		// in steps of 1 degree
+		servo.write(pos);
+		delay(100);             // waits 20ms for the servo to reach the position
+	}
+	for (int pos = open; pos >= close; pos -= 1) { // sweep from 180 degrees to 0 degrees
+		servo.write(pos);
+		delay(100);
+	}
+
+  servo.detach();
 
 
 };
@@ -102,7 +118,9 @@ void taskSystem( JsonObject plant , String plant_id){
     taskWater( plant["pinout"]["humCap"].as<int>(),
                plant["pinout"]["humEC"].as<int>(),
                plant["water"]["limit"].as<int>(),
-               plant["water"]["pinout"].as<int>());
+               plant["water"]["pinout"].as<int>(),
+               plant["water"]["open"].as<int>(),
+               plant["water"]["close"].as<int>());
     
     Serial.print("Before: ");
     Serial.println(plant["water"]["last_water"].as<String>());

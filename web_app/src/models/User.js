@@ -38,7 +38,9 @@ const UserSchema = new Schema({
                 supply: {type: Number},
                 limit: {type: Number},
                 pinout: {type: Number},
-                status: {type: Boolean, default: false }
+                status: {type: Boolean, default: false },
+                open: {type: Number, default: 180 },
+                close: {type: Number, default: 0 }
             },
             temperature:{
                 min:{type: Number}
