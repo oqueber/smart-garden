@@ -16,11 +16,16 @@ DynamicJsonDocument doc (200);
 JsonArray userTasks = doc.to<JsonArray>();
 
 
-#define waterOpen 0
+#define waterOpen   0
 #define waterMiddle 90
-#define waterClose 180
-#define timeOpen  2000
+#define waterClose  180
+#define timeOpen    2000
 
+#define humCap_seco   3166
+#define humCap_mojado 1284
+
+#define humEc_seco    0
+#define humEc_mojado  2460
 
 void receptionSystem( String topic, String message){
   if ( topic == "device/get/task" ) {
@@ -31,23 +36,53 @@ void receptionSystem( String topic, String message){
 
 void taskWater( int pin_humCap, int pin_humEc,int limit, int pinout, int open, int close)
 {  
+  unsigned int analogValue = 0;
+  bool riegoEc = false;
+  bool riegoCap = false;
+
   Serial.printf("\n Activado el sistema de riego pin %d open:%d close:%d \n", pinout,open, close); 
   
-  Servo servo;  // create servo object to control a servo
-  
-  servo.attach(pinout);
+  if (pin_humEc < 30){
+    // ADC2 control register restoring
+    WRITE_PERI_REG(SENS_SAR_READ_CTRL2_REG, reg_b);
+    //VERY IMPORTANT: DO THIS TO NOT HAVE INVERTED VALUES!
+    SET_PERI_REG_MASK(SENS_SAR_READ_CTRL2_REG, SENS_SAR2_DATA_INV);
+    //We have to do the 2 previous instructions BEFORE EVERY analogRead() calling!
+  }
+  analogValue = analogRead( pin_humEc );
+  Serial.printf("\n HumEC: %d \n", analogValue); 
+  if (  analogValue >= humEc_mojado/2 )
+  {
+    riegoEc = true;
+  }
 
-	for (int pos = close; pos <= open; pos += 1) { // sweep from 0 degrees to 180 degrees
-		// in steps of 1 degree
-		servo.write(pos);
-		delay(100);             // waits 20ms for the servo to reach the position
-	}
-	for (int pos = open; pos >= close; pos -= 1) { // sweep from 180 degrees to 0 degrees
-		servo.write(pos);
-		delay(100);
-	}
+  if (pin_humCap < 30){
+    // ADC2 control register restoring
+    WRITE_PERI_REG(SENS_SAR_READ_CTRL2_REG, reg_b);
+    //VERY IMPORTANT: DO THIS TO NOT HAVE INVERTED VALUES!
+    SET_PERI_REG_MASK(SENS_SAR_READ_CTRL2_REG, SENS_SAR2_DATA_INV);
+    //We have to do the 2 previous instructions BEFORE EVERY analogRead() calling!
+  }
+  analogValue = analogRead( pin_humCap );
+  Serial.printf("\n HumCap: %d \n", analogValue); 
+  if ( analogValue <= humCap_seco/2)
+  {
+    riegoCap = true;
+  }
 
-  servo.detach();
+  if ( riegoCap && riegoEc )
+  {
+    Serial.printf("\n water time \n"); 
+    Servo servo;  // create servo object to control a servo
+    
+    servo.attach(pinout);
+    servo.write(open);
+    delay(10000);
+    servo.write(close);
+    delay(3000);
+
+    servo.detach();
+  }
 
 
 };

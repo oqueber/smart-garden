@@ -18,6 +18,19 @@ static RTC_DATA_ATTR time_t timeSystem;;
 DynamicJsonDocument localUser (2048);
 static RTC_DATA_ATTR struct Plant_status plantStatus[MAX_PLANTS];
 
+bool finishedCore1 = false;
+bool finishedCore0 = false;
+uint8_t iServerMqtt = 0;
+
+uint8_t iMsgMqtt = 0;
+
+struct SendMqttMsg {
+  bool send;
+  String msg;
+};
+struct SendMqttMsg SendMqttMsg[MAX_PLANTS];
+
+
 #include <sistem_error.cpp>
 
 #include <./wifi/wifi.h>
@@ -42,17 +55,7 @@ void taskCore1( void * pvParameters);
 void taskCore0( void * pvParameters);
 void callback_touch(){};
 
-bool finishedCore1 = false;
-bool finishedCore0 = false;
-uint8_t iServerMqtt = 0;
 
-uint8_t iMsgMqtt = 0;
-
-struct SendMqttMsg {
-  bool send;
-  String msg;
-};
-struct SendMqttMsg SendMqttMsg[MAX_PLANTS];
 
 
 void swichs_on_off(int io){
@@ -499,32 +502,13 @@ void taskCore2( void * pvParameters){
 
 
     Serial.println("Task2 by touch new loop");
-    //if( wifi_status() ){
-    //  if ( !getUser() && !getUserSD() ){
-    //    sisError(0);
-    //  }
-    //}
     
-    swichs_on_off(HIGH);
-    /* 
-    *  Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
-    *  and this is send to database for store it.
-    */
-    for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
-      getDataAnalog(kvp.value(), kvp.key().c_str(),false ); 
-    }
-    /* 
-    *  Each User has max 4 measurements ( TCS34725, BME280, CCS811 and Si7021 )
-    *  and this is send to database for store it.
-    */
-    getDataDig(  localUser["Measurements"],false );
-    
-    swichs_on_off(LOW);
+
     if (!client.connected()){  // Reconnect if connection is lost
       reconnect();
     }
     client.loop();
-    delay(10000);
+    delay(1000);
 
   }
   

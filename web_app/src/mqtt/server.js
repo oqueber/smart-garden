@@ -6,11 +6,8 @@ const mosca = require('mosca');
 const DigitaldB = require('../models/Digital');
 const AnalogdB = require('../models/Analog');
 const Users = require('../models/User');
-const {io} = require('../utils/socketio.js'); 
-// Import events module
-var events = require('events');
-// Create an eventEmitter object
-var eventEmitter = new events.EventEmitter();
+const {io, eventEmitter} = require('../utils/socketio.js'); 
+
 
 const settings = {
 	port: 1883
@@ -18,6 +15,11 @@ const settings = {
 const server = new mosca.Server(settings)
 
 let userTask = new Map();
+
+eventEmitter.on('action/setData', async function( data ){ 
+  console.log("LLego al eventEmitter ");
+  console.log(data);
+});
 
 /*
 eventEmitter.on('client/set/connection', async function( id ){

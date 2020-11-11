@@ -12,21 +12,27 @@
           </div>
 
         </div>
-        <div class="row">
-          <div class="col s12">
-            <a id="waterU_link" href="/act/water/on/{{MAC}}/{{date}}" class="btn btn-primary">Activar agua</a>
-            <a href="/act/water/off/{{MAC}}/{{date}}" class="btn btn-primary">Apagar agua</a>
+       <div class="row ">
+          <div class="center" style="width: 80%; margin: 0 auto;">
+              <a style="width: 40%;" class="btn btn-primary" onclick="emitter_water(1)"  href="#" >Activar agua</a>
+              <a style="width: 40%;" class="btn btn-primary" onclick="emitter_water(0)"  href="#" >Apagar agua</a>
           </div>
         </div>
         <div class="row">
-            <div class="input-field col s12">
-              <labe>Valor de horas de luz diarios: <span class="" id="valueSpanLux"></span></label>
-              <div id="lightH"></div>
-            </div>
-            <div class="col s12">
-              <a id="lightH_link" href="/act/light/on/{{MAC}}/{{date}}" class="btn btn-primary">Activar luz</a>
-              <a href="/act/light/off/{{MAC}}/{{date}}" class="btn btn-primary">Apagar luz</a>
-            </div>
+          <div class="input-field col s6">
+            <input placeholder="Led start" id="led_start" name="led_start" type="number" class="validate">
+            <label for="led_start">Led start</label>
+          </div>
+          <div class="input-field col s6">
+            <input placeholder="Led end" id="led_end" name="led_end" type="number" class="validate">
+            <label for="led_end">Led end</label>
+          </div>
+        </div>
+        <div class="row ">
+          <div class="center" style="width: 80%; margin: 0 auto;">
+              <a style="width: 40%;" class="btn btn-primary" onclick="emitter_light(1)"  href="#" >Activar luz</a>
+              <a style="width: 40%;" class="btn btn-primary" onclick="emitter_light(0)"  href="#" >Apagar luz</a>
+          </div>
         </div>
       </div>
       <div class="col m6 s12">
@@ -50,6 +56,9 @@
 <script>
   const umbralLux = ["Sin luz", "poca luz", "en sombra", "Luz directa"];
   const umbralWater = ["Seco", "Poco Humedo", "Humedo", "Encharcado"];
+  let socket; // Aun no se inicializa el socket.io
+
+  
   /* --------------------------------------------------
   *              Water Umbral
   * --------------------------------------------------*/
@@ -64,8 +73,9 @@
       }
   });
   /* --------------------------------------------------
-  *              Water Umbral
+  *              Light  Umbral
   * --------------------------------------------------*/
+  /*
   var lightH = document.getElementById('lightH');
   noUiSlider.create(lightH, {
       start: [1],
@@ -76,6 +86,7 @@
           'max': [24]
       }
   });
+  */
   /* --------------------------------------------------
   *              Color
   * --------------------------------------------------*/
@@ -112,20 +123,52 @@
       });
   });
 
-    const valueSliderWater = document.getElementById("waterU");
-    const valueSliderLux = document.getElementById("lightH");
-    let valueSpanWater = document.getElementById('valueSpanWater');
-    let valueSpanLux = document.getElementById('valueSpanLux');
+  const valueSliderWater = document.getElementById("waterU");
+  //const valueSliderLux = document.getElementById("lightH");
+  let valueSpanWater = document.getElementById('valueSpanWater');
+  //let valueSpanLux = document.getElementById('valueSpanLux');
 
+  /* --------------------------------------------------
+  *              emitters
+  * --------------------------------------------------*/
+  function emitter_water(mode)
+  {
+    console.log("Enviando eventemitter");
+    socket.emit('action/setData', {
+      action:"water",
+      mode: mode,
+      limit: parseInt(valueSliderWater.noUiSlider.get(),10)
+    });
+  }
+  
+  function emitter_light(mode)
+  {
+    console.log("Enviando eventemitter");
+    socket.emit('action/setData', {
+      action:"light",
+      mode: mode,
+      red : colors[0],
+      green : colors[1],
+      blue : colors[2]
+    });
+  }
+
+  /* --------------------------------------------------
+  *              Main
+  * --------------------------------------------------*/
   $( document ).ready(function() {
 
+    socket = io(); //Inicializamos los sockets
+
     valueSpanWater.textContent = `${umbralWater[1]}`;
-    valueSpanLux.textContent = `1 horas diarias`;
+    //valueSpanLux.textContent = `1 horas diarias`;
     
+    /*
     document.getElementById("waterU_link").addEventListener('click',function(e){
       e.preventDefault();
       window.location.href = `${document.getElementById("waterU_link").href}/${parseInt(valueSliderWater.noUiSlider.get(),10)}`;
     });
+    
     document.getElementById("lightH_link").addEventListener('click',function(e){
       e.preventDefault();
       const url = document.getElementById("lightH_link").href;
@@ -135,12 +178,14 @@
       const blue = colors[2];
       window.location.href = `${url}/${hours}/${red}/${green}/${blue}`;
     });
-    valueSliderWater.noUiSlider.on('change.one', (values) => {
-        valueSpanWater.textContent = `${umbralWater[parseInt(values[0],10)]}`;
-    });
 
     valueSliderLux.noUiSlider.on('change.one', (values) => {
         valueSpanLux.textContent = `Activar por ${parseInt(values[0],10)} horas`;
     });
+    */
+    valueSliderWater.noUiSlider.on('change.one', (values) => {
+        valueSpanWater.textContent = `${umbralWater[parseInt(values[0],10)]}`;
+    });
+
   });
 </script>

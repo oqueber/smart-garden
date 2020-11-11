@@ -1,10 +1,20 @@
 'use strict'
 const AnalogdB = require('../models/Analog');
 const DigitaldB = require('../models/Digital');
-const {io} = require('../utils/socketio.js');
+const {io, eventEmitter} = require('../utils/socketio.js');
+
+
 io.on('connection',   (socket)=>{
   console.log('[Smart-Garden-Socket] connected '+ socket.id)
   
+  socket.on('action/setData', (Data)=>{
+    //console.log('Recibido al Servidor: ', Data);
+    //console.log('Del Usuario: ', socket.id);
+    console.log("enviando al eventEmitter ");
+    eventEmitter.emit('action/setData',Data );
+
+  }); 
+
   socket.on('chart/getData/digital', (Data)=>{
     //console.log('Recibido al Servidor: ', Data);
     //console.log('Del Usuario: ', socket.id);

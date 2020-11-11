@@ -116,6 +116,7 @@ bool send_mqtt(String msg_topic, String msg_payload, bool update){
 }
 // Recived the packages from the server. 
 void callback(char* topic, byte* payload, unsigned int length) {
+  
   String message = "";
   for (int i = 0; i < length; i++) {
     message += (char)payload[i]; 
