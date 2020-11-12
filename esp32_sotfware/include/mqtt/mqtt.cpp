@@ -13,7 +13,11 @@ void reconnect() {
     const String clientId = "device/"+getMac();
     // Attempt to connect
       if( client.connect(clientId.c_str()) ){
-        //client.subscribe("device/get/task");
+        
+        if (fl_manual)
+        {
+          client.subscribe("action/user/on");
+        }
         
         if(debugging_mqtt){
           Serial.println("connected");

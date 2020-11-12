@@ -20,6 +20,8 @@ static RTC_DATA_ATTR struct Plant_status plantStatus[MAX_PLANTS];
 
 bool finishedCore1 = false;
 bool finishedCore0 = false;
+bool fl_manual = false;
+
 uint8_t iServerMqtt = 0;
 
 uint8_t iMsgMqtt = 0;
@@ -298,6 +300,7 @@ void setup(){
 
     case ESP_SLEEP_WAKEUP_TOUCHPAD : 
       Serial.println("Wakeup caused by touchpad");
+      fl_manual = true;
       for(int i = 0; i<10; i++){
         digitalWrite(LED_GREEN,LOW);
         delay(1000);
@@ -487,14 +490,19 @@ void taskCore1( void * pvParameters){
 }
 // manual mood
 void taskCore2( void * pvParameters){
-  Serial.print("Task by touch:");
-  Serial.println(xPortGetCoreID());
-  delay(10000);
+
+  bool toogle = 1;
+
   for(;;){
 
+    digitalWrite(LED_GREEN,toogle);
+    toogle = toogle ? 0:1;
+
     if( touchRead(touchPin) < Threshold){
-      digitalWrite(LED_GREEN,LOW);
+      digitalWrite(LED_GREEN,HIGH);
       Serial.println("Task2 by touch finished");
+      client.unsubscribe("action/user/on");
+      delay(5000);
       client.disconnect();
       delay(5000);
       toSleep(TIME_TO_SLEEP);

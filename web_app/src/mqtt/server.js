@@ -8,6 +8,7 @@ const AnalogdB = require('../models/Analog');
 const Users = require('../models/User');
 const {io, eventEmitter} = require('../utils/socketio.js'); 
 
+let userConect = new Map();
 
 const settings = {
 	port: 1883
@@ -95,12 +96,32 @@ server.on('clientDisconnected', client => {
   debug(`Client Disconnected ${client.id}`);
 })
 
+server.on('unsubscribed',(topic,client) => {
+  debug(`Client unsubscribed ${client.id} with topic ${topic}`);
+  
+  let deviceId = (client.id).split('/')[1];
+
+
+  if( topic == "action/user/on")
+  {
+    io.emit(`action/user/${deviceId}`, "Offline" );
+  }
+})
 server.on('subscribed', (topic,client) => {
   debug(`Client subscribed ${client.id} with topic ${topic}`);
   
-  /*
+  
   let deviceId = (client.id).split('/')[1];
 
+  if( topic == "action/user/on")
+  {
+    debug("Enviando al socket");
+    io.emit(`action/user/${deviceId}`, "Online" );
+  }
+  
+
+
+  /*
   if( topic == "device/update/user"){
     if ( userTask.has(deviceId) ){
         debug( chalk.yellow( `searching update for ${deviceId}`) );
