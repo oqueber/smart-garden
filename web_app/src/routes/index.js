@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User')
-
+const { isAuthenticated } = require("../helpers/auth")
 
 router.get('/', (req,res)=>{
     res.render('index',{ title: 'Index', layout: 'webside' });
@@ -10,11 +10,13 @@ router.get('/about', (req,res)=>{
     res.render('about',{ title: 'about', layout: 'webside' });
 });
 
-router.get('/act/:date', (req,res)=>{
+router.get('/act/:date', isAuthenticated, (req,res)=>{
     const date = parseInt(req.params.date,10);
     const MAC = req.user.MAC;
 
+
     res.render('plants/act',{date,MAC});
+
 });
 
 /*  Data:{

@@ -1,17 +1,62 @@
 'use strict'
 const AnalogdB = require('../models/Analog');
 const DigitaldB = require('../models/Digital');
-const {io, eventEmitter} = require('../utils/socketio.js');
+const debug = require('debug')("SG:socketio ");
+const chalk = require('chalk');
+const {io, eventEmitter, userConnected} = require('../utils/socketio.js');
 
 
 io.on('connection',   (socket)=>{
   console.log('[Smart-Garden-Socket] connected '+ socket.id)
   
+  socket.on('user/connect', (data)=>{
+    if ( !userConnected.has(data.MAC))
+    {
+      let fl_status =  userConnected.set( data.MAC , { socket: socket, socketId:socket.id , esp32: false } );
+      debug( chalk.yellow( `new web connection with ${socket.id} and MAC ${data.MAC} status ${fl_status}`) );  
+    }
+    else
+    {
+      //Hay dos casos. 1: porque se conecto primero el esp32 y luego en la web
+      //               2: el usuario se volvio a conectar en la web.
+      let fl_status = userConnected.get(data.MAC);
+      debug( chalk.yellow( `already exits action connection MAC ${data.MAC} with value ${ fl_status }`) );        
+      userConnected.delete(data.MAC);  
+      userConnected.set(data.MAC ,{ socket: socket, socketId:socket.id , esp32: true });
+      socket.emit('action/user',"online");
+
+      if( fl_status == "empty" )
+      {
+        debug( chalk.yellow( `reemplace by esp32 connected first`) );
+      }
+      else
+      {
+        debug( chalk.yellow( `reemplace by new web connection`) );
+      }
+    }
+  }); 
+
+  socket.once('disconnect', function () {
+
+    for(let [i_MAC, i_value]  of userConnected )
+    {
+      if ( socket.id == i_value.socketId )
+      {
+        if( i_value.esp32 == false )
+        {
+          let fl_status = userConnected.delete(i_MAC);
+          debug( chalk.yellow( `delete action connection of ${i_value.socketId} and MAC ${ i_MAC } status ${ fl_status }`) );
+        }
+      }
+    }
+  });
+
+
   socket.on('action/setData', (Data)=>{
-    //console.log('Recibido al Servidor: ', Data);
-    //console.log('Del Usuario: ', socket.id);
+    console.log('Recibido al Servidor: ', Data);
+    console.log('Del Usuario: ', socket.id);
     console.log("enviando al eventEmitter ");
-    eventEmitter.emit('action/setData',Data );
+    eventEmitter.emit('action/setData',{ MAC: Data.MAC, payload: JSON.stringify(Data.payload) } );
 
   }); 
 

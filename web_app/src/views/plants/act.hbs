@@ -15,24 +15,24 @@
         </div>
        <div class="row ">
           <div class="center" style="width: 80%; margin: 0 auto;">
-              <a style="width: 40%;" class="btn btn-primary" onclick="emitter_water(1)"  href="#" >Activar agua</a>
-              <a style="width: 40%;" class="btn btn-primary" onclick="emitter_water(0)"  href="#" >Apagar agua</a>
+              <a style="width: 40%;" class="btn btn-primary" onclick="setSocket_water(1)"  href="#" >Activar agua</a>
+              <a style="width: 40%;" class="btn btn-primary" onclick="setSocket_water(0)"  href="#" >Apagar agua</a>
           </div>
         </div>
         <div class="row">
           <div class="input-field col s6">
-            <input placeholder="Led start" id="led_start" name="led_start" type="number" class="validate">
+            <input placeholder="Led start" id="led_start" value="0" name="led_start" type="number" class="validate">
             <label for="led_start">Led start</label>
           </div>
           <div class="input-field col s6">
-            <input placeholder="Led end" id="led_end" name="led_end" type="number" class="validate">
+            <input placeholder="Led end" id="led_end" value="0" name="led_end" type="number" class="validate">
             <label for="led_end">Led end</label>
           </div>
         </div>
         <div class="row ">
           <div class="center" style="width: 80%; margin: 0 auto;">
-              <a style="width: 40%;" class="btn btn-primary" onclick="emitter_light(1)"  href="#" >Activar luz</a>
-              <a style="width: 40%;" class="btn btn-primary" onclick="emitter_light(0)"  href="#" >Apagar luz</a>
+              <a style="width: 40%;" class="btn btn-primary" onclick="setSocket_light(1)"  href="#" >Activar luz</a>
+              <a style="width: 40%;" class="btn btn-primary" onclick="setSocket_light(0)"  href="#" >Apagar luz</a>
           </div>
         </div>
       </div>
@@ -134,25 +134,34 @@
   * --------------------------------------------------*/
   var userMac = document.getElementById("UserMac").innerHTML; 
 
-  function emitter_water(mode)
+  function setSocket_water(mode)
   {
-    console.log("Enviando eventemitter");
+    console.log("Enviando setSocket_water");
     socket.emit('action/setData', {
-      action:"water",
-      mode: mode,
-      limit: parseInt(valueSliderWater.noUiSlider.get(),10)
+      MAC: userMac, 
+      payload:
+      { 
+        action:"water",
+        mode: mode,
+        limit: parseInt(valueSliderWater.noUiSlider.get(),10)
+      }
     });
   }
   
-  function emitter_light(mode)
+  function setSocket_light(mode)
   {
     console.log("Enviando eventemitter");
     socket.emit('action/setData', {
-      action:"light",
-      mode: mode,
-      red : colors[0],
-      green : colors[1],
-      blue : colors[2]
+      MAC: userMac,
+      payload:{
+        action:"light",
+        mode: mode,
+        ledStart: document.getElementById("led_start").valueAsNumber,
+        ledEnd: document.getElementById("led_end").valueAsNumber,
+        red : colors[0],
+        green : colors[1],
+        blue : colors[2]
+      }
     });
   }
 
@@ -162,14 +171,25 @@
   $( document ).ready(function() {
 
     socket = io(); //Inicializamos los sockets
+    socket.emit('user/connect', { MAC: userMac });
 
-  // Socket que escucha las peticiones de recepcion de datos
-  socket.on(`action/user/${userMac}`, (Data)=>{
-    document.getElementById("PlantOn").innerHTML = Data;
-    console.log(`action/user/${userMac}`);
-    console.log(socket.id);
+    // Socket que escucha las peticiones de recepcion de datos
+    socket.on(`action/user`, (Data)=>{
+      document.getElementById("PlantOn").innerHTML = Data;
+    });
 
-  });
+     // Socket que escucha los posibles errores 
+    socket.on(`action/response/${userMac}`, (Data)=>{
+      var element = document.getElementById("div-errors");
+      element.innerHTML += `<div onclick="notificationDelete(this)" class="right alert show showAlert">
+        <span class="fas fa-exclamation-circle"></span>
+        <span class="msg">${Data.text}</span>
+        <div  class="close-btn">
+          <i class="material-icons">X</i>
+        </div>
+      </div>`;
+    });
+
 
 
 

@@ -44,7 +44,7 @@ router.get('/users/logout', (req,res)=>{
 
 router.post('/users/login-user', passport.authenticate('local', {
     successRedirect: '/my-plants',
-    failureRedirect: '/users/signup',
+    failureRedirect: '/users/Login',
     failureFlash: true
 }));
 router.post('/Users/update-user', async(req,res) =>{

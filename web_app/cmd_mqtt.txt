@@ -6,7 +6,8 @@ mosquitto_pub -t "Huerta/Push/Digital" -h 192.168.1.136 -m '{"Si7021":{"Temp":29
 mosquitto_pub -t "Huerta/Push/Digital" -h 192.168.1.136 -m '{"TCS34725":{"R":54,"G":47,"B":46,"C":107,"ColorTemp":6960,"Lux":22},"device":"28:92:37:18:207:164","timestamps":1600618174}'
 mosquitto_pub -t "Huerta/Push/Analog" -h 192.168.1.136 -m '{"plantId":"1598026512573","photocell1":{"rawData":352},"photocell2":{"rawData":442},"humCap":{"rawData":0},"humEC":{"rawData":0},"device":"28:92:37:18:207:164","timestamps":1600618294}'
 
-mqtt sub -t 'device/get/task' -h 'localhost' -i "Device/28:92:37:18:207:164 -v
+mosquitto_sub -t action/user/on -i Device/28:92:37:18:207:164 
+mosquitto_sub -t esp32/connect -i Device/28:92:37:18:207:164 -t action/#
 
 
 mqtt pub -t "Huerta/update/light" -h localhost -m '1598026512573/1" -i "Device/28:92:37:18:207:164" 

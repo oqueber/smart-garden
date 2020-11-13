@@ -10,6 +10,7 @@ const io = new socketio(server);
 var events = require('events');
 // Create an eventEmitter object
 var eventEmitter = new events.EventEmitter();
+let userConnected = new Map();
 
 
-module.exports  = {app, io, express, server, eventEmitter}
+module.exports  = {app, io, express, server, eventEmitter, userConnected}

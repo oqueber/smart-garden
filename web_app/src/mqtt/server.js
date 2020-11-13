@@ -6,9 +6,7 @@ const mosca = require('mosca');
 const DigitaldB = require('../models/Digital');
 const AnalogdB = require('../models/Analog');
 const Users = require('../models/User');
-const {io, eventEmitter} = require('../utils/socketio.js'); 
-
-let userConect = new Map();
+const {io, eventEmitter, userConnected} = require('../utils/socketio.js'); 
 
 const settings = {
 	port: 1883
@@ -18,8 +16,32 @@ const server = new mosca.Server(settings)
 let userTask = new Map();
 
 eventEmitter.on('action/setData', async function( data ){ 
-  console.log("LLego al eventEmitter ");
+  
+  let i_socket = userConnected.get(data.MAC);
+
+  console.log(`LLego al eventEmitter`);
   console.log(data);
+  
+  try {
+    if(i_socket.esp32 == true)
+    {
+      server.publish({
+        topic: 'action/setData/task',
+        payload: data.payload,
+        qos: 0, // 0, 1, or 2
+        retain: false // or true
+      },i_socket.client, () => debug("Message sent"));
+  
+    }
+    else
+    {
+      console.log(`ESP32 dont connected${data.MAC}`);
+    }
+  } catch (error) {
+    debug( chalk.red('Error mqtt eventEmmiter ('+error+').') );
+  }
+
+
 });
 
 /*
@@ -102,21 +124,50 @@ server.on('unsubscribed',(topic,client) => {
   let deviceId = (client.id).split('/')[1];
 
 
-  if( topic == "action/user/on")
+  if( topic == "esp32/connect")
   {
-    io.emit(`action/user/${deviceId}`, "Offline" );
+    // Comprobamos que el usuario esta conectado antes de enviar el mensaje
+    if ( userConnected.has(deviceId) )
+    {
+      var i_socket = userConnected.get(deviceId);
+      if ( i_socket.socket != "empty")
+      {
+        debug("Enviando MQTT al socket user offline"); 
+        i_socket.esp32 = false;       
+        i_socket.socket.emit('action/user',"offline");
+      }
+      else  // Si es empty nunca logro establecer una conexion
+      {
+        let fl_status = userConnected.delete(deviceId);
+        debug( chalk.yellow( `delete action connection MAC ${ deviceId } status ${ fl_status }`) );
+      } 
+    }
   }
+
 })
 server.on('subscribed', (topic,client) => {
-  debug(`Client subscribed ${client.id} with topic ${topic}`);
-  
-  
   let deviceId = (client.id).split('/')[1];
 
-  if( topic == "action/user/on")
+  debug(`Client subscribed ${deviceId} with topic ${topic}`);
+  
+
+  if( topic == "esp32/connect")
   {
-    debug("Enviando al socket");
-    io.emit(`action/user/${deviceId}`, "Online" );
+    // Comprobamos que el usuario esta conectado antes de enviar el mensaje
+    if ( userConnected.has(deviceId) )
+    {
+      debug("Enviando MQTT al socket user online");        
+      var i_socket = userConnected.get(deviceId);
+      i_socket.esp32 = true; 
+      i_socket.esp32_client = client; 
+      i_socket.socket.emit('action/user',"online");
+    }
+    else
+    {
+      //Creo el usuario pero a la espera de asociarle un socket
+      debug( chalk.yellow( `new action connection MAC ${ deviceId } status socket: empty`) );
+      userConnected.set(deviceId,{ socket:"empty",esp32:true, esp32_client: client } );
+    }
   }
   
 
@@ -244,6 +295,22 @@ server.on('published', async (packet, client) => {
       debug(err)
     }
   } 
+
+
+
+  // Parte la comunicacion modo action
+  if(packet.topic == "action/response"){
+    let deviceMAC = (client.id).split('/')[1]; 
+    let devicePayload = packet.payload.toString('utf-8').split('/');
+    debug(chalk.green(`action/response" ${Number(devicePayload[0])} in the user ${deviceMAC} with value ${Number(devicePayload[1])}`));
+    console.log(packet.payload.toString('utf-8'));
+
+    debug("Enviando al socket");
+    io.emit(`action/response/${deviceId}`, {text: packet.payload.toString('utf-8') });
+  }
+
+
+
 });
 
 server.on('ready', async () => {

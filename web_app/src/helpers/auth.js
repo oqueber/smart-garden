@@ -5,7 +5,7 @@ helpers.isAuthenticated = (req, res, next) => {
     return next();
   }
   req.flash('error_msg', 'Not Authorized.');
-  res.redirect('/users/signup');
+  res.redirect('/users/Login');
 };
 
 module.exports = helpers;
