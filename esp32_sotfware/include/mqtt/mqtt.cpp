@@ -1,9 +1,40 @@
 #define MQTT_MAX_PACKET_SIZE = 500
 #include <PubSubClient.h>
 
+extern void taskWater( int pin_humCap, int pin_humEc,int limit, int pinout, int open, int close);
+
 PubSubClient client(espClient);
 time_t now;
+
+bool action_task ( String string_task)
+{
+  DynamicJsonDocument json_task (200);
+
+  auto error = deserializeJson(json_task, string_task);  
+
+  if( error == DeserializationError::Ok )
+  {
+    if( json_task["action"].as<String>() == "water")
+    {
+
+    }
+    else if ( json_task["action"].as<String>() == "light") 
+    {
+
+    }
+    else
+    {
+      //Respondes que no se pudo realizar la tarea
+    }
+    
+  }
+  else
+  {
+    //Respondes que no se pudo realizar la tarea
+  }
   
+}
+
 // Try connecting to the Mqtt server
 void reconnect() {
   uint8_t intentos = 0;
@@ -16,10 +47,10 @@ void reconnect() {
         
         if (fl_manual)
         {
-          client.subscribe("action/user/on");
+          client.subscribe("esp32/connect");
         }
         
-        if(debugging_mqtt){
+      if(debugging_mqtt){
           Serial.println("connected");
           Serial.println(clientId);
           Serial.print("State, rc=");
@@ -125,6 +156,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
   for (int i = 0; i < length; i++) {
     message += (char)payload[i]; 
   }
+
+  action_task(message);
 
   if (debugging_mqtt){
     Serial.print("Message arrived on topic[");

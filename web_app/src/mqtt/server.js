@@ -26,7 +26,7 @@ eventEmitter.on('action/setData', async function( data ){
     if(i_socket.esp32 == true)
     {
       server.publish({
-        topic: 'action/setData/task',
+        topic: 'esp32/connect',
         payload: data.payload,
         qos: 0, // 0, 1, or 2
         retain: false // or true

@@ -143,6 +143,7 @@
       { 
         action:"water",
         mode: mode,
+        plantId: document.getElementById("plantId").valueAsNumber,
         limit: parseInt(valueSliderWater.noUiSlider.get(),10)
       }
     });
@@ -156,6 +157,7 @@
       payload:{
         action:"light",
         mode: mode,
+        plantId: document.getElementById("plantId").valueAsNumber,
         ledStart: document.getElementById("led_start").valueAsNumber,
         ledEnd: document.getElementById("led_end").valueAsNumber,
         red : colors[0],
