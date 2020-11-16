@@ -55,8 +55,18 @@ io.on('connection',   (socket)=>{
   socket.on('action/setData', (Data)=>{
     console.log('Recibido al Servidor: ', Data);
     console.log('Del Usuario: ', socket.id);
-    console.log("enviando al eventEmitter ");
-    eventEmitter.emit('action/setData',{ MAC: Data.MAC, payload: JSON.stringify(Data.payload) } );
+    
+    let user = userConnected.get(Data.MAC);
+    
+    if ( user.esp32 )
+    {
+      console.log("enviando al eventEmitter ");
+      eventEmitter.emit('action/setData',{ MAC: Data.MAC, payload: JSON.stringify(Data.payload) } );
+    }
+    else
+    {
+      socket.emit('action/response',{text: "Error user dont connected"});
+    }
 
   }); 
 

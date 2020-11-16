@@ -1,22 +1,16 @@
 
 <div class="row">
   <div class="section">
-  <h4>Activar sensores para <span id="PlantId">{{date}}</span> </h4>
-  <p><span id="UserMac">{{MAC}}</span>  ->  Status:<span id="PlantOn"> Offline </span> </p>
+  <h5>Activar sensores para la planta <span id="plantId" >{{date}}</span> del usuario <span id="UserMac">{{MAC}}</span>  </h5>
+  <p> Status del micro:  <span id="PlantOn" style="padding: 5px;background: red;border-radius: 100px;color: white;"> Offline </span> </p>
   
     <div class="row">
       <div class="col m6 s12">
+
         <div class="row">
           <div class="input-field col s12">
-            <label >Umbral maximo de riego: <span class="" id="valueSpanWater"></span></label>
+            <label style="margin:10px 0;" >Umbral maximo de riego: <strong id="valueSpanWater"></strong></label>
             <div id="waterU"></div>
-          </div>
-
-        </div>
-       <div class="row ">
-          <div class="center" style="width: 80%; margin: 0 auto;">
-              <a style="width: 40%;" class="btn btn-primary" onclick="setSocket_water(1)"  href="#" >Activar agua</a>
-              <a style="width: 40%;" class="btn btn-primary" onclick="setSocket_water(0)"  href="#" >Apagar agua</a>
           </div>
         </div>
         <div class="row">
@@ -28,11 +22,24 @@
             <input placeholder="Led end" id="led_end" value="0" name="led_end" type="number" class="validate">
             <label for="led_end">Led end</label>
           </div>
+          <div class="col s12">
+            <p>
+              <label>
+                <input type="checkbox" id="checkbox"/>
+                <span>Usar esta configuracion</span>
+              </label>
+            </p> 
+          </div>
         </div>
         <div class="row ">
-          <div class="center" style="width: 80%; margin: 0 auto;">
-              <a style="width: 40%;" class="btn btn-primary" onclick="setSocket_light(1)"  href="#" >Activar luz</a>
-              <a style="width: 40%;" class="btn btn-primary" onclick="setSocket_light(0)"  href="#" >Apagar luz</a>
+          <div class="col s4">
+              <a class="btn btn-primary" onclick="setSocket_water()"  href="#" >Activar agua</a>
+          </div>
+          <div class="col s4">
+              <a class="btn btn-primary" onclick="setSocket_light(1)"  href="#" >Activar luz</a>
+          </div>
+          <div class="col s4">
+              <a class="btn btn-primary" onclick="setSocket_light(0)"  href="#" >Apagar luz</a>
           </div>
         </div>
       </div>
@@ -44,6 +51,7 @@
                   <div class="sliders" id="green"></div>
                   <div class="sliders" id="blue"></div>
                   <div id="result"></div>
+                  <p> R:<span id="rValue"></span> G:<span id="gValue"></span> B:<span id="bValue"></span> </p> 
                 </div> 
             </div>
         </div>
@@ -51,7 +59,10 @@
       </div>
     </div>
   </div>
-  <a href="/my-plants" class="btn btn-primary">Cancel</a>
+  <div class="row" style="text-align: center;">
+    <a href="/my-plants" class="btn btn-primary">Cancel</a>
+
+  </div>
 </div>
 <script src="/js/nouislider.js"></script>
 <script>
@@ -94,6 +105,10 @@
   var resultElement = document.getElementById('result');
   var sliders = document.getElementsByClassName('sliders');
   var colors = [0, 0, 0];
+  var red = document.getElementById('rValue'),
+      blue = document.getElementById('gValue'),
+      gren = document.getElementById('bValue');
+
   [].slice.call(sliders).forEach(function (slider, index) {
 
       noUiSlider.create(slider, {
@@ -121,6 +136,11 @@
 
           resultElement.style.background = color;
           resultElement.style.color = color;
+
+          rValue.innerHTML = colors[0];
+          gValue.innerHTML = colors[1];
+          bValue.innerHTML = colors[2];
+
       });
   });
 
@@ -134,7 +154,7 @@
   * --------------------------------------------------*/
   var userMac = document.getElementById("UserMac").innerHTML; 
 
-  function setSocket_water(mode)
+  function setSocket_water()
   {
     console.log("Enviando setSocket_water");
     socket.emit('action/setData', {
@@ -142,8 +162,8 @@
       payload:
       { 
         action:"water",
-        mode: mode,
-        plantId: document.getElementById("plantId").valueAsNumber,
+        mode: document.getElementById("checkbox").checked ? 1:0,
+        plantId: document.getElementById("plantId").innerHTML,
         limit: parseInt(valueSliderWater.noUiSlider.get(),10)
       }
     });
@@ -156,8 +176,8 @@
       MAC: userMac,
       payload:{
         action:"light",
-        mode: mode,
-        plantId: document.getElementById("plantId").valueAsNumber,
+        mode: document.getElementById("checkbox").checked ? 2 : mode,
+        plantId: document.getElementById("plantId").innerHTML,
         ledStart: document.getElementById("led_start").valueAsNumber,
         ledEnd: document.getElementById("led_end").valueAsNumber,
         red : colors[0],
@@ -178,10 +198,11 @@
     // Socket que escucha las peticiones de recepcion de datos
     socket.on(`action/user`, (Data)=>{
       document.getElementById("PlantOn").innerHTML = Data;
+      document.getElementById("PlantOn").style.background =  Data == "online" ? "green": "red";
     });
 
      // Socket que escucha los posibles errores 
-    socket.on(`action/response/${userMac}`, (Data)=>{
+    socket.on(`action/response`, (Data)=>{
       var element = document.getElementById("div-errors");
       element.innerHTML += `<div onclick="notificationDelete(this)" class="right alert show showAlert">
         <span class="fas fa-exclamation-circle"></span>
