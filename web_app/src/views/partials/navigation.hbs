@@ -4,16 +4,16 @@
     <a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
         
     <ul class="right hide-on-med-and-down">
-      <li><a href="/">Home</a></li>
-      <li><a href="/about">About</a></li>
+      <li><a href="/">Inicio</a></li>
+      <li><a href="/about">Acerca</a></li>
       {{#if user}}
-        <li><a href="/chart">Chart</a></li>
-        <li><a href="/my-plants">My plants</a></li>
-        <li><a href="/users/Edit">Setting</a></li>
-        <li><a href="/users/logout">Logout</a></li>
+        <li><a href="/chart">Métricas</a></li>
+        <li><a href="/my-plants">Plantas</a></li>
+        <li><a href="/users/Edit">Configuración</a></li>
+        <li><a href="/users/logout">Cerrar sesión</a></li>
       {{else}}
-        <li><a href="/users/Login">Login</a></li>
-        <li><a href="/users/signup">Sign up</a></li>
+        <li><a href="/users/Login">Iniciar sesión</a></li>
+        <li><a href="/users/signup">Registrase</a></li>
       {{/if}}
     </ul>
   </div>
@@ -21,13 +21,13 @@
 
 <ul class="sidenav" id="mobile-demo">
   {{#if user}}
-    <li><a href="/chart">Chart</a></li>
-    <li><a href="/my-plants">My plants</a></li>
-    <li><a href="/users/Edit">Setting</a></li>
-    <li><a href="/users/logout">Logout</a></li>
+    <li><a href="/chart">Métricas</a></li>
+    <li><a href="/my-plants">Plantas</a></li>
+    <li><a href="/users/Edit">Configuración</a></li>
+    <li><a href="/users/logout">Cerrar sesión</a></li>
   {{else}}
-    <li><a href="/">Home</a></li>
-    <li><a href="/users/Login">Login</a></li>
-    <li><a href="/users/signup">Sign up</a></li>
+    <li><a href="/">Inicio</a></li>
+    <li><a href="/users/Login">Iniciar sesión</a></li>
+    <li><a href="/users/signup">Registrase</a></li>
   {{/if}}
 </ul>

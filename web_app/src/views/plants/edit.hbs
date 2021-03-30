@@ -5,9 +5,11 @@
   <form name="myForm" id="myForm" action="/edit-plant/{{index}}/save" method="POST" class="col s12" >
 {{/if}}
 
+  <h4>Valores recomendados para <span id="PlantName">{{plant.info.name}}</span> :</h4>
+
   <!-- One "tab" for each step in the form: -->
   <div class="tab blue white-text">
-    <h4>Iluminacion - parte 1</h4>
+    <h4>Tipo de iluminación</h4>
     <div class="row">
       <div class="col s12">
         <div id="colorpicker">
@@ -21,11 +23,11 @@
   </div>
 
   <div class="tab amber white-text">
-    <h4>Iluminacion - parte 2</h4>
+    <h4>Configuración para la iluminación</h4>
       <div class="row">
         <div class="col s12">
           <div class="col s6">
-            <p>Start work: </p>
+            <p>Empieza a las: </p>
           </div>  
           <div class="col s6">
             <input id="time_start" type="time" name="time_start" value="13:30">
@@ -33,7 +35,7 @@
         </div>
         <div class="col s12">
           <div class="col s6">
-            <p>Stop work: </p>
+            <p>Termina a las: </p>
           </div>  
           <div class="col s6">
             <input id="time_stop" type="time" name="time_stop" value="13:30">
@@ -43,17 +45,17 @@
       <div class="row">
         <div class="input-field col s6">
           <input placeholder="Led start" id="led_start" name="led_start" type="number" class="validate">
-          <label for="led_start">Led start</label>
+          <label for="led_start">Inicio de area LED</label>
         </div>
         <div class="input-field col s6">
           <input placeholder="Led end" id="led_end" name="led_end" type="number" class="validate">
-          <label for="led_end">Led end</label>
+          <label for="led_end">Fin de area LED </label>
         </div>
       </div>
   </div>
 
   <div class="tab green white-text">
-    <h4>Water</h4>
+    <h4>Riego</h4>
     <div class="row">
       <div class="input-field col s12">
         <p>Frecuencia de riego: <span id="valueSpanFreq"></span></p>
@@ -65,30 +67,30 @@
       </div>
       <div class="input-field col s4">
         <input placeholder="Water pin" id="waterPin" name="waterPin" type="number" class="validate">
-        <label for="waterPin">Water pin</label>
+        <label for="waterPin">Pin de riego</label>
       </div>
       <div class="input-field col s4">
         <input placeholder="Position open" id="waterOpen" name="waterOpen" type="number" class="validate">
-        <label for="waterOpen">Position open</label>
+        <label for="waterOpen">Positión de abierto</label>
       </div>
       <div class="input-field col s4">
         <input placeholder="Position close" id="waterClose" name="waterClose" type="number" class="validate">
-        <label for="waterClose">Position close</label>
+        <label for="waterClose">Positión de cerrado</label>
       </div>
     </div>
   </div>
 
   <div class="tab blue white-text">
-      <h4>Sensors</h4>
+      <h4>Sensores</h4>
       <div class="row">
         <div class="col s4">
           <div class="input-field col s12">
             <input placeholder="photocell1" id="adc1" name="adc1" type="number" class="validate">
-            <label for="adc1">PhotoCell1</label>
+            <label for="adc1">Fotorresistor 1</label>
           </div>
           <div class="input-field col s12">
             <input placeholder="photocell2" id="adc2" name="adc2" type="number" class="validate">
-            <label for="adc2">PhotoCell2</label>
+            <label for="adc2">Fotorresistor 2</label>
           </div>
         </div>
         <div class="col s4">
@@ -101,19 +103,27 @@
         <div class="col s4">
           <div class="input-field col s12">
             <input placeholder="HumCap" id="adc3" name="adc3" type="number" class="validate">
-            <label for="adc3">HumCap</label>
+            <label for="adc3">Humedad Capacitiva</label>
           </div>
 
           <div class="input-field col s12">
             <input placeholder="HumEC" id="adc4" name="adc4" type="number" class="validate">
-            <label for="adc4">HumEC</label>
+            <label for="adc4">Humedad Conductiva</label>
           </div>
         </div>
       </div>
   </div>
 
+  <!-- Circles which indicates the steps of the form: -->
+  <div style="text-align:center;margin-top:-20px;">
+    <span class="step"></span>
+    <span class="step"></span>
+    <span class="step"></span>
+    <span class="step"></span>
+  </div>
+
   <div style="overflow:auto;">
-    <div style="float:right;">
+    <div style="text-align: center;padding: 10px;">
                  
       <a href="/my-plants" class="btn btn-primary">Cancel</a>
       {{#if Type}}
@@ -128,15 +138,6 @@
     </div>
   </div>
 
-  <!-- Circles which indicates the steps of the form: -->
-  <div style="text-align:center;margin-top:40px;">
-    <span class="step"></span>
-    <span class="step"></span>
-    <span class="step"></span>
-    <span class="step"></span>
-  </div>
-
-  <h4>Valores recomendados para <span id="PlantName">{{plant.info.name}}</span> :</h4>
 
 </form>
 
