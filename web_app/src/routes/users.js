@@ -83,8 +83,8 @@ router.post('/Users/update-user', async(req,res) =>{
 });
 
 router.post('/Users/new-user', async(req,res) =>{
-    const {name,password, email,emailRepeat, city,state,zip,MAC0,MAC1,MAC2,MAC3,MAC4,MAC5, BME280, CCS811, Si7021, TCS34725,indoor} = req.body;
-    const errors = [];
+    let {name,password, email,emailRepeat, city,state,zip,MAC0,MAC1,MAC2,MAC3,MAC4,MAC5, BME280, CCS811, Si7021, TCS34725,indoor} = req.body;
+    let errors = [];
     //console.log(req.body);
     if(email != emailRepeat){errors.push({text: "Please both emails have the same"})}
     if(email == '' || emailRepeat == ''){errors.push({text: "Please enter a email"})}

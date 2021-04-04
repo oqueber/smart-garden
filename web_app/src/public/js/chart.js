@@ -68,10 +68,10 @@ let socket; // Aun no se inicializa el socket.io
 
 function updateData(){
     config.data.labels = [];
-    for (const prop in LocalDatabase_digital){
+    for (const prop in LocalDatabase_analog){
       // No representar los segundos formato HH:MM 
-      if( !config.data.labels.find( element => element == LocalDatabase_digital[prop].timestamps.substr(11,5) )){
-        config.data.labels.push( LocalDatabase_digital[prop].timestamps.substr(11,5) );
+      if( !config.data.labels.find( element => element == LocalDatabase_analog[prop].timestamps.substr(11,5) )){
+        config.data.labels.push( LocalDatabase_analog[prop].timestamps.substr(11,5) );
       }
     }
 
