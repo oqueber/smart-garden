@@ -1,24 +1,29 @@
 
     <div id="chart-erro" ></div>
-    <p style="margin: 0px;">Añadir Metricas a la graficas para <span id="MAC">{{mac}}</span></p>
+    <p style="margin: 10px;padding: 6px;background: #536DFE;color: white;border-radius: 30px;text-align: center;">
+        MAC del dispositivo: <span id="MAC">{{mac}}</span>
+    </p>
   <div class="row center">
-    <div class="col s4 "  >
-      <input style="font-size: 12px;" type="date" id="user_date" name="user_date">
+    <div class="col s4 " style="margin: 0px;padding: 0px 5px;" >
+      <input style="font-size: 13px;" type="date" id="user_date" name="user_date">
     </div>
     {{#if plants}}
-    <div class="input-field col s4">
+    <div class="col s4" >
       <select  id="select_plant" >
-        <option value="" disabled selected>Choose plant</option>
+        <option value="" disabled selected>Plantas</option>
         {{#each plants}}
-          <option value="{{Id}}">Plant {{Number}}</option>
+          <option value="{{Id}}">Planta {{Number}}</option>
         {{/each}}
       </select>
-      <label>Plant Select</label>
     </div>
     {{/if}}
-    <div class="col s4 m3 "  >
-      <button class="btn waves-effect waves-light" id="updateData">Update</button>
-      <button class="btn waves-effect waves-light" id="clearData">Clear</button>
+    <div class="col s4"  style="margin: 0px;padding: 0px 5px;">
+      <button class="btn waves-effect waves-light" id="updateData" style="width: 49%;float: left;font-size: 12px;margin:7px 0px;  padding: 0px;">
+        Update
+      </button>
+      <button class="btn waves-effect waves-light" id="clearData" style="width: 49%;padding: 0px;margin:7px 0px;font-size: 12px;">
+        Clear
+      </button>
     </div>
   </div>
   <hr class="my-1">
