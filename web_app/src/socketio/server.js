@@ -86,7 +86,7 @@ io.on('connection',   (socket)=>{
           if(dataUser.length != 0){
               socket.emit('chart/postData/digital', dataUser );  
           }else{
-              socket.emit('chart/err', {text: "empty Data to digital", Data} ); 
+              socket.emit('chart/err', {text: "No hay datos digitales", Data} ); 
           }
         }).catch( (error )=>{
             console.log("Error database digitalmongo:");
@@ -125,10 +125,10 @@ io.on('connection',   (socket)=>{
             if(dataUser.length != 0){ 
               socket.emit('chart/postData/analog', dataUser );  
             }else {
-              socket.emit('chart/err', {text: "empty Data to analog", Data} );
+              socket.emit('chart/err', {text: "No hay datos analogicos", Data} );
             }
           }else{
-              socket.emit('chart/err', {text: "empty Data to analog", Data} ); 
+              socket.emit('chart/err', {text: "No hay datos analogicos", Data} ); 
           }
         }).catch( (error )=>{
             console.log("Error database analog mongo:");
