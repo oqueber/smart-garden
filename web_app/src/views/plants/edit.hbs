@@ -290,9 +290,9 @@
         document.getElementById("scan2").style.boxShadow = `inset -5px -30px 20px rgb(${colors[0]},${colors[1]},${colors[2]})`;
         document.getElementById("scan1").style.boxShadow = `inset -1px 10px 100px rgb(${colors[0]},${colors[1]},${colors[2]})`;
         
-        document.getElementById("resultados_R").innerHTML = `R: ${ (colors[0]/255)*100 }%`;
-        document.getElementById("resultados_G").innerHTML = `G: ${ (colors[1]/255)*100 }%`;
-        document.getElementById("resultados_B").innerHTML = `B: ${ (colors[2]/255)*100 }%`;
+        document.getElementById("resultados_R").innerHTML = `R: ${ Math.round((colors[0]/255)*100) }%`;
+        document.getElementById("resultados_G").innerHTML = `G: ${ Math.round((colors[1]/255)*100) }%`;
+        document.getElementById("resultados_B").innerHTML = `B: ${ Math.round((colors[2]/255)*100) }%`;
     });
 
 });
