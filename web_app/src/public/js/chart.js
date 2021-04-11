@@ -545,7 +545,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var element = document.getElementById("div-errors");
     element.innerHTML += `<div onclick="notificationDelete(this)" class="right alert show showAlert">
       <span class="fas fa-exclamation-circle"></span>
-      <span class="msg">Para el Usuario ${Data.Data.Device} en el dia ${Data.Data.Date}, ${Data.text}</span>
+      <span class="msg">${Data.text}</span>
       <div  class="close-btn">
         <i class="material-icons">X</i>
       </div>
