@@ -16,11 +16,10 @@
           <div class="sliders" id="red"></div>
           <div class="sliders" id="green"></div>
           <div class="sliders" id="blue"></div>
-          <div id="result"></div>
-          <div id="resultados">
-            <p id="resultados_R">100%</p>
-            <p id="resultados_G">100%</p>
-            <p id="resultados_B">100%</p>
+          <div id="result">
+            <p id="resultados_R">R: 0%</p>
+            <p id="resultados_G">G: 0%</p>
+            <p id="resultados_B">B: 0%</p>
           </div>
         </div> 
       </div>
@@ -290,9 +289,9 @@
         document.getElementById("scan2").style.boxShadow = `inset -5px -30px 20px rgb(${colors[0]},${colors[1]},${colors[2]})`;
         document.getElementById("scan1").style.boxShadow = `inset -1px 10px 100px rgb(${colors[0]},${colors[1]},${colors[2]})`;
         
-        document.getElementById("resultados_R").innerHTML = `R: ${colors[0]}%`;
-        document.getElementById("resultados_G").innerHTML = `R: ${colors[1]}%`;
-        document.getElementById("resultados_B").innerHTML = `R: ${colors[2]}%`;
+        document.getElementById("resultados_R").innerHTML = `R: ${ (colors[0]/255)*100 }%`;
+        document.getElementById("resultados_G").innerHTML = `G: ${ (colors[1]/255)*100 }%`;
+        document.getElementById("resultados_B").innerHTML = `B: ${ (colors[2]/255)*100 }%`;
     });
 
 });
