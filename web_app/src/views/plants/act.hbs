@@ -1,7 +1,8 @@
 
 <div class="row">
   <div class="section">
-  <h5>Activar sensores para la planta <span id="plantId" >{{date}}</span> del usuario <span id="UserMac">{{MAC}}</span>  </h5>
+  <h5 style="margin: 10px; padding: 6px; background: #536DFE; color: white; border-radius: 30px;text-align: center;font-size: 16px;" >
+    Activar sensores para la planta: <span id="plantId" style="font-weight: bold;">{{date}}</span> del dispositivo <span style="font-weight: bold;" id="UserMac">{{MAC}}</span>  </h5>
   <p> Status del micro:  <span id="PlantOn" style="padding: 5px;background: red;border-radius: 100px;color: white;"> Offline </span> </p>
   
     <div class="row">
@@ -33,13 +34,13 @@
         </div>
         <div class="row ">
           <div class="col s4">
-              <a class="btn btn-primary" onclick="setSocket_water()"  href="#" >Activar agua</a>
+              <a style="font-size: 11px;" class="btn btn-primary" onclick="setSocket_water()"  href="#" >Activar agua</a>
           </div>
           <div class="col s4">
-              <a class="btn btn-primary" onclick="setSocket_light(1)"  href="#" >Activar luz</a>
+              <a style="font-size: 11px;" class="btn btn-primary" onclick="setSocket_light(1)"  href="#" >Activar luz</a>
           </div>
           <div class="col s4">
-              <a class="btn btn-primary" onclick="setSocket_light(0)"  href="#" >Apagar luz</a>
+              <a style="font-size: 11px;" class="btn btn-primary" onclick="setSocket_light(0)"  href="#" >Apagar luz</a>
           </div>
         </div>
       </div>
