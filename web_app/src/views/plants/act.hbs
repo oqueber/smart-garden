@@ -52,7 +52,10 @@
                   <div class="sliders" id="green"></div>
                   <div class="sliders" id="blue"></div>
                   <div id="result"></div>
-                  <p> R:<span id="rValue"></span> G:<span id="gValue"></span> B:<span id="bValue"></span> </p> 
+                  
+                  <p style="width: 135px; float: right;margin-top: -40px;">
+                    R:<span id="rValue"></span>% G:<span id="gValue"></span>% B:<span id="bValue"></span>%
+                  </p> 
                 </div> 
             </div>
         </div>
@@ -138,9 +141,9 @@
           resultElement.style.background = color;
           resultElement.style.color = color;
 
-          rValue.innerHTML = colors[0];
-          gValue.innerHTML = colors[1];
-          bValue.innerHTML = colors[2];
+          rValue.innerHTML = Math.round((colors[0]/255)*100);
+          gValue.innerHTML = Math.round((colors[1]/255)*100);
+          bValue.innerHTML = Math.round((colors[2]/255)*100);
 
       });
   });
