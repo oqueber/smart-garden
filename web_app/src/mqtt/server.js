@@ -6,7 +6,7 @@ const mosca = require('mosca');
 const DigitaldB = require('../models/Digital');
 const AnalogdB = require('../models/Analog');
 const Users = require('../models/User');
-const {io, eventEmitter, userConnected} = require('../utils/socketio.js'); 
+const {io, eventEmitter, devicesConnected,userConnected} = require('../utils/socketio.js'); 
 
 const settings = {
 	port: 1883
@@ -126,21 +126,18 @@ server.on('unsubscribed',(topic,client) => {
 
   if( topic == "esp32/connect")
   {
-    // Comprobamos que el usuario esta conectado antes de enviar el mensaje
+    // Eliminamos el dispositivo de la lista conectado.
+    if ( devicesConnected.has(deviceId) )
+    {
+      let fl_status = devicesConnected.delete(deviceId);
+      debug( chalk.yellow( `delete ESP32 connection MAC ${ i_MAC } status ${ fl_status }`) );
+
+    }
+    
     if ( userConnected.has(deviceId) )
     {
-      var i_socket = userConnected.get(deviceId);
-      if ( i_socket.socket != "empty")
-      {
-        debug("Enviando MQTT al socket user offline"); 
-        i_socket.esp32 = false;       
-        i_socket.socket.emit('action/user',"offline");
-      }
-      else  // Si es empty nunca logro establecer una conexion
-      {
-        let fl_status = userConnected.delete(deviceId);
-        debug( chalk.yellow( `delete action connection MAC ${ deviceId } status ${ fl_status }`) );
-      } 
+      debug("Enviando MQTT al socket user offline");      
+      userConnected.get(deviceId).socket.emit('action/user',"offline");
     }
   }
 
@@ -153,21 +150,19 @@ server.on('subscribed', (topic,client) => {
 
   if( topic == "esp32/connect")
   {
+    if ( !devicesConnected.has(deviceId) )
+    {
+      //Creo el usuario pero a la espera de asociarle un socket
+      debug( chalk.yellow( `ESP32 connection MAC ${ deviceId }`) );
+      userConnected.set(deviceId,{ online: true} );
+    }
+    
     // Comprobamos que el usuario esta conectado antes de enviar el mensaje
     if ( userConnected.has(deviceId) )
     {
-      debug("Enviando MQTT al socket user online");        
-      var i_socket = userConnected.get(deviceId);
-      i_socket.esp32 = true; 
-      i_socket.esp32_client = client; 
-      i_socket.socket.emit('action/user',"online");
-    }
-    else
-    {
-      //Creo el usuario pero a la espera de asociarle un socket
-      debug( chalk.yellow( `new action connection MAC ${ deviceId } status socket: empty`) );
-      userConnected.set(deviceId,{ socket:"empty",esp32:true, esp32_client: client } );
-    }
+      debug("Enviando MQTT al socket user online");    
+      userConnected.get(deviceId).socket.emit('action/user',"online");
+    }  
   }
   
 

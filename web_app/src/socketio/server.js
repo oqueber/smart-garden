@@ -3,7 +3,7 @@ const AnalogdB = require('../models/Analog');
 const DigitaldB = require('../models/Digital');
 const debug = require('debug')("SG:socketio ");
 const chalk = require('chalk');
-const {io, eventEmitter, userConnected} = require('../utils/socketio.js');
+const {io, eventEmitter, devicesConnected,userConnected} = require('../utils/socketio.js');
 
 
 io.on('connection',   (socket)=>{
@@ -12,28 +12,23 @@ io.on('connection',   (socket)=>{
   socket.on('user/connect', (data)=>{
     if ( !userConnected.has(data.MAC))
     {
-      let fl_status =  userConnected.set( data.MAC , { socket: socket, socketId:socket.id , esp32: false } );
-      debug( chalk.yellow( `new web connection with ${socket.id} and MAC ${data.MAC} status ${fl_status}`) );  
+      let fl_status =  userConnected.set( data.MAC , { socket: socket, socketId:socket.id} );
+      debug( chalk.yellow( `new web connection with ${socket.id} and MAC ${data.MAC} status ${fl_status}`) ); 
     }
     else
     {
-      //Hay dos casos. 1: porque se conecto primero el esp32 y luego en la web
-      //               2: el usuario se volvio a conectar en la web.
-      let fl_status = userConnected.get(data.MAC);
+      // Actualizamos el socket por nueva conexion.
       debug( chalk.yellow( `already exits action connection MAC ${data.MAC} with value ${ fl_status }`) );        
-      userConnected.delete(data.MAC);  
-      userConnected.set(data.MAC ,{ socket: socket, socketId:socket.id , esp32: true });
-      socket.emit('action/user',"online");
-
-      if( fl_status == "empty" )
-      {
-        debug( chalk.yellow( `reemplace by esp32 connected first`) );
-      }
-      else
-      {
-        debug( chalk.yellow( `reemplace by new web connection`) );
-      }
+      userConnected.get(data.MAC).socket = socket;
+      userConnected.get(data.MAC).socketId = socket.id;
     }
+
+    if ( devicesConnected.has(deviceId) )
+    {
+      debug("Enviando al socket user online"); 
+      socket.emit('action/user',"online");
+    }
+
   }); 
 
   socket.once('disconnect', function () {
@@ -45,7 +40,7 @@ io.on('connection',   (socket)=>{
         if( i_value.esp32 == false )
         {
           let fl_status = userConnected.delete(i_MAC);
-          debug( chalk.yellow( `delete action connection of ${i_value.socketId} and MAC ${ i_MAC } status ${ fl_status }`) );
+          debug( chalk.yellow( `delete web connection of ${i_value.socketId} and MAC ${ i_MAC } status ${ fl_status }`) );
         }
       }
     }
