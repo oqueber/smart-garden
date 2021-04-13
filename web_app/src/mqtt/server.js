@@ -130,7 +130,7 @@ server.on('unsubscribed',(topic,client) => {
     if ( devicesConnected.has(deviceId) )
     {
       let fl_status = devicesConnected.delete(deviceId);
-      debug( chalk.yellow( `delete ESP32 connection MAC ${ i_MAC } status ${ fl_status }`) );
+      debug( chalk.yellow( `delete ESP32 connection MAC ${ deviceId } status ${ fl_status }`) );
 
     }
     
