@@ -50,10 +50,8 @@ io.on('connection',   (socket)=>{
   socket.on('action/setData', (Data)=>{
     console.log('Recibido al Servidor: ', Data);
     console.log('Del Usuario: ', socket.id);
-    
-    let user = userConnected.get(Data.MAC);
-    
-    if ( user.esp32 )
+        
+    if ( devicesConnected.has(Data.MAC) )
     {
       console.log("enviando al eventEmitter ");
       eventEmitter.emit('action/setData',{ MAC: Data.MAC, payload: JSON.stringify(Data.payload) } );
