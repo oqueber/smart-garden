@@ -23,7 +23,7 @@ io.on('connection',   (socket)=>{
       userConnected.get(data.MAC).socketId = socket.id;
     }
 
-    if ( devicesConnected.has(deviceId) )
+    if ( devicesConnected.has(data.MAC) )
     {
       debug("Enviando al socket user online"); 
       socket.emit('action/user',"online");
