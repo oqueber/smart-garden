@@ -23,7 +23,7 @@ eventEmitter.on('action/setData', async function( data ){
   console.log(data);
   
   try {
-    if(i_socket.esp32 == true)
+    if(devicesConnected.has(data.MAC))
     {
       server.publish({
         topic: 'esp32/connect',
