@@ -154,7 +154,7 @@ server.on('subscribed', (topic,client) => {
     {
       //Creo el usuario pero a la espera de asociarle un socket
       debug( chalk.yellow( `ESP32 connection MAC ${ deviceId }`) );
-      userConnected.set(deviceId,{ online: true} );
+      devicesConnected.set(deviceId,{ online: true} );
     }
     
     // Comprobamos que el usuario esta conectado antes de enviar el mensaje
