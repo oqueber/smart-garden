@@ -16,14 +16,15 @@ bool action_task ( String string_task)
   {
     if( json_task["action"].as<String>() == "water")
     {
-
+      Serial.printf("Activando agua\n");
     }
     else if ( json_task["action"].as<String>() == "light") 
     {
-
+      Serial.printf("Activando luz\n");
     }
     else
     {
+      Serial.printf("Activando nada....\n");
       //Respondes que no se pudo realizar la tarea
     }
     
@@ -35,47 +36,70 @@ bool action_task ( String string_task)
   
 }
 
-// Try connecting to the Mqtt server
+// Conectarse al servidor Mqtt
 void reconnect() {
-  uint8_t intentos = 0;
 
-  // Loop until we're reconnected
-  while (!client.connected() && intentos < 10){
+  // Numero de intentos
+  byte intentos = 0;
+
+  // Maximo 10 intentos de conexion seguidos
+  while (!client.connected()){
+    
+    // Nombre del dispositivos conectado
     const String clientId = "device/"+getMac();
-    // Attempt to connect
-      if( client.connect(clientId.c_str()) ){
+
+    if( client.connect(clientId.c_str()) ){
         
-        if (fl_manual)
-        {
-          client.subscribe("esp32/connect");
-        }
-        
+      // Conexion manual agrega el dispositivo a una lista de dispositivos conectado
+      if (fl_manual)
+        client.subscribe("esp32/connect");
+      
+      // Trazas de debug
       if(debugging_mqtt){
-          Serial.println("connected");
-          Serial.println(clientId);
-          Serial.print("State, rc=");
-          Serial.print(client.state());
-        }
-      }else{
-        // Wait 5 seconds before retrying
-        intentos++;
-        Serial.println("Mqtt try to connecte to mqtt server");
-        delay(5000);
+        Serial.println("connected");
+        Serial.println(clientId);
+        Serial.print("State, rc=");
+        Serial.print(client.state());
       }
+
+      break;  //Salimos del while
+
+    }
+    
+    // Timeout
+    if( intentos++ < 10) 
+    {
+      // Esperamos 5 minutos y se vuelve a intentar hasta un maximo de 10 veces
+      Serial.println("Mqtt try to connecte to mqtt server");
+      delay(5000);
+      continue; // Continuamos con los intentos
+    }
+    
+    break; //Salimos del while
   }
   
-  if(!client.connected()){ sisError(6); }
+  // Notificamos que no se logro conectarse al servidor mqtt
+  if(!client.connected())
+    sisError(6); 
+
 }
+
 // Try to send the message to the Mqtt server
-bool send_mqtt(String msg_topic, String msg_payload, bool update){
+bool send_mqtt(String msg_topic, String msg_payload, bool msgRaw){
+
+  //Si no hay conexion, nada que enviar
+  if (client.connected())
+    return false;
+
   DynamicJsonDocument doc(2048);
   bool sendMsg = false;  
   uint8_t intentos = 0;
   String json = "";
 
-
-  if(update){
+  // Enviar mensajes sin procesado
+  if(msgRaw){
     json = msg_payload;
+  // Empaqueta el mensaje con el dispositivo y el tiempo actual.
   }else{
     auto error = deserializeJson(doc, msg_payload);
 
@@ -101,7 +125,6 @@ bool send_mqtt(String msg_topic, String msg_payload, bool update){
     }
   }
 
-  //Core 0 is already doing it.
   reconnect();
   delay(100);
   if (client.connected()) {
@@ -149,6 +172,7 @@ bool send_mqtt(String msg_topic, String msg_payload, bool update){
   }
   return sendMsg;
 }
+
 // Recived the packages from the server. 
 void callback(char* topic, byte* payload, unsigned int length) {
   

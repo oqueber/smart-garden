@@ -65,23 +65,26 @@ const char* SD_path_measure = "/measures.txt";
 // --------------------------------------------------------------------- 
 
 // API url to Users finding
-const String IP = "34.105.251.62"; // google server
-//const String IP = "192.168.2.132"; //Server local
+const String IP = "35.223.193.24"; // google server
 const String urlGetUser = "http://"+ IP +":3000/Users/GetData/";
 
 // ---------------------------------------------------------------------
 // ------------------ watchDog (Deep Sleep) -----------------------------
 // --------------------------------------------------------------------- 
 
-#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
-#define S_TO_M_FACTOR  60  /* Conversion factor for  seconds to minuts */
-#define TIME_TO_SLEEP  (30*S_TO_M_FACTOR* uS_TO_S_FACTOR)         /* Time ESP32 will go to sleep (in Min) */
+#define TIME_SLEEP_uS_TO_S_FACTOR 1000000  /* Conversion de useg a segudos */
+#define TIME_SLEEP_S_TO_M_FACTOR  60    /* Conversion de segudos a miutos*/
+#define TIME_SLEEP_MINUTS  5           /* Conversion de segudos a miutos*/
+#define TIME_TO_SLEEP  TIME_SLEEP_MINUTS*TIME_SLEEP_S_TO_M_FACTOR*TIME_SLEEP_uS_TO_S_FACTOR        /* Tiempo total que dormira 30minutos */
 
 // Sleep time while the micro does nothing
 const unsigned int time_1S = 1000000;
 const unsigned int sleepTime_reconnect= 60 * time_1S; // 1 Min
 const unsigned int sleepTime = 30*60 * time_1S; // 30 Min
-bool itsHardReboot = false;
+
+// Flag que indica que el inicio del micro no proviene de un reset
+//bool fl_cold_reset = false;
+
 // ---------------------------------------------------------------------
 // ------------------ NeoPixel (Led Strip) -----------------------------
 // --------------------------------------------------------------------- 
@@ -104,7 +107,14 @@ const int   daylightOffset_sec = 3600;
 // ----------------------  Debugging flag  -----------------------------
 // --------------------------------------------------------------------- 
 
-#define MAX_PLANTS 5
+// Numero maximos de mensaje por planta
+#define MAX_MSG_PLANTS    6
+// NUmero maximo de planta que maneja el sistema
+#define MAX_PLANTS        10
+// Buffer de mensajes de salida
+#define MAX_BUFFER_PLANTS (MAX_MSG_PLANTS*MAX_PLANTS)
+// Numero de intentos para enviar un mensaje
+#define N_SEND_MQTT       10
 
 // Debugging flag for printing in monitor serial
 const bool debugging = true;
@@ -112,11 +122,16 @@ const bool debugging_mqtt = true;
 const bool debugging_SD = false;
 
 
+struct ST_MQTT_SEND {
+  bool send;
+  bool ready;
+  String topic;
+  String msg;
+};
+
 struct Plant_status
 {
-    unsigned long long Id;
-    bool water;
-    unsigned long last_time_water;
-    bool light;
-    unsigned long last_time_light;
+    String Id;
+    byte ticks_water;
+    byte ticks_light;
 };

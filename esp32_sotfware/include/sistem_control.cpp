@@ -27,6 +27,73 @@ JsonArray userTasks = doc.to<JsonArray>();
 #define humEc_seco    0
 #define humEc_mojado  2460
 
+// Ajustara en algua durante 5 ciclos 
+#define TICKS_WATER_DEFAULT 5
+
+bool getUserSD( bool update = false ){
+  
+  bool fl_SD = false;
+
+  // Buscamos la SD
+  if(!SD.begin())
+  {
+    Serial.println("Card Mount Failed");
+    sisError(5);
+  }
+  else
+  {
+    // Se imprime todos los archivos de la SD
+    listDir(SD, "/", 0);
+
+    // Se comprueba si existe datos del usuario guardados en la SD.
+    if (SD.exists(SD_path_user)) 
+    {
+      
+      if( debugging_SD )
+      {
+        Serial.println("Datos eliminados desde SD");
+        deleteFile(SD, SD_path_user);
+        delay(100);
+        
+      }
+      else if(update == true)
+      {
+        String msg = "";
+        deleteFile(SD, SD_path_user);
+        delay(100);
+        serializeJson(localUser, msg); 
+        writeFile(SD, SD_path_user, msg.c_str() );
+      }
+      else
+      {
+        String stringUser = readFile(SD, SD_path_user);
+
+        auto error = deserializeJson(localUser, stringUser );
+        if( error == DeserializationError::Ok )
+        {  
+          fl_SD = true;
+          Serial.println("Datos Actualizados desde SD");
+        }
+      }
+
+    }
+    else if( update )
+    {
+        String msg = "";
+        serializeJson(localUser, msg); 
+        writeFile(SD, SD_path_user, msg.c_str() );
+    }
+    else 
+    {
+      Serial.println("userData.txt doesn't exist.");
+    }
+
+  }  
+  SD.end();
+  return fl_SD;
+}
+
+
 void receptionSystem( String topic, String message){
   if ( topic == "device/get/task" ) {
     userTasks.add(message);
@@ -120,93 +187,111 @@ void taskLight( int led_start,  int led_end, int r, int g, int b){
 };
 void taskSystem( JsonObject plant , String plant_id){
  
-  struct tm timeinfo;
-  if(!getLocalTime(&timeinfo)){
+  if(systemTime.tm_year < (2016 - 1900)){
     Serial.println("Failed to obtain time");
     return;
   }
 
-  // Variables para calcular el dia de regiego
-  int rightNow = (timeinfo.tm_hour *60*60) + (timeinfo.tm_min *60);
+  // Calculamos la hora y minutos actuales en segundos
+  unsigned int rightNow = (systemTime.tm_hour*60*60) + (systemTime.tm_min *60);
+  // Obtenemos la hora y minutos en segundos del inicio de la iluminacion 
   int hourStart_hour= (plant["light"]["time_start"].as<String>()).substring (0 , 2).toInt() ;
       hourStart_hour= hourStart_hour*60*60;
   int hourStart_min=  (plant["light"]["time_start"].as<String>()).substring (3 , 5).toInt() ;
       hourStart_min= hourStart_min*60;
+  // Obtenemos la hora y minutos en segundos del fin de la iluminacion 
   int hourStop_hour= (plant["light"]["time_stop"].as<String>()).substring (0 , 2).toInt() ;
       hourStop_hour= hourStop_hour*60*60;
   int hourStop_min=  (plant["light"]["time_stop"].as<String>()).substring (3 , 5).toInt() ;
       hourStop_min= hourStop_min*60; 
 
-    
-  // Calculamos la diferencia de dias desde la ultima vez de riego
+  // Se calcula la diferencia de dias desde la ultima vez de riego
   // Last_time_water : "YYYY:MM:DDD"
-  time_t timeinfo_2 = mktime(&timeinfo);
+  time_t timeinfo_2 = mktime(&systemTime);
   unsigned long plant_water_time = plant["water"]["last_water"];
   double diff = difftime(timeinfo_2,  plant_water_time ) ;
 
-
-  if( (diff/(60*60*24))  >=   plant["water"]["frequency"].as<int>()  ) {
+  // Proceso no inicializado
+  if ( plantStatus[iPlant].ticks_water <= 0)
+  {
     
-    //Enviar una actualizacion de la fecha del agua agua y actualizar la variable en local
-    //Hacer un sistema de backup, que utilice solo el contador reinicios del micro para activar el riego
-    // counterRiego >= frecuencia*24  --> CounterRiego aumenta 1 cada 30min. asi establecemos el encendido del micro
-    taskWater( plant["pinout"]["humCap"].as<int>(),
-               plant["pinout"]["humEC"].as<int>(),
-               plant["water"]["limit"].as<int>(),
-               plant["water"]["pinout"].as<int>(),
-               plant["water"]["open"].as<int>(),
-               plant["water"]["close"].as<int>());
-    
-    Serial.print("Before: ");
-    Serial.println(plant["water"]["last_water"].as<String>());
-    plant["water"]["last_water"] = timeinfo_2;
+    // Compobar si toca regar la planta
+    if( (diff/(60*60*24))  >=   plant["water"]["frequency"].as<int>()  ) {
+      
+      // [TO DO] Almacenar
+      Serial.print("\nRiego activo\n");
+      plantStatus[iPlant].Id = plant_id;
+      plantStatus[iPlant].ticks_water = TICKS_WATER_DEFAULT;
 
-    Serial.print("After: ");
-    Serial.println(plant["water"]["last_water"].as<String>());
-    //enviar mqtt con los cambios
-    send_mqtt("Huerta/update/water" , (plant_id+"/"+String(timeinfo_2)), true);
+      // Regar la planta
+      /*
+      taskWater( plant["pinout"]["humCap"].as<int>(),
+                plant["pinout"]["humEC"].as<int>(),
+                plant["water"]["limit"].as<int>(),
+                plant["water"]["pinout"].as<int>(),
+                plant["water"]["open"].as<int>(),
+                plant["water"]["close"].as<int>());
+      */
+
+      Serial.print("Before: ");
+      Serial.println(plant["water"]["last_water"].as<String>());
+      plant["water"]["last_water"] = timeinfo_2;
+
+      Serial.print("After: ");
+      Serial.println(plant["water"]["last_water"].as<String>());
+
+      // Actualizamos en el servidor la ultima vez que se rego
+      send_mqtt("Huerta/update/water" , (plant_id+"/"+String(timeinfo_2)), true);
+
+      // Actualizamos los datos de riego de la planta
+      getUserSD( true );
+    }
+    
   }
   
-  if( (rightNow >= (hourStart_hour + hourStart_min)) &&  (rightNow <= (hourStop_hour + hourStop_min)) ){
+  if (plantStatus[iPlant].ticks_light <= 0)
+  {
+    // Encendemos si -> Inicio de iluminacion <= Tiempo actual < fin de la iluminacion
+    if( (rightNow >= (hourStart_hour + hourStart_min)) && 
+        (rightNow <= (hourStop_hour  + hourStop_min)) ){
 
-    //Si es la primera vez, encendemos la luz
-    if( plant["light"]["status"].as<bool>() == false || itsHardReboot ){
+        Serial.print("\nLuz activo\n");
+        plantStatus[iPlant].Id = plant_id;
+        plantStatus[iPlant].ticks_light = ceil( ((hourStop_hour  + hourStop_min) - (hourStart_hour + hourStart_min))/(TIME_SLEEP_MINUTS*TIME_SLEEP_S_TO_M_FACTOR)  ) ;
 
-      
-      plant["light"]["status"] = true;
-      plant["light"]["last_light"] = timeinfo_2;
-      //enviar mqtt con los cambios
-      send_mqtt("Huerta/update/light" ,(plant_id+"/1/"+String(timeinfo_2)) , true);
-      
-
-      taskLight( plant["light"]["led_start"].as<int>(), 
-                plant["light"]["led_end"].as<int>(),
-                plant["light"]["color_red"].as<int>(),
-                plant["light"]["color_green"].as<int>(),
-                plant["light"]["color_blue"].as<int>());
-
-    }
-
-  }else{
-    if ( plant["light"]["status"].as<bool>() == true  ){
-      plant["light"]["status"] == false;
+        // Enviar al servidor mqtt con los cambios
+        send_mqtt("Huerta/update/light" ,(plant_id+"/1/"+String(timeinfo_2)) , true);
+        
+        // Encendemos la iluminacion
+        /*
+        taskLight( plant["light"]["led_start"].as<int>(), 
+                  plant["light"]["led_end"].as<int>(),
+                  plant["light"]["color_red"].as<int>(),
+                  plant["light"]["color_green"].as<int>(),
+                  plant["light"]["color_blue"].as<int>());
+        */
+    }else{
+      // Enviar al servidor mqtt con los cambios 
       send_mqtt("Huerta/update/light" , (plant_id+"/0") , true);
+      
+      // Apagamos la iluminacion
+      /*
+      taskLight(  plant["light"]["led_start"].as<int>(), 
+                  plant["light"]["led_end"].as<int>(),
+                  0,
+                  0,
+                  0);
+      */
     }
-    taskLight(  plant["light"]["led_start"].as<int>(), 
-                plant["light"]["led_end"].as<int>(),
-                0,
-                0,
-                0);
   }
 
   if( debugging ){
     Serial.println("------------------  taskSystem   ---------------------------------");
     
-    Serial.print("Time now: "); Serial.println( rightNow);
-    Serial.print("LightStatus: "); Serial.println( plant["light"]["status"].as<bool>() );
-    Serial.print("ItsHardReboot: "); Serial.println( itsHardReboot);
-    
     Serial.print("ID plant: "); Serial.println( plant_id );
+    Serial.print("Time_hour_min_now: "); Serial.println( rightNow);
+    Serial.print("ticks_water: "); Serial.println( plantStatus[iPlant].ticks_water );
+    Serial.print("ticks_light: "); Serial.println( plantStatus[iPlant].ticks_light);    
 
     Serial.print("[light][time_start]: "); Serial.println( plant["light"]["time_start"].as<String>() );
     Serial.print("[light][time_start][seg]: "); Serial.println( (hourStart_hour + hourStart_min) );
@@ -214,14 +299,15 @@ void taskSystem( JsonObject plant , String plant_id){
     Serial.print("[light][time_stop]: "); Serial.println( plant["light"]["time_stop"].as<String>()  );
     Serial.print("[light][time_stop][seg]: "); Serial.println( (hourStop_hour + hourStop_min) );
 
-    Serial.print("[water][last_water]: "); Serial.println( plant_water_time);
-    Serial.print("time: "); Serial.println( timeinfo_2 );
-    Serial.print("diff: "); Serial.println( diff/(60*60*24) );
-    Serial.print("[water][frequency]: "); Serial.println( plant["water"]["frequency"].as<String>() );
     
+    Serial.print("[water][frequency]: "); Serial.println( plant["water"]["frequency"].as<String>() );
+    Serial.print("[water][last_water]: "); Serial.println( plant_water_time);
+    Serial.print("time now: "); Serial.println( timeinfo_2 );
+    Serial.print("diff: "); Serial.println( diff/(60*60*24) );
     Serial.println("------------------  taskSystem end   ---------------------------------");
   }
 }
+
 void tasksControl(){
   time_t now;
   time(&now);
@@ -281,65 +367,6 @@ void controlSystem( void ){
   } 
 }
 
-bool getUserSD( bool update = false ){
-  bool fl_SD = false;
-
-  // If we can't fount the user in local. Go to sleep
-  if(!SD.begin())
-  {
-    Serial.println("Card Mount Failed");
-    sisError(5);
-  }
-  else
-  {
-    listDir(SD, "/", 0);
-    // Check to see if the file exists:
-    if (SD.exists(SD_path_user)) 
-    {
-      
-      if( debugging_SD )
-      {
-        Serial.println("Datos eliminados desde SD");
-        deleteFile(SD, SD_path_user);
-        delay(100);
-        
-      }
-      else if(update == true)
-      {
-        String msg = "";
-        deleteFile(SD, SD_path_user);
-        delay(100);
-        serializeJson(localUser, msg); 
-        writeFile(SD, SD_path_user, msg.c_str() );
-      }
-      else
-      {
-        String stringUser = readFile(SD, SD_path_user);
-
-        auto error = deserializeJson(localUser, stringUser );
-        if( error == DeserializationError::Ok )
-        {  
-          fl_SD = true;
-          Serial.println("Datos Actualizados desde SD");
-        }
-      }
-
-    }
-    else if( update )
-    {
-        String msg = "";
-        serializeJson(localUser, msg); 
-        writeFile(SD, SD_path_user, msg.c_str() );
-    }
-    else 
-    {
-      Serial.println("userData.txt doesn't exist.");
-    }
-
-  }  
-  SD.end();
-  return fl_SD;
-}
 
 bool userUpdateData (String newData){
   String userLocalData;
@@ -378,7 +405,7 @@ bool userUpdateData (String newData){
           newDataUser["update"]= false;
           
           // if the same plant, update all, excepte this elements.
-          for( auto element:  localUser["plants"].as<JsonObject>() )
+          /*for( auto element:  localUser["plants"].as<JsonObject>() )
           {
             // If we already have the plant in local, we keep the old control data.
             if( newDataUser["plants"].containsKey( element.key()) )
@@ -394,7 +421,7 @@ bool userUpdateData (String newData){
               send_mqtt("Huerta/update/light" , (plantId+"/"+newDataUser["plants"][plantId]["light"]["status"].as<String>()+"/"+newDataUser["plants"][plantId]["light"]["last_light"].as<String>()), true);
             }
           }
-
+          */
           deleteFile(SD, SD_path_user);
           delay(100);
           serializeJson(newDataUser, userDataUpdated); 
@@ -433,12 +460,13 @@ bool userUpdateData (String newData){
   return userUpdate;
 }
 
+/*
 void updateLastData (){
-  bool find_plant[MAX_PLANTS];
+  bool find_plant[MAX_BUFFER_PLANTS];
   
   //implementar que si el valor de now es malo, coger el del estadoa anterior
   // Inicializamos los valores por defecto para poder encontrar cuales plantas siguen con el usuario
-  for (int i = 0 ; i< MAX_PLANTS; i++)
+  for (int i = 0 ; i< MAX_BUFFER_PLANTS; i++)
   {
     find_plant[i] = false;
   }
@@ -447,7 +475,7 @@ void updateLastData (){
     
     String Id_plant = kvp.key().c_str();
 
-    for (int i = 0; i < MAX_PLANTS; i++)
+    for (int i = 0; i < MAX_BUFFER_PLANTS; i++)
     {
       if( plantStatus[i].Id == strtoll(kvp.key().c_str(), (char **) NULL, 10))
       {
@@ -476,7 +504,7 @@ void updateLastData (){
     }
   }
 
-  for (int i = 0; i < MAX_PLANTS; i++)
+  for (int i = 0; i < MAX_BUFFER_PLANTS; i++)
   {
     if( find_plant[i] == false)
     {
@@ -497,12 +525,11 @@ void saveUser()
   //Serial.println(localUser_string);
   int indice = 0;
 
-  timeSystem = now;
   // Guardamos todas las plantas actuales para reestablecer su valore al reinicio.
   for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
     
     String Id_plant = kvp.key().c_str();
-    if ( indice < MAX_PLANTS)
+    if ( indice < MAX_BUFFER_PLANTS)
     {
       plantStatus[indice].Id = strtoll(kvp.key().c_str(), (char **) NULL, 10); 
       plantStatus[indice].water = localUser["plants"][Id_plant]["water"]["status"].as<bool>();
@@ -521,6 +548,7 @@ void saveUser()
     } 
   }
 }
+*/
 /* The getUser() function is used as a flag if a user is found or not.
 * Each device has a unique identification to connect to the internet (MAC)
 * This code is used as a uuid and each measurement reported by this divice
@@ -531,7 +559,7 @@ bool getUser(){
 
   bool UserFinded= false;
 
-  getUserSD();
+  //getUserSD();
   
   //And then check if we have update
   if( wifi_status() ){

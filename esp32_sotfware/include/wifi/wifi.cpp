@@ -1,6 +1,8 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 
+#define MAX_CNX_WIFI          10
+#define MAX_TIMEOUT_WIFI      10
 WiFiClient espClient;
 
 /*
@@ -8,18 +10,25 @@ WiFiClient espClient;
 * if the wifi already connected, it returns a true.
 */
 bool wifi_status (){
+  byte iConect    = MAX_CNX_WIFI;
+  byte cnxTimeout = 0;
 
-  if ( WiFi.status() != WL_CONNECTED ) { //Check the current connection status
-    // connect to wifi.
-    //IPAddress local_IP(192, 168, 1, 200);
-    //IPAddress gateway(192, 168, 1, 1);
-    //IPAddress subnet(255, 255, 255, 0);
-    //WiFi.config(local_IP, gateway, subnet);
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    uint8_t reintentos = 0;
-    while ((reintentos <= 10) && (WiFi.status() != WL_CONNECTED)) {
-      delay(1500);
-      reintentos++;
+  while ( (iConect--) && (WiFi.status() != WL_CONNECTED) )
+  {
+    Serial.printf("\n Conectando al wifi");
+
+    // Recargamos el tiempo maximo de timeout por conexion
+    cnxTimeout = MAX_TIMEOUT_WIFI;
+
+    if ( WiFi.status() != WL_CONNECTED ) { //Check the current connection status
+      
+      WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+      while ((cnxTimeout--) && (WiFi.status() != WL_CONNECTED)) {
+        delay(1000);
+        Serial.printf(".");
+      }
+
     }
   }
 

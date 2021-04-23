@@ -9,28 +9,34 @@
 
 #include "soc/sens_reg.h" // needed for manipulating ADC2 control register
 
-
 #include "config.h"
 
-static RTC_NOINIT_ATTR int reg_b; // place in RTC slow memory so available after deepsleep
-static RTC_NOINIT_ATTR int counterSleep; 
-static RTC_DATA_ATTR time_t timeSystem;;
+// place in RTC slow memory so available after deepsleep
+static RTC_NOINIT_ATTR int reg_b;
+//Contador de reinicios -> Cada 30minutos suma uno 
+static RTC_NOINIT_ATTR byte ticks_system; 
+//JSON con los datos del usuario
 DynamicJsonDocument localUser (2048);
+
+//Tiempo del sistema.
+struct tm systemTime;
+
 static RTC_DATA_ATTR struct Plant_status plantStatus[MAX_PLANTS];
 
 bool finishedCore1 = false;
 bool finishedCore0 = false;
 bool fl_manual = false;
 
-uint8_t iServerMqtt = 0;
+//Flag que indica que solo realizaremos las rutinas internas del cuidado de planta
+bool fl_local_modo;
 
-uint8_t iMsgMqtt = 0;
+byte iPlant;
+byte nServerMqtt;
+byte n_send_msg_mqtt; //Numero de intentos en enviar un mensaje mqtt
 
-struct SendMqttMsg {
-  bool send;
-  String msg;
-};
-struct SendMqttMsg SendMqttMsg[MAX_PLANTS];
+//Estructura para rellenar con los datos de los sensores
+byte iMsgMqtt;
+struct ST_MQTT_SEND buffer_mqtt_msg_send[MAX_BUFFER_PLANTS];
 
 
 #include <sistem_error.cpp>
@@ -45,6 +51,7 @@ struct SendMqttMsg SendMqttMsg[MAX_PLANTS];
 
 #include <sistem_control.cpp>
 #include "setup_sensors.cpp"
+
 #define Threshold 40 /* Greater the value, more the sensitivity */
 
 
@@ -57,17 +64,14 @@ void taskCore1( void * pvParameters);
 void taskCore0( void * pvParameters);
 void callback_touch(){};
 
-
-
-
 void swichs_on_off(int io){
   Serial.print("\nSwitch mode: ");
   Serial.println(io);
   digitalWrite(SW1, io);
   delay(5000);
 }
-void getDataDig(String select , bool send = true){
-  String json = "";
+
+void getDataDig(String select ){
   DynamicJsonDocument parte1(200);
   DynamicJsonDocument parte2(200);
   //doc["PlantId"] = "measurement";
@@ -104,15 +108,11 @@ void getDataDig(String select , bool send = true){
       Data["ColorTemp"] = colorTemp;
       Data["Lux"] = lux;
 
-      serializeJson(parte1, json);
-      if(send) {
-        send_mqtt("Huerta/Push/Digital" ,json);
-      }else{
-        Serial.println("");
-        Serial.println("json:");
-        Serial.println(json);
-      }
-      json = "";
+      // Agregamos un nuevo mensaje al buffer de salida
+      ++iMsgMqtt;
+      buffer_mqtt_msg_send[iMsgMqtt].send = (parte1.size() > 0) ? true : false; 
+      buffer_mqtt_msg_send[iMsgMqtt].topic = "Huerta/Push/Digital"; 
+      serializeJson(parte1, buffer_mqtt_msg_send[iMsgMqtt].msg);
     }
   }
   if (select[3] == '1'){
@@ -186,20 +186,21 @@ void getDataDig(String select , bool send = true){
     }
   }
 
-  serializeJson(parte2, json);
-  if(send) {
-    send_mqtt("Huerta/Push/Digital" ,json);
-  }else{
-    Serial.println("");
-    Serial.println("json:");
-    Serial.println(json);
-  }
+  // Agregamos un nuevo mensaje al buffer de salida
+  ++iMsgMqtt;
+  buffer_mqtt_msg_send[iMsgMqtt].send = (parte2.size() > 0) ? true : false; 
+  buffer_mqtt_msg_send[iMsgMqtt].topic = "Huerta/Push/Digital"; 
+  serializeJson(parte2, buffer_mqtt_msg_send[iMsgMqtt].msg);
 }
-void getDataAnalog(JsonObjectConst User, String plant, bool send = true ){
+
+void getDataAnalog(JsonObjectConst User, String plant){
+  
+  // Documento JSON para guardalos los datos de manera ordenada
   DynamicJsonDocument analog(1024);
-  //JsonObject analog = doc.createNestedObject("Analog");
+  //Guardamos el ID de la planta
   analog["plantId"] = plant;
 
+  // Variables para hacer la media 
   unsigned int SumaAnalog = 0;
   unsigned int samples = 10; 
 
@@ -207,13 +208,13 @@ void getDataAnalog(JsonObjectConst User, String plant, bool send = true ){
 
     for(int i = 0; i < samples; i++){
       
-      if (element.value() < 30){
+      /*if (element.value() < 30){
         // ADC2 control register restoring
         WRITE_PERI_REG(SENS_SAR_READ_CTRL2_REG, reg_b);
         //VERY IMPORTANT: DO THIS TO NOT HAVE INVERTED VALUES!
         SET_PERI_REG_MASK(SENS_SAR_READ_CTRL2_REG, SENS_SAR2_DATA_INV);
         //We have to do the 2 previous instructions BEFORE EVERY analogRead() calling!
-      }
+      }*/
       SumaAnalog += analogRead( element.value() );
       delay(50);
     }
@@ -221,47 +222,53 @@ void getDataAnalog(JsonObjectConst User, String plant, bool send = true ){
     JsonObject path = analog.createNestedObject(element.key());
     path["rawData"] = (SumaAnalog/samples);
     
-    if(!send){path["pin"] = element.value();}
+    path["pin"] = element.value();
     SumaAnalog = 0;
   }
 
-  serializeJson(analog, SendMqttMsg[iMsgMqtt].msg);
-  if(send) {
-    SendMqttMsg[iMsgMqtt].send = true;
-  }else{
-    SendMqttMsg[iMsgMqtt].send = false;
+  // Agregamos un nuevo mensaje al buffer de salida
+  ++iMsgMqtt;
+  buffer_mqtt_msg_send[iMsgMqtt].send = (analog.size() > 0) ? true : false; 
+  buffer_mqtt_msg_send[iMsgMqtt].topic = "Huerta/Push/Analog"; 
+  serializeJson(analog, buffer_mqtt_msg_send[iMsgMqtt].msg);
+}
+
+bool update_time( void ){
+  
+  if(!getLocalTime(&systemTime)){
+    Serial.println("Failed to obtain time");
+    return false;
   }
 
+  Serial.println(&systemTime, "%A, %B %d %Y %H:%M:%S");
+  return true;
 }
-void printLocalTime(){
-  struct tm timeinfo;
-  if(!getLocalTime(&timeinfo)){
-    Serial.println("Failed to obtain time");
-    return;
-  }
-  Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+
+void init_var_system( void )
+{
+  // reiniciamos el indice del buffer de envio de mensaje
+  iMsgMqtt = 0;
+
+  // reiniciamos el numero de intentos de conexion al servidor mqtt
+  nServerMqtt = 0;
+
+  iPlant = 0;
+
+  fl_local_modo = false;
+
+  //fl_cold_reset = false;
+
+  fl_manual = false;
 }
 
 void setup(){
-
-  // These lines are specifically to support the Adafruit Trinket 5V 16 MHz.
-  // Any other board, you can remove this part (but no harm leaving it):
-  //#if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
-  //  clock_prescale_set(clock_div_1);
-  //#endif
-  // END of Trinket-specific code.
-  //pixels.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
-
-  FastLED.addLeds<NEOPIXEL, pin_pixel>(leds, num_pixels);
 
   if (debugging || debugging_mqtt){
     Serial.begin(115200);
     delay(100);
   }
 
-  //Inicializacion de variables
-  iMsgMqtt = 0;
-
+  FastLED.addLeds<NEOPIXEL, pin_pixel>(leds, num_pixels);
 
   //pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
   pinMode(LED_GREEN, OUTPUT);
@@ -272,133 +279,231 @@ void setup(){
   pinMode(waterPin2, OUTPUT);
   pinMode(waterPin3, OUTPUT);
   pinMode(neoPin, OUTPUT);
-    
-  esp_sleep_wakeup_cause_t wakeup_reason;
-  wakeup_reason = esp_sleep_get_wakeup_cause();
+  
+  // Inicializacion de variables
+  init_var_system();
+  
+  switch( esp_sleep_get_wakeup_cause() ){
 
-  switch(wakeup_reason){
     case ESP_SLEEP_WAKEUP_TIMER :
       
-      Serial.println(""); 
-      Serial.print("Wakeup caused by timer:");
-      Serial.println(counterSleep);  
-      digitalWrite(LED_GREEN,HIGH);
-      delay(1000);
-      
-      if(counterSleep++ >= 48){
-        Serial.println("reset preventivo.");
-        //Traer la ultima version del usuario
-        getUser();
-        //Introducirle los datos almacenados en local
-        updateLastData();
-        //Guardarlos en la SD, antes de reinicio preventivo
-        getUserSD( true );
-        ESP.restart();
-      }
+      Serial.printf("\nWakeup caused by timer:%u\n", ticks_system);
 
+      /*
+      digitalWrite(LED_GREEN,HIGH);
+      
+      //Aplicamos un reset preventivo cada 24H
+      if(ticks_system++ >= 48){
+
+        Serial.println("reset preventivo.");
+        
+        // Reiniciamos el contador
+        ticks_system = 0;
+      }
+      */
       break;
 
     case ESP_SLEEP_WAKEUP_TOUCHPAD : 
-      Serial.println("Wakeup caused by touchpad");
+      
+      Serial.println("\n Wakeup caused by touchpad");
+
+      // Control del micro manualmente
       fl_manual = true;
+
+      // Indicador led que se inicio correctamente el inicio manual
       for(int i = 0; i<10; i++){
-        digitalWrite(LED_GREEN,LOW);
-        delay(1000);
         digitalWrite(LED_GREEN,HIGH);
-        delay(1000);
+        delay(500);
+        digitalWrite(LED_GREEN,LOW);
+        delay(500);
       } 
+
       break;
 
     default : 
-      counterSleep = 0;
-      itsHardReboot = true;
-      //pixels.clear();
-      //pixels.show();
+      
+      Serial.printf("\n Arranque del Micro \n");
 
-      reg_b = READ_PERI_REG(SENS_SAR_READ_CTRL2_REG);
-      Serial.println("Reading reg b.....");
-      Serial.printf("Wakeup was not caused by deep sleep: %d\n",wakeup_reason); 
+      // Reiniciamos el contador
+      //ticks_system = 0;
+
+      // El micro no viene de un reset.
+      //fl_cold_reset = true;
+
+      // Definimos el espacio de memoria
+      memset(plantStatus, 0,MAX_PLANTS*sizeof(Plant_status));
+
+      for( iPlant = 0; iPlant < MAX_PLANTS; iPlant++)
+      {
+        plantStatus[iPlant].Id = "";
+        plantStatus[iPlant].ticks_light = 0;
+        plantStatus[iPlant].ticks_water = 0;
+      }
       break;
   }
     
-  //Setup interrupt on Touch Pad 3 (GPIO15)
+  // Establecemos el GPIO15 como un boton capacitivo
   touchAttachInterrupt(touchPin, callback_touch, Threshold);
-  //Configure Touchpad as wakeup source
+  // Habilitamos despertar el micro por interrupcion de un boton capacitivo
   esp_sleep_enable_touchpad_wakeup();
 
-  esp_wifi_start();
+  // Habilitamos el uso del i2c
   Wire.begin();
 
-  // If we can connected to wifi..
-  if ( wifi_status() ){
-    Serial.println("We connected to the wifi...");
+  //Limpieza de la tira para hacer la lectura analogicas.
+  FastLED.clear();
+  FastLED.show();
 
-    // definimos el servidor y el puerto del MQTT
+  //Led indicador que esta en funcionamiento
+  digitalWrite(LED_GREEN, HIGH);
+
+  // Obtener los datos desde la tarjeta SD. 
+  if( (getUserSD() == true) && (fl_manual == false) )
+  {
+    //Damos electricidad a los sensores analogicos
+    swichs_on_off(HIGH);
+
+    /* 
+    *  Each User has max 4 measurements ( TCS34725, BME280, CCS811 and Si7021 )
+    *  and this is send to database for store it.
+    */
+      getDataDig(  localUser["Measurements"] );
+
+    /* 
+    *  Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
+    *  and this is send to database for store it.
+    */
+    for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
+    
+      //Definir los datos analogicos y los datos de riego y de iluminacion para ser activados
+      getDataAnalog(kvp.value(), kvp.key().c_str() ); 
+
+      // Proteccion
+      if ( iPlant > MAX_PLANTS)
+          break; 
+      
+      iPlant++;
+    }
+    
+    for( iPlant = 0; iPlant < MAX_PLANTS; iPlant++)
+    {
+      if(plantStatus[iPlant].Id = "")
+        continue;
+
+      Serial.printf("\n Tareas de la planta [%u] %s \n", iPlant ,plantStatus[iPlant].Id.c_str());
+      Serial.printf(" ticks_light [%u] \n", plantStatus[iPlant].ticks_light);
+      Serial.printf(" ticks_water [%u] \n", plantStatus[iPlant].ticks_water);
+
+      // [TO DO] Tener en cuenta que al utilizar los ADC afecta la medida que este encendida la luces
+      if (plantStatus[iPlant].ticks_light)
+        plantStatus[iPlant].ticks_light--;
+
+      if(plantStatus[iPlant].ticks_water)
+        plantStatus[iPlant].ticks_water--;
+    }
+
+    //Apagamos los sensores analogicos
+    swichs_on_off(LOW);
+  }
+  
+  // Encendemos el wifi
+  esp_wifi_start();
+  delay(1000);
+  
+  // Obtenemos la hora actual por NTP 
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
+  Serial.println("We connected to the wifi...");
+  if ( wifi_status() == true )
+  {
+    //
+    // Conectado al wifi
+    //
+
+    // Verificamos si existe una actualizacion de la informacion actual del usuario
+    getUser();
+
+    // Definimos el servidor y el puerto del MQTT
     client.setServer(mqtt_server, mqttPort);
     client.setCallback(callback);
 
-    // get NTP time every time connect to wifi, not necessary but wont hurts
-    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-    
-    // Try to get the user by the server
-    // True: updated or same data
-    // false: bad json was send
-    if( !getUser())
-    { 
-      //if we fount any user. we have nothing to do, go to sleep
-      sisError(0);
-    }
-    
-    delay(100);
+    do
+    {
+      // Intentamos conectarnos al servidor mqtt
+      reconnect();
 
+      if (nServerMqtt)
+        delay(5000);
+      
+      nServerMqtt++;
+    }while((!client.connected()) && (nServerMqtt <= 10 ));
 
-  }else if(!getUserSD()){
-    //Nothing to do, reboot
-    sisError(0);
+    if( nServerMqtt >= 10)
+      Serial.println("[MQTT][ERR]server unreach, power off uC");
+    
   }
-
-  updateLastData();
+  
+  //Actualizamos la hora con o sin wifi.
+  update_time();
 
   if (debugging || debugging_mqtt){
     Serial.println("----------------------------------------------------------");
     Serial.println("--------------------- SETUP END --------------------------");
     Serial.print("connected by: ");
     Serial.println(WiFi.localIP());
-    Serial.print("User mac: ");
-    Serial.println(getMac());
-    Serial.print("HardReboot: ");
-    Serial.println(itsHardReboot ? "Yes" : "No");
-    Serial.println("Setup ESP32 to sleep for every " + String(TIME_TO_SLEEP) +" Seconds");
-    printLocalTime();
+    Serial.printf("User mac: %s \n", getMac().c_str() );
+    //Serial.printf("HardReboot: %s\n",fl_cold_reset ? "Yes" : "No") ;
+    Serial.println("Setup ESP32 to sleep for every " + String(TIME_SLEEP_MINUTS) +" Minutes");
     Serial.println("----------------------------------------------------------");
   }
 
-  do
-  {
-    reconnect();
-    delay(5000);
-    iServerMqtt++;
-  }while((!client.connected()) && (iServerMqtt <= 10 ));
 
-  if( iServerMqtt >= 10)
-  {
-    ESP.restart();
-    Serial.println("server unreach, power off uC");
-  }
+  if ( fl_manual == true){
 
-  if (wakeup_reason == ESP_SLEEP_WAKEUP_TOUCHPAD){
     xTaskCreatePinnedToCore(taskCore2, "Task2", 10000, NULL, 1, &Task2,  0); 
     delay(500); 
   
-  }else{
+  }
+  else if ( wifi_status() == false )
+  {
+      Serial.printf("\n No wifi task \n");
+
+      // [TO DO] -> Seguir con la rutina de riego y de iluminacion
+      //         -> Enviar las metricas que antes no se lograron enviar
+      //sisError(0);
+
+      esp_wifi_stop();
+
+      delay(1000);
+
+      // Reinicio del indice de la planta
+      iPlant = 0;
+
+      //por cada planta, realizamos la rutina de tareas (Riego y/o iluminacion)
+      for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
+      
+        //Definir los datos analogicos y los datos de riego y de iluminacion para ser activados
+        taskSystem(kvp.value(), kvp.key().c_str() ); 
+
+        if ( iPlant > MAX_PLANTS)
+          break; 
+        
+        iPlant++;
+      }
+
+      //saveUser();
+      toSleep(TIME_TO_SLEEP);
+  }
+  else
+  {
+
+    Serial.printf("\n WIFI task\n");
 
     delay(100);
     xTaskCreatePinnedToCore(taskCore1, "Task1", 10000, NULL, 1, &Task1,  1); 
-    delay(500);
-    xTaskCreatePinnedToCore(taskCore0, "Task0", 10000, NULL, 1, &Task0,  0); 
-    delay(500); 
+    //delay(500);
+    //xTaskCreatePinnedToCore(taskCore0, "Task0", 10000, NULL, 1, &Task0,  0); 
   }
-  time(&now);
 }
 
 void taskCore0( void * pvParameters){
@@ -412,6 +517,9 @@ void taskCore0( void * pvParameters){
       {
         reconnect();
       }
+
+
+
       client.loop();
       delay(100);
     }
@@ -423,71 +531,67 @@ void taskCore0( void * pvParameters){
   }
   
 }
+
 void taskCore1( void * pvParameters){
   //Serial.print("Task of the core 1:");
   //Serial.println(xPortGetCoreID());
   for(;;){
 
-    //Led indicador que esta en funcionamiento
+    if (!client.connected())  // Reconnect if connection is lost
+      reconnect();
     
-    digitalWrite(LED_GREEN, HIGH);
-
-    /* 
-    *  Each User has max 4 measurements ( TCS34725, BME280, CCS811 and Si7021 )
-    *  and this is send to database for store it.
-    */
-    getDataDig(  localUser["Measurements"] );
-
-    //Damos electricidad a los sensores analogicos
-    swichs_on_off(HIGH);
-    /* 
-    *  Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
-    *  and this is send to database for store it.
-    */
-    for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
-      
-      //Definir los datos analogicos y los datos de riego y de iluminacion para ser activados
-      getDataAnalog(kvp.value(), kvp.key().c_str() ); 
-      iMsgMqtt++;
-    }
-    //Apagamos los sensores analogicos
-    swichs_on_off(LOW);
-    
-    //Por cada planta, enviamos cada mensaje analogico
-    for(iMsgMqtt = 0; iMsgMqtt< MAX_PLANTS; iMsgMqtt++)
+       
+    // Intentamos enviar los mensajes
+    if( buffer_mqtt_msg_send[iMsgMqtt].send )
     {
-      Serial.printf("\n Enviando a mqtt: %d \n", SendMqttMsg[iMsgMqtt].send );
-      Serial.println(SendMqttMsg[iMsgMqtt].msg);
+      Serial.printf("\n Enviando iMsg: %u send:%u intento:%u \n", iMsgMqtt , buffer_mqtt_msg_send[iMsgMqtt].send, n_send_msg_mqtt );
+      Serial.printf("\n topic: %s \n  msg:%s \n", 
+        buffer_mqtt_msg_send[iMsgMqtt].topic.c_str(),
+        buffer_mqtt_msg_send[iMsgMqtt].msg.c_str());
+    }
 
-      if (SendMqttMsg[iMsgMqtt].send == true )
-      {
-        send_mqtt("Huerta/Push/Analog" ,SendMqttMsg[iMsgMqtt].msg);
+    if( iMsgMqtt >= (MAX_BUFFER_PLANTS-1 ))
+      finishedCore1 = true;
+    else if( n_send_msg_mqtt >= N_SEND_MQTT)
+      iMsgMqtt++;
+    else if ( buffer_mqtt_msg_send[iMsgMqtt].send == false)
+      iMsgMqtt++;
+    else
+    {
+      if(send_mqtt(buffer_mqtt_msg_send[iMsgMqtt].topic ,buffer_mqtt_msg_send[iMsgMqtt].msg) == true)
+      { 
+        iMsgMqtt++;
+        n_send_msg_mqtt = 0;
       }
-    }
+      else
+      {
+        n_send_msg_mqtt++;
+      }
+    } 
 
-    //por cada planta, realizamos la rutina de tareas (Riego y/o iluminacion)
-    for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
+    client.loop();
+    delay(100);
+
+    if( finishedCore1 == true)
+    {
+      // Encendemos el wifi
+      //esp_wifi_stop();
+
+      //delay(1000);
+
+      //por cada planta, realizamos la rutina de tareas (Riego y/o iluminacion)
+      for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
       
-      //Definir los datos analogicos y los datos de riego y de iluminacion para ser activados
-      taskSystem(kvp.value(), kvp.key().c_str() ); 
-    }
-    
-    Serial.println("re send the mqtt messages");
-    //sendPedientingMessage();
-    //  Do something with all tasks received
-    //controlSystem();
-    //tasksControl();
-    
-    finishedCore1 = true;
+        //Definir los datos analogicos y los datos de riego y de iluminacion para ser activados
+        taskSystem(kvp.value(), kvp.key().c_str() ); 
+      }
 
-    while ( !finishedCore0 ){
-      delay(1000);
+      //saveUser();
+      toSleep(TIME_TO_SLEEP);
     }
-
-    saveUser();
-    toSleep(TIME_TO_SLEEP);
   }
 }
+
 // manual mood
 void taskCore2( void * pvParameters){
 
