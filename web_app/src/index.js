@@ -44,6 +44,14 @@ app.engine('.hbs', exphbs({
                 return (new Date(date*1000)).toDateString();
             }
         },
+        toPercentage: function(data)
+        {
+            if ( date == 0){
+                return "never";
+            }else{
+                return Math.round( (data/4096)*100 ) ;
+            }
+        },
         isVegetable: function (value) {
             return value == "vegetable";
         }
