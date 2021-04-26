@@ -290,7 +290,7 @@ server.on('published', async (packet, client) => {
             doc.plants[element].info.analog.date       =  json_data.timestamps;
 
             fl_save = true;
-            debug(chalk.green(doc.plants[element].sowing.light ));
+            debug(chalk.yellow(doc.plants[element].info.analog ));
           }
         }
         if( fl_save)
