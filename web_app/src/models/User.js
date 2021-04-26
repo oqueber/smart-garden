@@ -13,12 +13,14 @@ const UserSchema = new Schema({
     devices: {type: String},
     indoor: {type: Boolean},
     update: {type: Boolean, default: false },
+    device_last_connect: {type: Number, default: 0},   // Ultima conexion
     plants: [{
         info: {
             name: {type: String},
             type: {type: String},
             index: {type: Number},
             date: {type: Number},   //Creation Date
+            status: {type: Number, default: 0},   // Ultima conexion
             analog:
             {
                 photocell1:{type: Number, default: 0 },

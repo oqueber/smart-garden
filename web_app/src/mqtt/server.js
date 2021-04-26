@@ -66,6 +66,15 @@ eventEmitter.on('user/update/water', async function(UserMac,plantIndex){
 */
 server.on('clientConnected', async client => {
   debug(`Client connected ${client.id}`);
+
+  let deviceId = (client.id).split('/')[1];
+  
+  await Users.findOne( {MAC: deviceId }).then(doc => { 
+    doc.device_last_connect =  Date.now();
+    doc.save();
+    debug(chalk.yellow(doc));
+    debug(chalk.green("User connected update"));
+  });
 });
 
 server.on('clientDisconnected', client => {
