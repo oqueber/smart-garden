@@ -281,7 +281,7 @@ server.on('published', async (packet, client) => {
 
         //debug(chalk.yellow(`User found: `));
         for( const element in doc.plants){
-          if (doc.plants[element].info.date == Number(json_data.plant) ){
+          if (doc.plants[element].info.date == Number(json_data.plantId) ){
             
             doc.plants[element].info.analog.photocell1 =  newData.photocell1;
             doc.plants[element].info.analog.photocell2 =  newData.photocell1;
