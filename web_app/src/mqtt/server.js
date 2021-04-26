@@ -248,11 +248,12 @@ server.on('published', async (packet, client) => {
     }
   } 
   if (packet.topic == "Huerta/Push/Analog") {
-    
+    let json_data;
+
     try {
       //debug( chalk.yellow('Msg Anag: '));
       //debug( packet.payload.toString('utf-8') );
-      let json_data = JSON.parse(packet.payload.toString('utf-8'));
+      json_data = JSON.parse(packet.payload.toString('utf-8'));
       if(json_data != null){
 
         // offset de 2 horas y pasarlo de int a time_t
