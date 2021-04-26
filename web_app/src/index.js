@@ -46,7 +46,7 @@ app.engine('.hbs', exphbs({
         },
         toPercentage: function(data)
         {
-            if ( date == 0){
+            if ( data == 0){
                 return "never";
             }else{
                 return Math.round( (data/4096)*100 ) ;
