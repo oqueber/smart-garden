@@ -27,11 +27,26 @@
             <div class="card-content" style="padding: 20px 5px">
               <!-- <p>Fecha de creacion {{{toDate info.date }}} </p> --->
               <div>
-                <p>WaterEC:  {{ toPercentage info.analog.humEC}}%</p>
-                <p>WaterCap: {{ toPercentage info.analog.humCap}}%</p>
-                <p>Luz1: {{ toPercentage info.analog.photocell1}}%</p>
-                <p>Luz2: {{ toPercentage info.analog.photocell2}}%</p>
-                <p>Date: {{info.analog.date}}</p>
+                <p>
+                  <i class="material-icons">invert_colors</i>
+                  WaterEC:  {{ toPercentage info.analog.humEC}}%
+                </p>
+                <p>
+                  <i class="material-icons">invert_colors</i>
+                  WaterCap: {{ toPercentage info.analog.humCap}}%
+                </p>
+                <p>
+                  <i class="material-icons">brightness_5</i>
+                  Luz1: {{ toPercentage info.analog.photocell1}}%
+                </p>
+                <p>
+                  <i class="material-icons">brightness_5</i>
+                  Luz2: {{ toPercentage info.analog.photocell2}}%
+                </p>
+                <p>
+                  <i class="material-icons">access_time</i>
+                  Date: {{info.analog.date}}
+                </p>
               </div>
               <p>Fecha de creacion:</p> 
               <p>{{{toDate info.date }}} </p> 
