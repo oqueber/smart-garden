@@ -28,7 +28,7 @@
               <!-- <p>Fecha de creacion {{{toDate info.date }}} </p> --->
               <div>
                 <div>
-                  <i class="material-icons">invert_colors</i>
+                  <i style="float: left;" class="material-icons">invert_colors</i>
                   
                   <p>WaterEC:  {{ toPercentage info.analog.humEC}}%</p>
                   <p>WaterCap: {{ toPercentage info.analog.humCap}}%</p>
@@ -37,7 +37,7 @@
                 </div>
                 
                 <div>
-                  <i class="material-icons">brightness_5</i>
+                  <i style="float: left;" class="material-icons">brightness_5</i>
                   
                   <p>Luz1: {{ toPercentage info.analog.photocell1}}%</p>
                   <p>Luz2: {{ toPercentage info.analog.photocell2}}%</p>
@@ -52,15 +52,14 @@
                 </div>   
 
                 <p>
-                  <i class="material-icons">access_time</i>
+                  <i style="float: left;" class="material-icons">access_time</i>
                   Date: {{info.analog.date}}
                 </p>
               </div>
               <div>
-                <i class="material-icons">event_note</i>
+                <i style="float: left;" class="material-icons">event_note</i>
                 <p>Fecha de creacion:</p> 
                 <p>{{{toDate info.date }}} </p> 
-
               </div>
 
             </div>
