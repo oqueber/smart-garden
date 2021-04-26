@@ -249,6 +249,7 @@ server.on('published', async (packet, client) => {
   } 
   if (packet.topic == "Huerta/Push/Analog") {
     let json_data;
+    let fl_save = false;
 
     try {
       //debug( chalk.yellow('Msg Anag: '));
@@ -273,7 +274,6 @@ server.on('published', async (packet, client) => {
     }
 
     debug( chalk.yellow('Msg last_value: '));
-    let fl_save = false;
     
     if(json_data != null){
 
@@ -290,7 +290,7 @@ server.on('published', async (packet, client) => {
             doc.plants[element].info.analog.date       =  json_data.timestamps;
 
             fl_save = true;
-            debug(chalk.yellow(doc.plants[element].info.analog ));
+            debug(chalk.yellow(doc.plants[element].info.analog));
           }
         }
         if( fl_save)
