@@ -8,6 +8,11 @@ const AnalogdB = require('../models/Analog');
 const Users = require('../models/User');
 const {io, eventEmitter, devicesConnected,userConnected} = require('../utils/socketio.js'); 
 
+//
+// Mqtt nos permite la comunicacion entre el dispositivo y el servidor web.
+//
+
+
 const settings = {
 	port: 1883
 }
@@ -15,6 +20,7 @@ const server = new mosca.Server(settings)
 
 let userTask = new Map();
 
+// El servidor envia mensajes Mqtt al dispositivo
 eventEmitter.on('action/setData', async function( data ){ 
   
   let i_socket = userConnected.get(data.MAC);
@@ -44,59 +50,7 @@ eventEmitter.on('action/setData', async function( data ){
 
 });
 
-/*
-eventEmitter.on('client/set/connection', async function( id ){
-  if ( !userTask.has( id ) ){
-    let task = new Promise( async (resolve, reject) => {
-      const user = await Users.findOne({MAC: id});
-       
-      if(user){
-        if(user.plants.length >= 1){
-          let task_for_plant = new Map();
-          
-          user.plants.forEach( (element, index) => {
-            let today = Date.now();
-            let last_water     = element.sowing.water.last_water;
-            let frequency_water= element.sowing.water.frequency;
-            let limit_water = element.sowing.water.limit;
-            let last_light = element.sowing.light.last_light;
-            debug( chalk.blue( ` ${(today-last_water)/(1000*60*60*24)} > ${frequency_water}`) );
-            if( ((today-last_water)/(1000*60*60*24)) >  frequency_water){
-              task_for_plant.set(index,{
-                topic: 'device/get/task',
-                payload: 'water/on/'+index+"/"+limit_water,
-                qos: 0, // 0, 1, or 2
-                retain: false // or true
-              });
-            }
-          }); 
-          
-          if( task_for_plant.size > 0){
-            resolve(task_for_plant);
-          }else{
-            reject(Error("Nothing to doing right now"))
-          }
-        }else{
-          reject(Error("The user don't have plants"));
-        }
-      }else{
-        reject(Error("User don't found"));
-      }
 
-    });
-    task.then( function(tasks) {
-      userTask.set(id,tasks);
-
-    }).catch(function(reason) {
-      debug( chalk.yellow('Manejar promesa rechazada ('+reason+') aquí.') );
-    });
-    
-  }else{
-    //already have a notice
-    debug('the user already have a task');
-  }
-});
-*/
 /*
 eventEmitter.on('user/update/water', async function(UserMac,plantIndex){  
   const index = parseInt(plantIndex,10);
@@ -198,51 +152,77 @@ server.on('published', async (packet, client) => {
   }
   */
   if(packet.topic == "Huerta/update/water"){
-    let deviceMAC = (client.id).split('/')[1]; 
-    let devicePayload = packet.payload.toString('utf-8').split('/');
-    debug(chalk.green(`Update plant water ${Number(devicePayload[0])} in the user ${deviceMAC} with value ${Number(devicePayload[1])}`));
-    console.log(packet.payload.toString('utf-8'));
-    await Users.findOne( {MAC: deviceMAC }).then(doc => {
+    debug( chalk.yellow('Msg water: '));
+    debug( packet.payload.toString('utf-8') );
 
-      //debug(chalk.yellow(`User found: `));
-      for( const element in doc.plants){
+    let json_data = JSON.parse(packet.payload.toString('utf-8'));
+    let fl_save = false;
 
-        if (doc.plants[element].info.date == Number(devicePayload[0]) ){
-          doc.plants[element].sowing.water.last_water = Number(devicePayload[1]) ;
-          debug(chalk.green(doc.plants[element].sowing.water ));
+    if(json_data != null){
+      
+      // offset de 2 horas y pasarlo de int a time_t
+      json_data.timestamps = (json_data.timestamps + 2*60*60) *1000; 
+      debug(chalk.yellow(`Update plant water ${Number(json_data.plant)} in the user ${json_data.device} with value ${json_data.status}`));
+
+      await Users.findOne( {MAC: json_data.device }).then(doc => {
+
+        //debug(chalk.yellow(`User found: `));
+        for( const element in doc.plants){
+          if (doc.plants[element].info.date == Number(json_data.plant) )
+          {
+            doc.plants[element].sowing.water.last_water =  Number(json_data.timestamps);
+            debug(chalk.green(doc.plants[element].sowing.water ));
+            fl_save = true;
+          }
         }
 
-      }
-      doc.save();
-      debug(chalk.green("plant save"));
-      //debug(chalk.green(doc.plants ));
-    });
+        if(fl_save)
+        {
+          doc.save();
+          debug(chalk.green("plant save"));
+        }
+      });
+    }
   }
   if(packet.topic == "Huerta/update/light"){
-    let deviceMAC = (client.id).split('/')[1]; 
-    let devicePayload = packet.payload.toString('utf-8').split('/');
-    debug(chalk.yellow(`Update plant light ${Number(devicePayload[0])} in the user ${deviceMAC} with value ${Number(devicePayload[1])}`));
-    console.log(packet.payload.toString('utf-8'));
-    await Users.findOne( {MAC: deviceMAC }).then(doc => {
+    
+    debug( chalk.yellow('Msg light: '));
+    debug( packet.payload.toString('utf-8') );
+    let fl_save = false;
+    let json_data = JSON.parse(packet.payload.toString('utf-8'));
+    
+    if(json_data != null){
+      
+      // offset de 2 horas y pasarlo de int a time_t
+      json_data.timestamps = (json_data.timestamps + 2*60*60) *1000; 
+      debug(chalk.yellow(`Update plant light ${Number(json_data.plant)} in the user ${json_data.device} with value ${json_data.status}`));
 
-      //debug(chalk.yellow(`User found: `));
-      for( const element in doc.plants){
-        if (doc.plants[element].info.date == Number(devicePayload[0]) ){
-          
-          if( Number(devicePayload[1]) == 1){ // Si esta activo, guardamos la fecha acualizada
-            doc.plants[element].sowing.light.last_light =  Number(devicePayload[2])  ;
-            doc.plants[element].sowing.light.status = true;
+      await Users.findOne( {MAC: json_data.device }).then(doc => {
+
+        //debug(chalk.yellow(`User found: `));
+        for( const element in doc.plants){
+          if (doc.plants[element].info.date == Number(json_data.plant) ){
+            
+            if( Number(json_data.status) == 1){ // Si esta activo, guardamos la fecha acualizada
+              doc.plants[element].sowing.light.last_light =  Number(json_data.timestamps);
+              doc.plants[element].sowing.light.status = true;
+            }
+            else{
+              doc.plants[element].sowing.light.status = false  ;
+            }
+            fl_save = true;
+            debug(chalk.green(doc.plants[element].sowing.light ));
           }
-          else{
-            doc.plants[element].sowing.light.status = false  ;
-          }
-          
-          debug(chalk.green(doc.plants[element].sowing.light ));
         }
-      }
-      doc.save();
-      debug(chalk.green("plant save"));
-    });
+        if( fl_save)
+        {
+          doc.save();
+          debug(chalk.green("plant save"));
+        }
+      });
+
+    }
+
   }
   if (packet.topic == "Huerta/Push/Digital") {
     

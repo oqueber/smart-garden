@@ -6,37 +6,60 @@
 #include <ArduinoJson.hpp>
 #include <ArduinoJson.h>
 #include <SD.cpp>
-
+#include <FastLED.h>
 #include "soc/sens_reg.h" // needed for manipulating ADC2 control register
 
 #include "config.h"
 
+
+//--------------------------------------------------------
+//--------------  Definiciones LOCALES       -------------
+//--------------------------------------------------------
+
+// Numero de intentos maximos consecutivos para conectarse al servidor MQTT
+#define MAX_N_CONNECT_MQTT_SERVER 5
+
+// Valor de sensivilidad del boton capacitivo 
+#define Threshold 40 
+
+//--------------------------------------------------------
+//--------------  VARIABLES EN MEMORIA RAM   -------------
+//--------------------------------------------------------
+
 // place in RTC slow memory so available after deepsleep
 static RTC_NOINIT_ATTR int reg_b;
-//Contador de reinicios -> Cada 30minutos suma uno 
-static RTC_NOINIT_ATTR byte ticks_system; 
-//JSON con los datos del usuario
-DynamicJsonDocument localUser (2048);
 
-//Tiempo del sistema.
-struct tm systemTime;
-
+// Estado y tareas actual de cada planta 
 static RTC_DATA_ATTR struct Plant_status plantStatus[MAX_PLANTS];
 
-bool finishedCore1 = false;
-bool finishedCore0 = false;
-bool fl_manual = false;
+static RTC_DATA_ATTR CRGB leds[MAX_N_LEDS];
 
-//Flag que indica que solo realizaremos las rutinas internas del cuidado de planta
-bool fl_local_modo;
+//--------------------------------------------------------
+//--------------    VARIABLES GLOBALES       -------------
+//--------------------------------------------------------
 
+// Datos del usuario en formato JSON
+DynamicJsonDocument localUser (2048);
+
+// Hora del sistema.
+struct tm systemTime;
+
+// Indice de planta a tratar
 byte iPlant;
-byte nServerMqtt;
-byte n_send_msg_mqtt; //Numero de intentos en enviar un mensaje mqtt
+byte max_plants_user;
+
+// Buffer de mensajes MQTT por enviar
+struct ST_MQTT_SEND buffer_mqtt_msg_send[MAX_BUFFER_PLANTS];
+
+//--------------------------------------------------------
+//--------------    FLAGS DE CONTROL         -------------
+//--------------------------------------------------------
+
+// Micro controlado desde la plataforma web
+bool fl_manual = false;
 
 //Estructura para rellenar con los datos de los sensores
 byte iMsgMqtt;
-struct ST_MQTT_SEND buffer_mqtt_msg_send[MAX_BUFFER_PLANTS];
 
 
 #include <sistem_error.cpp>
@@ -52,29 +75,18 @@ struct ST_MQTT_SEND buffer_mqtt_msg_send[MAX_BUFFER_PLANTS];
 #include <sistem_control.cpp>
 #include "setup_sensors.cpp"
 
-#define Threshold 40 /* Greater the value, more the sensitivity */
-
-
-TaskHandle_t Task0;
 TaskHandle_t Task1;
 TaskHandle_t Task2;
 
 void taskCore2( void * pvParameters);
 void taskCore1( void * pvParameters);
-void taskCore0( void * pvParameters);
 void callback_touch(){};
 
-void swichs_on_off(int io){
-  Serial.print("\nSwitch mode: ");
-  Serial.println(io);
-  digitalWrite(SW1, io);
-  delay(5000);
-}
-
+// Recopilacion de variables Digitales
 void getDataDig(String select ){
+  
   DynamicJsonDocument parte1(200);
   DynamicJsonDocument parte2(200);
-  //doc["PlantId"] = "measurement";
   
   if (select[0] == '1'){
     if (Setup_TCS34725() ){
@@ -109,8 +121,8 @@ void getDataDig(String select ){
       Data["Lux"] = lux;
 
       // Agregamos un nuevo mensaje al buffer de salida
-      ++iMsgMqtt;
-      buffer_mqtt_msg_send[iMsgMqtt].send = (parte1.size() > 0) ? true : false; 
+      iMsgMqtt++;
+      buffer_mqtt_msg_send[iMsgMqtt].send = (parte1.size() > 0) ? true : false;
       buffer_mqtt_msg_send[iMsgMqtt].topic = "Huerta/Push/Digital"; 
       serializeJson(parte1, buffer_mqtt_msg_send[iMsgMqtt].msg);
     }
@@ -187,17 +199,19 @@ void getDataDig(String select ){
   }
 
   // Agregamos un nuevo mensaje al buffer de salida
-  ++iMsgMqtt;
+  iMsgMqtt++;
   buffer_mqtt_msg_send[iMsgMqtt].send = (parte2.size() > 0) ? true : false; 
   buffer_mqtt_msg_send[iMsgMqtt].topic = "Huerta/Push/Digital"; 
   serializeJson(parte2, buffer_mqtt_msg_send[iMsgMqtt].msg);
 }
 
+// Recopilacion de variables Analogicas
 void getDataAnalog(JsonObjectConst User, String plant){
   
-  // Documento JSON para guardalos los datos de manera ordenada
+  // Documento JSON
   DynamicJsonDocument analog(1024);
-  //Guardamos el ID de la planta
+
+  // ID de la planta
   analog["plantId"] = plant;
 
   // Variables para hacer la media 
@@ -208,13 +222,14 @@ void getDataAnalog(JsonObjectConst User, String plant){
 
     for(int i = 0; i < samples; i++){
       
-      /*if (element.value() < 30){
+      if (element.value() < 30){
         // ADC2 control register restoring
         WRITE_PERI_REG(SENS_SAR_READ_CTRL2_REG, reg_b);
         //VERY IMPORTANT: DO THIS TO NOT HAVE INVERTED VALUES!
         SET_PERI_REG_MASK(SENS_SAR_READ_CTRL2_REG, SENS_SAR2_DATA_INV);
         //We have to do the 2 previous instructions BEFORE EVERY analogRead() calling!
-      }*/
+      }
+
       SumaAnalog += analogRead( element.value() );
       delay(50);
     }
@@ -227,12 +242,13 @@ void getDataAnalog(JsonObjectConst User, String plant){
   }
 
   // Agregamos un nuevo mensaje al buffer de salida
-  ++iMsgMqtt;
+  iMsgMqtt++;
   buffer_mqtt_msg_send[iMsgMqtt].send = (analog.size() > 0) ? true : false; 
   buffer_mqtt_msg_send[iMsgMqtt].topic = "Huerta/Push/Analog"; 
   serializeJson(analog, buffer_mqtt_msg_send[iMsgMqtt].msg);
 }
 
+// Actualizacion de la hora del sistema con o sin WIFI
 bool update_time( void ){
   
   if(!getLocalTime(&systemTime)){
@@ -244,31 +260,103 @@ bool update_time( void ){
   return true;
 }
 
+// Inicializacion de variables
 void init_var_system( void )
 {
   // reiniciamos el indice del buffer de envio de mensaje
   iMsgMqtt = 0;
 
-  // reiniciamos el numero de intentos de conexion al servidor mqtt
-  nServerMqtt = 0;
-
+  // Reiniciamos el indice de planta a tratar
   iPlant = 0;
+  max_plants_user = 0;
 
-  fl_local_modo = false;
-
-  //fl_cold_reset = false;
-
+  // Estado inicial del sistema
   fl_manual = false;
 }
 
+// Rutina de cuidado de la planta. Encargada de apagar el riego o la iluminacion
+void taskPlantCare( void)
+{
+  byte iPlantCare;
+
+  for( iPlantCare = 0; iPlantCare < max_plants_user; iPlantCare++)
+  {
+    // Protecciones
+    //if ( (plantStatus[iPlantCare].ticks_water == 0) && (plantStatus[iPlantCare].ticks_light == 0))
+    //  continue;
+
+    Serial.printf("\n Tareas de la planta [%u] %s \n", iPlantCare ,plantStatus[iPlantCare].Id.c_str());
+    Serial.printf(" ticks_light [%u] \n", plantStatus[iPlantCare].ticks_light);
+    Serial.printf(" ticks_water [%u] \n", plantStatus[iPlantCare].ticks_water);
+
+    // Mantener la iluminacion encendida hasta que transcurra el tiempo establecido
+    if (plantStatus[iPlantCare].ticks_light)
+    {
+      
+      plantStatus[iPlantCare].ticks_light--;
+      
+      // Enviar al servidor MQTT que sigue encendido la luz
+      // Agregamos un nuevo mensaje al buffer de salida
+      iMsgMqtt++;
+      buffer_mqtt_msg_send[iMsgMqtt].send = true;
+      buffer_mqtt_msg_send[iMsgMqtt].topic = "Huerta/update/light"; 
+      buffer_mqtt_msg_send[iMsgMqtt].msg = "{\"plant\":\""+plantStatus[iPlantCare].Id+"\",\"status\":1}";
+    }     
+    else
+    {
+      taskLight(
+                localUser["plants"][plantStatus[iPlantCare].Id]["light"]["led_start"].as<int>(),
+                localUser["plants"][plantStatus[iPlantCare].Id]["light"]["led_end"].as<int>(),
+                0,
+                0,
+                0);
+
+      // Enviar al servidor MQTT que sigue permanece apagado la iluminacion
+      // Agregamos un nuevo mensaje al buffer de salida
+      iMsgMqtt++;
+      buffer_mqtt_msg_send[iMsgMqtt].send = true;
+      buffer_mqtt_msg_send[iMsgMqtt].topic = "Huerta/update/light"; 
+      buffer_mqtt_msg_send[iMsgMqtt].msg = "{\"plant\":\""+plantStatus[iPlantCare].Id+"\",\"status\":0}";
+    }
+
+    // Mantener el riego de agua a un nivel estable
+    if(plantStatus[iPlantCare].ticks_water)
+    {
+      plantStatus[iPlantCare].ticks_water--;
+      
+      taskWater(
+        localUser["plants"][plantStatus[iPlantCare].Id]["pinout"]["humCap"].as<int>(),
+        localUser["plants"][plantStatus[iPlantCare].Id]["pinout"]["humEC"].as<int>(),
+        localUser["plants"][plantStatus[iPlantCare].Id]["water"]["limit"].as<int>(),
+        localUser["plants"][plantStatus[iPlantCare].Id]["water"]["pinout"].as<int>(),
+        localUser["plants"][plantStatus[iPlantCare].Id]["water"]["open"].as<int>(),
+        localUser["plants"][plantStatus[iPlantCare].Id]["water"]["close"].as<int>()
+      );
+
+      // Enviar al servidor MQTT que se ha regado la planta
+      // Agregamos un nuevo mensaje al buffer de salida
+      iMsgMqtt++;
+      buffer_mqtt_msg_send[iMsgMqtt].send = true;
+      buffer_mqtt_msg_send[iMsgMqtt].topic = "Huerta/update/water"; 
+      buffer_mqtt_msg_send[iMsgMqtt].msg = "{\"plant\":\""+plantStatus[iPlantCare].Id+"}";
+    } 
+
+    
+  }
+}
+
+// Configuracion del sistema
 void setup(){
+
+  // Numero de intentos de conexion al servidor mqtt
+  byte nServerMqtt = 0;
 
   if (debugging || debugging_mqtt){
     Serial.begin(115200);
     delay(100);
   }
 
-  FastLED.addLeds<NEOPIXEL, pin_pixel>(leds, num_pixels);
+  FastLED.addLeds<NEOPIXEL, pin_pixel>(leds, MAX_N_LEDS);
 
   //pinMode(LED_BUILTIN, OUTPUT);     // Initialize the LED_BUILTIN pin as an output
   pinMode(LED_GREEN, OUTPUT);
@@ -283,26 +371,15 @@ void setup(){
   // Inicializacion de variables
   init_var_system();
   
+  // Causa del despetar/inicio del micro
   switch( esp_sleep_get_wakeup_cause() ){
 
+    // Se desperto por timeout
     case ESP_SLEEP_WAKEUP_TIMER :
-      
-      Serial.printf("\nWakeup caused by timer:%u\n", ticks_system);
-
-      /*
-      digitalWrite(LED_GREEN,HIGH);
-      
-      //Aplicamos un reset preventivo cada 24H
-      if(ticks_system++ >= 48){
-
-        Serial.println("reset preventivo.");
-        
-        // Reiniciamos el contador
-        ticks_system = 0;
-      }
-      */
+      //digitalWrite(LED_GREEN,HIGH);
       break;
 
+    // Se desperto por el boton capacitivo
     case ESP_SLEEP_WAKEUP_TOUCHPAD : 
       
       Serial.println("\n Wakeup caused by touchpad");
@@ -311,6 +388,7 @@ void setup(){
       fl_manual = true;
 
       // Indicador led que se inicio correctamente el inicio manual
+      // Proteccion para que de tiempo de soltar el boton
       for(int i = 0; i<10; i++){
         digitalWrite(LED_GREEN,HIGH);
         delay(500);
@@ -320,30 +398,37 @@ void setup(){
 
       break;
 
+    // Arranque del micro. Se a conectado la alimentacion
     default : 
       
       Serial.printf("\n Arranque del Micro \n");
 
-      // Reiniciamos el contador
-      //ticks_system = 0;
+      //Guardamos el registro de la lectura analogicas 2
+      reg_b = READ_PERI_REG(SENS_SAR_READ_CTRL2_REG);
 
-      // El micro no viene de un reset.
-      //fl_cold_reset = true;
-
-      // Definimos el espacio de memoria
+      // Definimos y rellenamos el espacio de memoria
       memset(plantStatus, 0,MAX_PLANTS*sizeof(Plant_status));
-
+      
       for( iPlant = 0; iPlant < MAX_PLANTS; iPlant++)
       {
         plantStatus[iPlant].Id = "";
         plantStatus[iPlant].ticks_light = 0;
         plantStatus[iPlant].ticks_water = 0;
       }
+
+      // Reiniciamos el indice de planta para la proxima iteracion
+      iPlant = 0;
+
+      //Limpieza de la tira para hacer la lectura analogicas.
+      FastLED.clear();
+      FastLED.show();
+
       break;
   }
     
   // Establecemos el GPIO15 como un boton capacitivo
   touchAttachInterrupt(touchPin, callback_touch, Threshold);
+
   // Habilitamos despertar el micro por interrupcion de un boton capacitivo
   esp_sleep_enable_touchpad_wakeup();
 
@@ -351,8 +436,8 @@ void setup(){
   Wire.begin();
 
   //Limpieza de la tira para hacer la lectura analogicas.
-  FastLED.clear();
-  FastLED.show();
+  //FastLED.clear();
+  //FastLED.show();
 
   //Led indicador que esta en funcionamiento
   digitalWrite(LED_GREEN, HIGH);
@@ -363,63 +448,46 @@ void setup(){
     //Damos electricidad a los sensores analogicos
     swichs_on_off(HIGH);
 
-    /* 
-    *  Each User has max 4 measurements ( TCS34725, BME280, CCS811 and Si7021 )
-    *  and this is send to database for store it.
-    */
-      getDataDig(  localUser["Measurements"] );
+    // Cada planta tiene como maximo 4 sensores i2c ( TCS34725, BME280, CCS811 and Si7021 )
+    getDataDig(  localUser["Measurements"] );
 
-    /* 
-    *  Each plant has 4 measurements (2 Photocel, 1 HumCap and HumEC)
-    *  and this is send to database for store it.
-    */
+    // Cada planta tiene 4 medidas analogicas (2 Photocel, 1 HumCap and HumEC)
     for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
     
       //Definir los datos analogicos y los datos de riego y de iluminacion para ser activados
       getDataAnalog(kvp.value(), kvp.key().c_str() ); 
 
+      // llenado de valores
+      plantStatus[iPlant].Id = kvp.key().c_str();
+
       // Proteccion
-      if ( iPlant > MAX_PLANTS)
-          break; 
-      
-      iPlant++;
+      if ( iPlant++ > MAX_PLANTS)
+        break; // Proteccion del sistema 
     }
+    // Guardamos cuantas plantas hay en el json 
+    max_plants_user = iPlant;
+
+    // Reiniciamos el indice de planta para la proxima iteracion
+    iPlant = 0;
     
-    for( iPlant = 0; iPlant < MAX_PLANTS; iPlant++)
-    {
-      if(plantStatus[iPlant].Id = "")
-        continue;
+    // Tareas pendientes por realizar
+    taskPlantCare();
 
-      Serial.printf("\n Tareas de la planta [%u] %s \n", iPlant ,plantStatus[iPlant].Id.c_str());
-      Serial.printf(" ticks_light [%u] \n", plantStatus[iPlant].ticks_light);
-      Serial.printf(" ticks_water [%u] \n", plantStatus[iPlant].ticks_water);
-
-      // [TO DO] Tener en cuenta que al utilizar los ADC afecta la medida que este encendida la luces
-      if (plantStatus[iPlant].ticks_light)
-        plantStatus[iPlant].ticks_light--;
-
-      if(plantStatus[iPlant].ticks_water)
-        plantStatus[iPlant].ticks_water--;
-    }
-
-    //Apagamos los sensores analogicos
+    // Quitar alimentacion a los sensores analogicos
     swichs_on_off(LOW);
   }
   
-  // Encendemos el wifi
+  // Encendido del WIFI
   esp_wifi_start();
   delay(1000);
   
-  // Obtenemos la hora actual por NTP 
+  // Actualizamos la hora por NTP 
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
-  Serial.println("We connected to the wifi...");
+  Serial.println(" Buscando conexion wifi ");
+
   if ( wifi_status() == true )
   {
-    //
-    // Conectado al wifi
-    //
-
     // Verificamos si existe una actualizacion de la informacion actual del usuario
     getUser();
 
@@ -427,19 +495,15 @@ void setup(){
     client.setServer(mqtt_server, mqttPort);
     client.setCallback(callback);
 
+    // Intentamos conectarnos al servidor mqtt
     do
     {
-      // Intentamos conectarnos al servidor mqtt
       reconnect();
 
       if (nServerMqtt)
         delay(5000);
       
-      nServerMqtt++;
-    }while((!client.connected()) && (nServerMqtt <= 10 ));
-
-    if( nServerMqtt >= 10)
-      Serial.println("[MQTT][ERR]server unreach, power off uC");
+    }while((!client.connected()) && ( nServerMqtt++ <= MAX_N_CONNECT_MQTT_SERVER ));
     
   }
   
@@ -457,84 +521,59 @@ void setup(){
     Serial.println("----------------------------------------------------------");
   }
 
+  if( (nServerMqtt >= MAX_N_CONNECT_MQTT_SERVER) ||
+      (wifi_status() == false)
+    )
+  {
+    // Apagar el WIFI
+    esp_wifi_stop();
+    delay(1000);
 
-  if ( fl_manual == true){
+    iPlant = 0;
+
+    //Damos electricidad a los sensores analogicos
+    swichs_on_off(HIGH);
+
+    //por cada planta, realizamos la rutina de tareas (Riego y/o iluminacion)
+    for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
+    
+      //Definir los datos analogicos y los datos de riego y de iluminacion para ser activados
+      taskSystem(kvp.value(), kvp.key().c_str() ); 
+
+      if ( iPlant++ > MAX_PLANTS)
+        break; 
+    }
+    
+    //Apagamos los sensores analogicos
+    swichs_on_off(LOW);
+
+    // Sin datos que publicar, a dormir....
+    toSleep(TIME_TO_SLEEP);
+  }
+  // Hay conexion wifi y se esta conectado al servidor MQTT
+  else if ( fl_manual == true){
+    Serial.printf("\n MANUAL task\n");
 
     xTaskCreatePinnedToCore(taskCore2, "Task2", 10000, NULL, 1, &Task2,  0); 
     delay(500); 
-  
-  }
-  else if ( wifi_status() == false )
-  {
-      Serial.printf("\n No wifi task \n");
-
-      // [TO DO] -> Seguir con la rutina de riego y de iluminacion
-      //         -> Enviar las metricas que antes no se lograron enviar
-      //sisError(0);
-
-      esp_wifi_stop();
-
-      delay(1000);
-
-      // Reinicio del indice de la planta
-      iPlant = 0;
-
-      //por cada planta, realizamos la rutina de tareas (Riego y/o iluminacion)
-      for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
-      
-        //Definir los datos analogicos y los datos de riego y de iluminacion para ser activados
-        taskSystem(kvp.value(), kvp.key().c_str() ); 
-
-        if ( iPlant > MAX_PLANTS)
-          break; 
-        
-        iPlant++;
-      }
-
-      //saveUser();
-      toSleep(TIME_TO_SLEEP);
   }
   else
   {
-
     Serial.printf("\n WIFI task\n");
-
+    
     delay(100);
     xTaskCreatePinnedToCore(taskCore1, "Task1", 10000, NULL, 1, &Task1,  1); 
-    //delay(500);
-    //xTaskCreatePinnedToCore(taskCore0, "Task0", 10000, NULL, 1, &Task0,  0); 
   }
-}
-
-void taskCore0( void * pvParameters){
-  //Serial.print("Task of the core 0:");
-  //Serial.println(xPortGetCoreID());
-  for(;;){
-
-    while ( !finishedCore1 )
-    {  
-      if (!client.connected())  // Reconnect if connection is lost
-      {
-        reconnect();
-      }
-
-
-
-      client.loop();
-      delay(100);
-    }
-
-    finishedCore0 = true;
-    client.disconnect();
-    Serial.println("Core 0 finished");
-    while (true) { delay(1000);}
-  }
-  
 }
 
 void taskCore1( void * pvParameters){
-  //Serial.print("Task of the core 1:");
-  //Serial.println(xPortGetCoreID());
+
+  bool finishedCore1 = false;
+  //Numero de intentos en enviar un mensaje mqtt
+  byte n_send_msg_mqtt = 0; 
+  // Reiniciamos el indice del buffer
+  iMsgMqtt = 0;
+
   for(;;){
 
     if (!client.connected())  // Reconnect if connection is lost
@@ -544,30 +583,30 @@ void taskCore1( void * pvParameters){
     // Intentamos enviar los mensajes
     if( buffer_mqtt_msg_send[iMsgMqtt].send )
     {
-      Serial.printf("\n Enviando iMsg: %u send:%u intento:%u \n", iMsgMqtt , buffer_mqtt_msg_send[iMsgMqtt].send, n_send_msg_mqtt );
-      Serial.printf("\n topic: %s \n  msg:%s \n", 
+      Serial.printf("\n Enviando iMsg: %u send:%u intento:%u", iMsgMqtt , buffer_mqtt_msg_send[iMsgMqtt].send, n_send_msg_mqtt );
+      Serial.printf("\n topic: %s \n msg:%s \n", 
         buffer_mqtt_msg_send[iMsgMqtt].topic.c_str(),
         buffer_mqtt_msg_send[iMsgMqtt].msg.c_str());
-    }
 
-    if( iMsgMqtt >= (MAX_BUFFER_PLANTS-1 ))
-      finishedCore1 = true;
-    else if( n_send_msg_mqtt >= N_SEND_MQTT)
-      iMsgMqtt++;
-    else if ( buffer_mqtt_msg_send[iMsgMqtt].send == false)
-      iMsgMqtt++;
-    else
-    {
       if(send_mqtt(buffer_mqtt_msg_send[iMsgMqtt].topic ,buffer_mqtt_msg_send[iMsgMqtt].msg) == true)
       { 
         iMsgMqtt++;
         n_send_msg_mqtt = 0;
       }
       else
-      {
         n_send_msg_mqtt++;
-      }
-    } 
+    }
+
+    //Logica para el siguiente mensaje
+    if( iMsgMqtt >= (MAX_BUFFER_PLANTS-1 ))
+      finishedCore1 = true;
+    else if( (n_send_msg_mqtt >= N_SEND_MQTT) || 
+             (buffer_mqtt_msg_send[iMsgMqtt].send == false)
+    )
+    {
+      iMsgMqtt++;
+      n_send_msg_mqtt = 0;
+    }  
 
     client.loop();
     delay(100);
@@ -575,18 +614,23 @@ void taskCore1( void * pvParameters){
     if( finishedCore1 == true)
     {
       // Encendemos el wifi
-      //esp_wifi_stop();
+      esp_wifi_stop();
 
-      //delay(1000);
+      iPlant = 0;
+
+      delay(1000);
 
       //por cada planta, realizamos la rutina de tareas (Riego y/o iluminacion)
       for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
       
         //Definir los datos analogicos y los datos de riego y de iluminacion para ser activados
         taskSystem(kvp.value(), kvp.key().c_str() ); 
+
+         // Proteccion
+        if ( iPlant++ > MAX_PLANTS)
+          break; // Proteccion del sistema 
       }
 
-      //saveUser();
       toSleep(TIME_TO_SLEEP);
     }
   }
@@ -598,6 +642,9 @@ void taskCore2( void * pvParameters){
   bool toogle = 1;
 
   for(;;){
+
+    // Reiniciamos el indice del buffer pero no enviamos ningun mensaje
+    iMsgMqtt = 0;
 
     digitalWrite(LED_GREEN,toogle);
     toogle = toogle ? 0:1;
@@ -612,9 +659,10 @@ void taskCore2( void * pvParameters){
       toSleep(TIME_TO_SLEEP);
     }
 
-
     Serial.println("Task2 by touch new loop");
-    
+
+    // Tareas pendientes por realizar
+    taskPlantCare();
 
     if (!client.connected()){  // Reconnect if connection is lost
       reconnect();

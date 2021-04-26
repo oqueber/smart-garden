@@ -74,16 +74,8 @@ const String urlGetUser = "http://"+ IP +":3000/Users/GetData/";
 
 #define TIME_SLEEP_uS_TO_S_FACTOR 1000000  /* Conversion de useg a segudos */
 #define TIME_SLEEP_S_TO_M_FACTOR  60    /* Conversion de segudos a miutos*/
-#define TIME_SLEEP_MINUTS  5           /* Conversion de segudos a miutos*/
+#define TIME_SLEEP_MINUTS  30           /* Conversion de segudos a miutos*/
 #define TIME_TO_SLEEP  TIME_SLEEP_MINUTS*TIME_SLEEP_S_TO_M_FACTOR*TIME_SLEEP_uS_TO_S_FACTOR        /* Tiempo total que dormira 30minutos */
-
-// Sleep time while the micro does nothing
-const unsigned int time_1S = 1000000;
-const unsigned int sleepTime_reconnect= 60 * time_1S; // 1 Min
-const unsigned int sleepTime = 30*60 * time_1S; // 30 Min
-
-// Flag que indica que el inicio del micro no proviene de un reset
-//bool fl_cold_reset = false;
 
 // ---------------------------------------------------------------------
 // ------------------ NeoPixel (Led Strip) -----------------------------
@@ -92,7 +84,7 @@ const unsigned int sleepTime = 30*60 * time_1S; // 30 Min
 // Which pin on the Arduino is connected to the NeoPixels?
 #define pin_pixel 17 
 // How many NeoPixels are attached to the Arduino?
-#define num_pixels 81 
+#define MAX_N_LEDS 81 
 #define DELAYVAL 500 // Time (in milliseconds) to pause between pixels
 
 
@@ -124,7 +116,6 @@ const bool debugging_SD = false;
 
 struct ST_MQTT_SEND {
   bool send;
-  bool ready;
   String topic;
   String msg;
 };

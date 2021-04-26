@@ -2,11 +2,11 @@
 #include <PubSubClient.h>
 
 extern void taskWater( int pin_humCap, int pin_humEc,int limit, int pinout, int open, int close);
+extern void taskLight( int led_start,  int led_end, int r, int g, int b);
 
 PubSubClient client(espClient);
-time_t now;
 
-bool action_task ( String string_task)
+void web_platform_task ( String string_task)
 {
   DynamicJsonDocument json_task (200);
 
@@ -14,13 +14,67 @@ bool action_task ( String string_task)
 
   if( error == DeserializationError::Ok )
   {
+    String plantId = json_task["plantId"].as<String>();
+    
     if( json_task["action"].as<String>() == "water")
     {
-      Serial.printf("Activando agua\n");
+      Serial.printf("\nActivando agua\n");
+      
+      plantStatus[9].Id = plantId;
+      plantStatus[9].ticks_water = 10;
+
+      taskWater(
+        localUser["plants"][plantId]["pinout"]["humCap"].as<int>(),
+        localUser["plants"][plantId]["pinout"]["humEC"].as<int>(),
+        localUser["plants"][plantId]["water"]["limit"].as<int>(),
+        localUser["plants"][plantId]["water"]["pinout"].as<int>(),
+        localUser["plants"][plantId]["water"]["open"].as<int>(),
+        localUser["plants"][plantId]["water"]["close"].as<int>()
+      );
     }
     else if ( json_task["action"].as<String>() == "light") 
     {
-      Serial.printf("Activando luz\n");
+      Serial.printf("\nActivando luz\n");
+      switch( json_task["mode"].as<int>() )
+      {
+        //Limpieza de la tira led
+        case 0:
+          taskLight(
+            0,
+            0,
+            0,
+            0,
+            0 
+          );
+          break;
+        // Encender con la configuracion establecida de la planta
+        case 1:
+          plantStatus[9].Id = plantId;
+          plantStatus[9].ticks_light = 50;
+          taskLight(
+            localUser["plants"][plantId]["light"]["led_start"].as<int>(),
+            localUser["plants"][plantId]["light"]["led_end"].as<int>(),
+            localUser["plants"][plantId]["light"]["color_red"].as<int>(),
+            localUser["plants"][plantId]["light"]["color_green"].as<int>(),
+            localUser["plants"][plantId]["light"]["color_blue"].as<int>()
+          );
+          break;
+        // Encender con la configuracion de la web
+        case 2: 
+          plantStatus[9].Id = plantId;
+          plantStatus[9].ticks_light = 50;
+          taskLight(
+            json_task["ledStart"].as<int>(),
+            json_task["ledEnd"].as<int>(),
+            json_task["red"].as<int>(),
+            json_task["green"].as<int>(),
+            json_task["blue"].as<int>()
+          );
+          break;
+        default:
+          break;
+      }
+      
     }
     else
     {
@@ -31,6 +85,7 @@ bool action_task ( String string_task)
   }
   else
   {
+    Serial.printf("Problemas de deserializacion....\n");
     //Respondes que no se pudo realizar la tarea
   }
   
@@ -85,60 +140,57 @@ void reconnect() {
 }
 
 // Try to send the message to the Mqtt server
-bool send_mqtt(String msg_topic, String msg_payload, bool msgRaw){
+bool send_mqtt(String msg_topic, String msg_payload){
+
+  bool sendMsg = false;
 
   //Si no hay conexion, nada que enviar
-  if (client.connected())
-    return false;
+  if (!client.connected())
+    return sendMsg;
 
   DynamicJsonDocument doc(2048);
-  bool sendMsg = false;  
-  uint8_t intentos = 0;
+  byte intentos = 0;
   String json = "";
 
-  // Enviar mensajes sin procesado
-  if(msgRaw){
-    json = msg_payload;
   // Empaqueta el mensaje con el dispositivo y el tiempo actual.
-  }else{
-    auto error = deserializeJson(doc, msg_payload);
+  auto error = deserializeJson(doc, msg_payload);
 
-    if( error == DeserializationError::Ok ){
-      doc["device"] = getMac();
-      doc["timestamps"] = now;
-      serializeJson(doc, json);
+  if( error == DeserializationError::Ok )
+  {
+    doc["device"] = getMac();
+    doc["timestamps"] = mktime(&systemTime);
+    serializeJson(doc, json);
+  }
+ 
+  if(debugging_mqtt )
+  {
+    Serial.println("----------- mqtt packgate---------------");
+    Serial.print("Status mqtt: ");
+    Serial.println( client.state() );
+    Serial.print("connected wifi: ");
+    Serial.println(WiFi.status() == WL_CONNECTED);
+    Serial.print("connected mqtt: ");
+    Serial.println(client.connected());
+    Serial.print("Topic:");
+    Serial.println(msg_topic);
+    Serial.print("Msg:");
+    Serial.println(json);
+    Serial.println("----------------------------------------------------------");
+  } 
 
-      if(debugging_mqtt ){
-        Serial.println("----------- mqtt packgate---------------");
-        Serial.print("Status mqtt: ");
-        Serial.println( client.state() );
-        Serial.print("connected wifi: ");
-        Serial.println(WiFi.status() == WL_CONNECTED);
-        Serial.print("connected mqtt: ");
-        Serial.println(client.connected());
-        Serial.print("Topic:");
-        Serial.println(msg_topic);
-        Serial.print("Msg:");
-        Serial.println(json);
-        Serial.println("----------------------------------------------------------");
-      }  
-    }
+  while((client.publish(msg_topic.c_str(), json.c_str(),false) != 1)&&(intentos <=10)){
+    intentos++;
+    Serial.print("try send number: ");
+    Serial.println(intentos);
+    delay(2000);
   }
 
-  reconnect();
-  delay(100);
-  if (client.connected()) {
-    while((client.publish(msg_topic.c_str(), json.c_str(),false) != 1)&&(intentos <=10)){
-      intentos++;
-      Serial.print("try send number: ");
-      Serial.println(intentos);
-      delay(2000);
-    }
-
-    if( intentos <= 10){ sendMsg = true;}
-  }
+  // Envio el mensaje
+  if( intentos <= 10)
+    sendMsg = true;
 
   // the message can not sent. reconnect() so we store
+  /*
   if ( intentos > 10  || !client.connected() ){
     String dataSave = msg_topic + "-" + json + "\n";
     String pathSave = "/db/"+doc["timestamps"].as<String>()+".txt";
@@ -151,29 +203,12 @@ bool send_mqtt(String msg_topic, String msg_payload, bool msgRaw){
       Serial.println("----------------------------------------------------------");
     }
 
-/*
-    if(!SD.begin()){
-      Serial.println("Card Mount Failed");
-      sisError(5);
-    }else{
-      listDir(SD, "/", 1);
-      writeFile(SD,pathSave.c_str(), dataSave.c_str() );
-    }
-    SD.end();
-*/
-    //if ( SD.exists("/db/"+SD_path_measure) ){
-    //  appendFile(SD, SD_path_measure, dataSave.c_str() );
-    //  //Serial.println("Store message old: ");
-    //  //Serial.println(readFile(SD,SD_path_measure));
-    //}else{
-    //  writeFile(SD, SD_path_measure, dataSave.c_str() );
-    //}
-
   }
+  */
   return sendMsg;
 }
 
-// Recived the packages from the server. 
+// Recepcion de paquetes MQTT 
 void callback(char* topic, byte* payload, unsigned int length) {
   
   String message = "";
@@ -181,8 +216,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
     message += (char)payload[i]; 
   }
 
-  action_task(message);
+  // Tarea enviada desde la plataforma web 
+  web_platform_task(message);
 
+  // Depuracion de los mensajes
   if (debugging_mqtt){
     Serial.print("Message arrived on topic[");
     Serial.print(topic);
@@ -191,7 +228,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.println();
   }
 
-  //receptionSystem( String(topic) , message);
 }
 
 

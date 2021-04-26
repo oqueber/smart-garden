@@ -8,5 +8,5 @@ const char* willTopic = "PW";
 const char* willMessage = "Offline";
 
 void reconnect(void);
-bool send_mqtt(String msg_topic, String msg_payload, bool update = false);
+bool send_mqtt(String msg_topic, String msg_payload, bool packet);
 void callback(char* topic, byte* payload, unsigned int length); 

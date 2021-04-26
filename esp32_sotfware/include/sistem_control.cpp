@@ -1,5 +1,4 @@
 //#include <Adafruit_NeoPixel.h>
-#include <FastLED.h>
 #include <ESP32Servo.h>
 
 //#ifdef __AVR__
@@ -9,11 +8,9 @@
 //  clock_prescale_set(clock_div_1);
 //#endif
 
-CRGB leds[num_pixels];
 
-//Adafruit_NeoPixel pixels(num_pixels, pin_pixel, NEO_GRB + NEO_KHZ800);
+//Adafruit_NeoPixel pixels(MAX_N_LEDS, pin_pixel, NEO_GRB + NEO_KHZ800);
 DynamicJsonDocument doc (200);
-JsonArray userTasks = doc.to<JsonArray>();
 
 
 #define waterOpen   0
@@ -29,6 +26,13 @@ JsonArray userTasks = doc.to<JsonArray>();
 
 // Ajustara en algua durante 5 ciclos 
 #define TICKS_WATER_DEFAULT 5
+
+void swichs_on_off(int io){
+  Serial.print("\nSwitch mode: ");
+  Serial.println(io);
+  digitalWrite(SW1, io);
+  delay(5000);
+}
 
 bool getUserSD( bool update = false ){
   
@@ -94,48 +98,56 @@ bool getUserSD( bool update = false ){
 }
 
 
-void receptionSystem( String topic, String message){
-  if ( topic == "device/get/task" ) {
-    userTasks.add(message);
-  } 
-}
-
 
 void taskWater( int pin_humCap, int pin_humEc,int limit, int pinout, int open, int close)
 {  
+
   unsigned int analogValue = 0;
   bool riegoEc = false;
   bool riegoCap = false;
+  
+  int  muxPin = 0;
 
   Serial.printf("\n Activado el sistema de riego pin %d open:%d close:%d \n", pinout,open, close); 
   
-  if (pin_humEc < 30){
-    // ADC2 control register restoring
-    WRITE_PERI_REG(SENS_SAR_READ_CTRL2_REG, reg_b);
-    //VERY IMPORTANT: DO THIS TO NOT HAVE INVERTED VALUES!
-    SET_PERI_REG_MASK(SENS_SAR_READ_CTRL2_REG, SENS_SAR2_DATA_INV);
-    //We have to do the 2 previous instructions BEFORE EVERY analogRead() calling!
-  }
-  analogValue = analogRead( pin_humEc );
-  Serial.printf("\n HumEC: %d \n", analogValue); 
-  if (  analogValue >= humEc_mojado/2 )
-  {
-    riegoEc = true;
-  }
 
-  if (pin_humCap < 30){
-    // ADC2 control register restoring
-    WRITE_PERI_REG(SENS_SAR_READ_CTRL2_REG, reg_b);
-    //VERY IMPORTANT: DO THIS TO NOT HAVE INVERTED VALUES!
-    SET_PERI_REG_MASK(SENS_SAR_READ_CTRL2_REG, SENS_SAR2_DATA_INV);
-    //We have to do the 2 previous instructions BEFORE EVERY analogRead() calling!
-  }
-  analogValue = analogRead( pin_humCap );
-  Serial.printf("\n HumCap: %d \n", analogValue); 
-  if ( analogValue <= humCap_seco/2)
+  for( int ianalog = 0; ianalog < 2; ianalog++)
   {
-    riegoCap = true;
+    // Variables para hacer la media 
+    unsigned int SumaAnalog = 0;
+    unsigned int samples = 10; 
+
+    // ianalog = 0 -> HumCap
+    // ianalog = 1 -> HumEc
+
+    muxPin = (ianalog == 0) ? pin_humCap : pin_humEc;
+
+    for(int i = 0; i < samples; i++)
+    {
+      
+      if (pin_humEc < 30)
+      {
+        // ADC2 control register restoring
+        WRITE_PERI_REG(SENS_SAR_READ_CTRL2_REG, reg_b);
+        //VERY IMPORTANT: DO THIS TO NOT HAVE INVERTED VALUES!
+        SET_PERI_REG_MASK(SENS_SAR_READ_CTRL2_REG, SENS_SAR2_DATA_INV);
+        //We have to do the 2 previous instructions BEFORE EVERY analogRead() calling!
+      }
+
+      SumaAnalog += analogRead( muxPin );
+      delay(50);
+    }
+
+    analogValue = ceil(SumaAnalog/samples);
+    Serial.printf("\n %s: %d \n", (ianalog == 0) ? "pin_humCap" : "pin_humEc" ,analogValue); 
+    
+    if (ianalog == 0)
+      riegoEc =  (  analogValue >= humEc_mojado/2 ) ? true : false;
+    else
+      riegoCap = ( analogValue <= humCap_seco/2) ? true : false;
   }
+  
+  Serial.printf(" humCap:%u humEc:%u \n",riegoCap ,riegoEc ); 
 
   if ( riegoCap && riegoEc )
   {
@@ -144,19 +156,25 @@ void taskWater( int pin_humCap, int pin_humEc,int limit, int pinout, int open, i
     
     servo.attach(pinout);
     servo.write(open);
-    delay(10000);
+    delay(10000); // [TO DO] -> segun el nivel permaneceras mas tiempo regando
     servo.write(close);
     delay(3000);
 
     servo.detach();
   }
 
-
 };
-void taskLight( int led_start,  int led_end, int r, int g, int b){ 
+void taskLight(int led_start,  int led_end, int r, int g, int b){ 
 
     Serial.println("Activado el sistema de iluminacion"); 
     
+    if((led_start == 0) && (led_end == 0)&& (r == 0) && (g == 0) && (b == 0))
+    {
+      FastLED.clear();
+      FastLED.show();
+      return; 
+    }
+
 
     // The first NeoPixel in a strand is #0, second is 1, all the way up
     // to the count of pixels minus one.
@@ -185,6 +203,7 @@ void taskLight( int led_start,  int led_end, int r, int g, int b){
     }
 
 };
+
 void taskSystem( JsonObject plant , String plant_id){
  
   if(systemTime.tm_year < (2016 - 1900)){
@@ -196,12 +215,12 @@ void taskSystem( JsonObject plant , String plant_id){
   unsigned int rightNow = (systemTime.tm_hour*60*60) + (systemTime.tm_min *60);
   // Obtenemos la hora y minutos en segundos del inicio de la iluminacion 
   int hourStart_hour= (plant["light"]["time_start"].as<String>()).substring (0 , 2).toInt() ;
-      hourStart_hour= hourStart_hour*60*60;
+      hourStart_hour=  (hourStart_hour == 0) ? 24*60*60 : hourStart_hour*60*60;
   int hourStart_min=  (plant["light"]["time_start"].as<String>()).substring (3 , 5).toInt() ;
       hourStart_min= hourStart_min*60;
   // Obtenemos la hora y minutos en segundos del fin de la iluminacion 
   int hourStop_hour= (plant["light"]["time_stop"].as<String>()).substring (0 , 2).toInt() ;
-      hourStop_hour= hourStop_hour*60*60;
+      hourStop_hour= (hourStop_hour == 0) ? 24*60*60 : hourStop_hour*60*60;
   int hourStop_min=  (plant["light"]["time_stop"].as<String>()).substring (3 , 5).toInt() ;
       hourStop_min= hourStop_min*60; 
 
@@ -220,18 +239,9 @@ void taskSystem( JsonObject plant , String plant_id){
       
       // [TO DO] Almacenar
       Serial.print("\nRiego activo\n");
-      plantStatus[iPlant].Id = plant_id;
+      //plantStatus[iPlant].Id = plant_id;
       plantStatus[iPlant].ticks_water = TICKS_WATER_DEFAULT;
 
-      // Regar la planta
-      /*
-      taskWater( plant["pinout"]["humCap"].as<int>(),
-                plant["pinout"]["humEC"].as<int>(),
-                plant["water"]["limit"].as<int>(),
-                plant["water"]["pinout"].as<int>(),
-                plant["water"]["open"].as<int>(),
-                plant["water"]["close"].as<int>());
-      */
 
       Serial.print("Before: ");
       Serial.println(plant["water"]["last_water"].as<String>());
@@ -239,9 +249,6 @@ void taskSystem( JsonObject plant , String plant_id){
 
       Serial.print("After: ");
       Serial.println(plant["water"]["last_water"].as<String>());
-
-      // Actualizamos en el servidor la ultima vez que se rego
-      send_mqtt("Huerta/update/water" , (plant_id+"/"+String(timeinfo_2)), true);
 
       // Actualizamos los datos de riego de la planta
       getUserSD( true );
@@ -251,45 +258,74 @@ void taskSystem( JsonObject plant , String plant_id){
   
   if (plantStatus[iPlant].ticks_light <= 0)
   {
-    // Encendemos si -> Inicio de iluminacion <= Tiempo actual < fin de la iluminacion
-    if( (rightNow >= (hourStart_hour + hourStart_min)) && 
-        (rightNow <= (hourStop_hour  + hourStop_min)) ){
-
-        Serial.print("\nLuz activo\n");
-        plantStatus[iPlant].Id = plant_id;
-        plantStatus[iPlant].ticks_light = ceil( ((hourStop_hour  + hourStop_min) - (hourStart_hour + hourStart_min))/(TIME_SLEEP_MINUTS*TIME_SLEEP_S_TO_M_FACTOR)  ) ;
-
-        // Enviar al servidor mqtt con los cambios
-        send_mqtt("Huerta/update/light" ,(plant_id+"/1/"+String(timeinfo_2)) , true);
-        
+    // De un dia para otro dia
+    if( (hourStart_hour + hourStart_min) > (hourStop_hour  + hourStop_min) )
+    {
+      // Encendemos si -> Inicio de iluminacion <= Tiempo actual < fin de la iluminacion
+      if( (rightNow >= (hourStart_hour + hourStart_min)))
+      {
         // Encendemos la iluminacion
-        /*
-        taskLight( plant["light"]["led_start"].as<int>(), 
-                  plant["light"]["led_end"].as<int>(),
-                  plant["light"]["color_red"].as<int>(),
-                  plant["light"]["color_green"].as<int>(),
-                  plant["light"]["color_blue"].as<int>());
-        */
-    }else{
-      // Enviar al servidor mqtt con los cambios 
-      send_mqtt("Huerta/update/light" , (plant_id+"/0") , true);
-      
-      // Apagamos la iluminacion
-      /*
-      taskLight(  plant["light"]["led_start"].as<int>(), 
-                  plant["light"]["led_end"].as<int>(),
-                  0,
-                  0,
-                  0);
-      */
+        Serial.print("\nLuz activo\n");
+        plantStatus[iPlant].ticks_light = ceil( (((24*60*60)- rightNow) + (hourStop_hour  + hourStop_min)) /(TIME_SLEEP_MINUTS*TIME_SLEEP_S_TO_M_FACTOR)  ) ;
+
+        taskLight(
+          localUser["plants"][plant_id]["light"]["led_start"].as<int>(),
+          localUser["plants"][plant_id]["light"]["led_end"].as<int>(),
+          localUser["plants"][plant_id]["light"]["color_red"].as<int>(),
+          localUser["plants"][plant_id]["light"]["color_green"].as<int>(),
+          localUser["plants"][plant_id]["light"]["color_blue"].as<int>()
+        );
+      }
+      else if ((rightNow < ((hourStop_hour + hourStop_min) - (TIME_SLEEP_MINUTS*TIME_SLEEP_S_TO_M_FACTOR)))) 
+      {
+        // Encendemos la iluminacion
+        Serial.print("\nLuz activo\n");
+        plantStatus[iPlant].ticks_light = ceil( ( (hourStop_hour  + hourStop_min) - rightNow) /(TIME_SLEEP_MINUTS*TIME_SLEEP_S_TO_M_FACTOR)  ) ;
+
+        taskLight(
+          localUser["plants"][plant_id]["light"]["led_start"].as<int>(),
+          localUser["plants"][plant_id]["light"]["led_end"].as<int>(),
+          localUser["plants"][plant_id]["light"]["color_red"].as<int>(),
+          localUser["plants"][plant_id]["light"]["color_green"].as<int>(),
+          localUser["plants"][plant_id]["light"]["color_blue"].as<int>()
+        );
+      } 
+
+      // Ticks se queda en cero porque no hay que encender nada
+
     }
+    // En el mismo dia
+    else if ((hourStart_hour + hourStart_min) < (hourStop_hour  + hourStop_min))
+    {
+      // Encendemos si -> Inicio de iluminacion <= Tiempo actual < fin de la iluminacion
+      if( (rightNow >= (hourStart_hour + hourStart_min)) && 
+          (rightNow <= (hourStop_hour  + hourStop_min)) )
+        {
+
+        // Encendemos la iluminacion
+        Serial.print("\nLuz activo\n");
+        //plantStatus[iPlant].Id = plant_id;
+        plantStatus[iPlant].ticks_light = ceil( ((hourStop_hour  + hourStop_min) - (rightNow))/(TIME_SLEEP_MINUTS*TIME_SLEEP_S_TO_M_FACTOR)  ) ;
+
+        taskLight(
+          localUser["plants"][plant_id]["light"]["led_start"].as<int>(),
+          localUser["plants"][plant_id]["light"]["led_end"].as<int>(),
+          localUser["plants"][plant_id]["light"]["color_red"].as<int>(),
+          localUser["plants"][plant_id]["light"]["color_green"].as<int>(),
+          localUser["plants"][plant_id]["light"]["color_blue"].as<int>()
+        );
+      }
+    }
+
   }
 
   if( debugging ){
     Serial.println("------------------  taskSystem   ---------------------------------");
     
     Serial.print("ID plant: "); Serial.println( plant_id );
+    Serial.print("ID statusPlant: "); Serial.println( plantStatus[iPlant].Id );
     Serial.print("Time_hour_min_now: "); Serial.println( rightNow);
+    Serial.print("iPlant: "); Serial.println( iPlant );
     Serial.print("ticks_water: "); Serial.println( plantStatus[iPlant].ticks_water );
     Serial.print("ticks_light: "); Serial.println( plantStatus[iPlant].ticks_light);    
 
@@ -325,48 +361,6 @@ void tasksControl(){
   Serial.println(" -> end the recoletion of object ");
   
 }
-void controlSystem( void ){
-  
-  Serial.println("Stored tasks");
-  for(JsonVariant v : userTasks) {
-    String message = v.as<String>();
-    Serial.println(message);
-
-    unsigned int first_slash  = message.indexOf('/');
-    unsigned int second_slash = message.indexOf('/',first_slash+1);
-    unsigned int third_slash  = message.indexOf('/',second_slash+1);
-    unsigned int  end = message.length();
-
-    String element  = message.substring (0 , first_slash);
-    String io = message.substring (first_slash+1, second_slash); 
-    String plant = message.substring (second_slash+1 , third_slash);     
-    String limit = message.substring (third_slash+1 , end); 
-
-    if (debugging_mqtt){
-      Serial.print("Split message : ");
-      Serial.print(element + " ");
-      Serial.print(io +" ");
-      Serial.print(plant + " ");
-      Serial.print(limit + " ");
-      Serial.println();
-    }
-    /*
-    if(message == "led/on/plan"){
-      digitalWrite(4, HIGH);
-      
-    }else if(message == "led/off/plan"){
-      digitalWrite(4, LOW);
-    }
-    else if(message == "water/off/plan"){
-      digitalWrite(5, LOW);
-    }
-    else if(message == "water/on/plan"){
-      digitalWrite(5, HIGH);
-    }
-    */
-  } 
-}
-
 
 bool userUpdateData (String newData){
   String userLocalData;
@@ -404,24 +398,6 @@ bool userUpdateData (String newData){
           
           newDataUser["update"]= false;
           
-          // if the same plant, update all, excepte this elements.
-          /*for( auto element:  localUser["plants"].as<JsonObject>() )
-          {
-            // If we already have the plant in local, we keep the old control data.
-            if( newDataUser["plants"].containsKey( element.key()) )
-            {
-              String plantId = element.key().c_str();
-              //We save the last user image 
-              newDataUser["plants"][plantId]["water"]["last_water"] = localUser["plants"][plantId]["water"]["last_water"];
-              newDataUser["plants"][plantId]["light"]["last_light"] = localUser["plants"][plantId]["light"]["last_light"];
-              newDataUser["plants"][plantId]["light"]["status"] = localUser["plants"][plantId]["light"]["status"];
-              newDataUser["plants"][plantId]["water"]["status"] = localUser["plants"][plantId]["water"]["status"];
-              // Update the cloud data
-              send_mqtt("Huerta/update/water" , (plantId+"/"+newDataUser["plants"][plantId]["water"]["last_water"].as<String>() ), true);
-              send_mqtt("Huerta/update/light" , (plantId+"/"+newDataUser["plants"][plantId]["light"]["status"].as<String>()+"/"+newDataUser["plants"][plantId]["light"]["last_light"].as<String>()), true);
-            }
-          }
-          */
           deleteFile(SD, SD_path_user);
           delay(100);
           serializeJson(newDataUser, userDataUpdated); 
@@ -460,95 +436,7 @@ bool userUpdateData (String newData){
   return userUpdate;
 }
 
-/*
-void updateLastData (){
-  bool find_plant[MAX_BUFFER_PLANTS];
-  
-  //implementar que si el valor de now es malo, coger el del estadoa anterior
-  // Inicializamos los valores por defecto para poder encontrar cuales plantas siguen con el usuario
-  for (int i = 0 ; i< MAX_BUFFER_PLANTS; i++)
-  {
-    find_plant[i] = false;
-  }
 
-  for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
-    
-    String Id_plant = kvp.key().c_str();
-
-    for (int i = 0; i < MAX_BUFFER_PLANTS; i++)
-    {
-      if( plantStatus[i].Id == strtoll(kvp.key().c_str(), (char **) NULL, 10))
-      {
-        find_plant[i] = true;
-
-        printf("\n ---before---- \n");
-        printf("  Id: %lld in indice:%d \n", plantStatus[i].Id, i);
-        printf("  water: %d \n", localUser["plants"][Id_plant]["water"]["status"].as<bool>());
-        printf(" last_time_water: %ld \n", localUser["plants"][Id_plant]["water"]["last_water"].as<unsigned long>() );
-        printf(" light: %d \n", localUser["plants"][Id_plant]["light"]["status"].as<bool>());
-        printf(" last_time_light: %ld \n",  localUser["plants"][Id_plant]["light"]["last_light"].as<unsigned long>() );
-
-        localUser["plants"][Id_plant]["water"]["status"] = plantStatus[i].water;
-        localUser["plants"][Id_plant]["water"]["last_water"] = plantStatus[i].last_time_water;
-        localUser["plants"][Id_plant]["light"]["status"] = plantStatus[i].light;
-        localUser["plants"][Id_plant]["light"]["last_light"] = plantStatus[i].last_time_light;
-
-        printf("\n ---after---- \n");
-        printf("  Id: %lld in indice:%d \n", plantStatus[i].Id, i);
-        printf("  water: %d \n", localUser["plants"][Id_plant]["water"]["status"].as<bool>());
-        printf(" last_time_water: %ld \n", localUser["plants"][Id_plant]["water"]["last_water"].as<unsigned long>() );
-        printf(" light: %d \n", localUser["plants"][Id_plant]["light"]["status"].as<bool>());
-        printf(" last_time_light: %ld \n",  localUser["plants"][Id_plant]["light"]["last_light"].as<unsigned long>() );
-        Serial.println("");
-      }
-    }
-  }
-
-  for (int i = 0; i < MAX_BUFFER_PLANTS; i++)
-  {
-    if( find_plant[i] == false)
-    {
-      Serial.printf("No se a encontrdo a la planta id:%lld en el indice %d",plantStatus[i].Id, i );
-      plantStatus[i].Id = 0;
-      plantStatus[i].water = 0;
-      plantStatus[i].last_time_water= 0;
-      plantStatus[i].light = 0;
-      plantStatus[i].last_time_light= 0;
-    }
-  }
-}
-void saveUser()
-{
-
-  Serial.println("\n Guardando datos en local: ");
-  //serializeJson(localUser, localUser_string );
-  //Serial.println(localUser_string);
-  int indice = 0;
-
-  // Guardamos todas las plantas actuales para reestablecer su valore al reinicio.
-  for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
-    
-    String Id_plant = kvp.key().c_str();
-    if ( indice < MAX_BUFFER_PLANTS)
-    {
-      plantStatus[indice].Id = strtoll(kvp.key().c_str(), (char **) NULL, 10); 
-      plantStatus[indice].water = localUser["plants"][Id_plant]["water"]["status"].as<bool>();
-      plantStatus[indice].last_time_water= localUser["plants"][Id_plant]["water"]["last_water"].as<unsigned long>();
-      plantStatus[indice].light = localUser["plants"][Id_plant]["light"]["status"].as<bool>();
-      plantStatus[indice].last_time_light= localUser["plants"][Id_plant]["light"]["last_light"].as<unsigned long>();
-
-      printf("\n ------- \n");
-      printf("  Id: %lld (%s) in indice:%d \n", plantStatus[indice].Id, kvp.key().c_str(), indice);
-      printf(" water: %d (%s) \n",              plantStatus[indice].water, localUser["plants"][Id_plant]["water"]["status"].as<String>().c_str());
-      printf(" last_time_light: %lu (%s) \n",   plantStatus[indice].last_time_water, localUser["plants"][Id_plant]["water"]["last_water"].as<String>().c_str());
-      printf(" light: %d (%s) \n",              plantStatus[indice].light, localUser["plants"][Id_plant]["light"]["status"].as<String>().c_str());
-      printf(" last_time_light: %lu (%s)\n",     plantStatus[indice].last_time_light, localUser["plants"][Id_plant]["light"]["last_light"].as<String>().c_str());
-      
-      indice++;
-    } 
-  }
-}
-*/
 /* The getUser() function is used as a flag if a user is found or not.
 * Each device has a unique identification to connect to the internet (MAC)
 * This code is used as a uuid and each measurement reported by this divice

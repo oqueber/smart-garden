@@ -6,23 +6,31 @@ const chalk = require('chalk');
 const {io, eventEmitter, devicesConnected,userConnected} = require('../utils/socketio.js');
 
 
+//
+// SocketIo nos permite realiar comunicacion entre la plataforma web y el servidor.
+//
+
 io.on('connection',   (socket)=>{
   console.log('[Smart-Garden-Socket] connected '+ socket.id)
   
+  // Usuario conectado a la plataforma web
   socket.on('user/connect', (data)=>{
+
+    // Comprobar si el usuario ya está conectado
     if ( !userConnected.has(data.MAC))
     {
       let fl_status =  userConnected.set( data.MAC , { socket: socket, socketId:socket.id} );
-      debug( chalk.yellow( `new web connection with ${socket.id} and MAC ${data.MAC} status ${fl_status}`) ); 
+      chalk.yellow( `new web connection with ${socket.id} and MAC ${data.MAC} status ${fl_status}`); 
     }
     else
     {
       // Actualizamos el socket por nueva conexion.
-      debug( chalk.yellow( `already exits action connection MAC ${data.MAC} with value ${ fl_status }`) );        
+      chalk.yellow( `already exits action connection MAC ${data.MAC}`);        
       userConnected.get(data.MAC).socket = socket;
       userConnected.get(data.MAC).socketId = socket.id;
     }
 
+    // Comprobar si el dispositivo ya esta conectado al servidor,
     if ( devicesConnected.has(data.MAC) )
     {
       debug("Enviando al socket user online"); 
@@ -31,6 +39,7 @@ io.on('connection',   (socket)=>{
 
   }); 
 
+  // Usuario cse desconecto de la plataforma web
   socket.once('disconnect', function () {
 
     for(let [i_MAC, i_value]  of userConnected )
@@ -46,7 +55,7 @@ io.on('connection',   (socket)=>{
     }
   });
 
-
+  // Cuando el usuario y el dispositivo estan conectado a la plataforma web
   socket.on('action/setData', (Data)=>{
     console.log('Recibido al Servidor: ', Data);
     console.log('Del Usuario: ', socket.id);
@@ -129,5 +138,7 @@ io.on('connection',   (socket)=>{
             socket.emit('chart/fatal/err',{text: "Error dB analog", err: error});
         });
   });  
+
 });
+
 console.log(`[Smart-Garden-Socketio]: connected`);
