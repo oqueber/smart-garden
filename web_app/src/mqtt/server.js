@@ -270,6 +270,37 @@ server.on('published', async (packet, client) => {
       debug( chalk.yellow('error dee JSON'))
       debug(err)
     }
+
+    debug( chalk.yellow('Msg last_value: '));
+    let fl_save = false;
+    
+    if(json_data != null){
+
+      await Users.findOne( {MAC: json_data.device }).then(doc => {
+
+        //debug(chalk.yellow(`User found: `));
+        for( const element in doc.plants){
+          if (doc.plants[element].info.date == Number(json_data.plant) ){
+            
+            doc.plants[element].info.analog.photocell1 =  newData.photocell1;
+            doc.plants[element].info.analog.photocell2 =  newData.photocell1;
+            doc.plants[element].info.analog.humEC      =  newData.humEC;
+            doc.plants[element].info.analog.humCap     =  newData.humCap;
+            doc.plants[element].info.analog.date       =  json_data.timestamps;
+
+            fl_save = true;
+            debug(chalk.green(doc.plants[element].sowing.light ));
+          }
+        }
+        if( fl_save)
+        {
+          doc.save();
+          debug(chalk.green("plant save"));
+        }
+      });
+
+    }
+
   } 
 
 

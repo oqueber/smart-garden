@@ -18,7 +18,15 @@ const UserSchema = new Schema({
             name: {type: String},
             type: {type: String},
             index: {type: Number},
-            date: {type: Number}   //Creation Date
+            date: {type: Number},   //Creation Date
+            analog:
+            {
+                photocell1:{type: Number, default: 0 },
+                photocell2:{type: Number, default: 0 },
+                humCap:{type: Number, default: 0 },
+                humEC:{type: Number, default: 0 },
+                date:{ type: Date, default: 0 } 
+            }
         },
         sowing:{
             light:{
