@@ -283,10 +283,10 @@ server.on('published', async (packet, client) => {
         for( const element in doc.plants){
           if (doc.plants[element].info.date == Number(json_data.plantId) ){
             
-            doc.plants[element].info.analog.photocell1 =  json_data.photocell1;
-            doc.plants[element].info.analog.photocell2 =  json_data.photocell1;
-            doc.plants[element].info.analog.humEC      =  json_data.humEC;
-            doc.plants[element].info.analog.humCap     =  json_data.humCap;
+            doc.plants[element].info.analog.photocell1 =  json_data.photocell1.rawData;
+            doc.plants[element].info.analog.photocell2 =  json_data.photocell1.rawData;
+            doc.plants[element].info.analog.humEC      =  json_data.humEC.rawData;
+            doc.plants[element].info.analog.humCap     =  json_data.humCap.rawData;
             doc.plants[element].info.analog.date       =  json_data.timestamps;
 
             fl_save = true;
