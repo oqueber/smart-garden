@@ -28,27 +28,30 @@
               <!-- <p>Fecha de creacion {{{toDate info.date }}} </p> --->
               <div>
                 <div>
-                  <i style="float: left;" class="material-icons">invert_colors</i>
-                  
-                  <p>WaterEC:  {{ toPercentage info.analog.humEC}}%</p>
-                  <p>WaterCap: {{ toPercentage info.analog.humCap}}%</p>
-                  <p>Ultimo riego </p>
-                  <p>{{{toDate sowing.water.last_water }}} </p>
+                  <p>
+                    <i style="float: left;" class="material-icons">invert_colors</i>
+                     E:{{ toPercentage info.analog.humEC}}% C:{{ toPercentage info.analog.humCap}}%
+                  </p>
+                  <p>
+                   <i style="float: left;" class="material-icons">av_timer</i>
+                   {{{toDate sowing.water.last_water }}}
+                  </p>
                 </div>
                 
                 <div>
+                  <p>
                   <i style="float: left;" class="material-icons">brightness_5</i>
-                  
-                  <p>Luz1: {{ toPercentage info.analog.photocell1}}%</p>
-                  <p>Luz2: {{ toPercentage info.analog.photocell2}}%</p>
+                  I:{{ toPercentage info.analog.photocell1}}%  O:{{ toPercentage info.analog.photocell2}}%
+                  </p>
                   
                   {{#if sowing.light.status }} 
-                    <p>Suministro de luz activado</p> 
+                    <p>Luz Encendida</p> 
                   {{else}}
-                    <p>ultima suministro de luz </p>
-                    <p>{{{toDate sowing.light.last_light }}} </p>
+                    <p>
+                      <i style="float: left;" class="material-icons">av_timer</i>
+                      {{{toDate sowing.light.last_light }}}
+                    </p>
                   {{/if}}
-                
                 </div>   
 
                 <p>
