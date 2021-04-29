@@ -27,23 +27,18 @@
             <div class="card-content" style="padding: 20px 5px">
               <!-- <p>Fecha de creacion {{{toDate info.date }}} </p> --->
               <div>
-                <div>
-                  <i class="material-icons">access_time</i>
-                  <p>{{info.analog.date}} </p>
-                </div>
-                <div>
+                <div style="display: flex;">
                    <i class="material-icons">invert_colors</i>
                    <p>E:{{ toPercentage info.analog.humEC}}% C:{{ toPercentage info.analog.humCap}}%</p>
                 </div>
-                <div>
+                <div style="display: flex;">
                   <i class="material-icons">brightness_5</i>
                   <p>I:{{ toPercentage info.analog.photocell1}}%  O:{{ toPercentage info.analog.photocell2}}%</p>
-                  {{#if sowing.light.status }} 
-                    <p>Luz encendida</p> 
-                  {{else}}
-                    <p>Luz apagada</p> 
-                  {{/if}}
-                </div>   
+                </div>
+                <div style="display: flex;">
+                  <i class="material-icons">access_time</i>
+                  <p>{{info.analog.date}} </p>
+                </div>
               </div>
 
 
