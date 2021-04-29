@@ -41,7 +41,7 @@ app.engine('.hbs', exphbs({
             if ( date == 0){
                 return "never";
             }else{
-                return (new Date(date*1000)).toJSON().slice(0,16);
+                return (new Date(date)).toJSON().slice(0,16);
             }
         },
         toPercentage: function(data)
