@@ -66,20 +66,8 @@ router.get('/edit-plant/:index/',isAuthenticated, async(req,res) =>{
     plant["pinout/adc3"]=plant["pinout/humCap"];
     plant["pinout/adc4"]=plant["pinout/humEC"];
 
-    let info_copy;
     
-    if(plant.info.type == "vegetable"){
-        info_copy = (vegetable[ plant.info.index]).info;
-    }else if(plant.info.type == "aromatic"){
-        info_copy = (Aromatics[ plant.info.index]).info;
-    }else if(plant.info.type == "manual")
-    {
-        info_copy = (ManualPlant[ plant.info.index]).info;
-    }else{
-        res.render('404');
-    }
-    
-    res.render('plants/edit',{plant ,info:info_copy ,index, date: plant.info.date});
+    res.render('plants/edit',{plant ,index, date: plant.info.date});
  });
 
 router.post('/my-plants/new-plant', async(req,res) =>{
@@ -112,18 +100,26 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
     const { waterF, waterU,waterPin, 
             color_red, color_blue,color_green, led_start,led_end, time_start, time_stop,
             adc1,adc2,adc3,adc4,
-            name,waterOpen,waterClose} = req.body;
+            name,waterOpen,waterClose,description} = req.body;
     //console.log(req.body);
-    if( !Number.isInteger( parseInt(adc1,10) ) ){errors.push({text: "ADC1 neeeds to be a number"})}
-    if( !Number.isInteger( parseInt(adc2,10) ) ){errors.push({text: "ADC2 neeeds to be a number"})}
-    if( !Number.isInteger( parseInt(adc3,10) ) ){errors.push({text: "ADC3 neeeds to be a number"})}
-    if( !Number.isInteger( parseInt(adc4,10) ) ){errors.push({text: "ADC4 neeeds to be a number"})}
+    if( !Number.isInteger( parseInt(adc1,10) ) ){errors.push({text: "ADC1 necesita ser un numero"})}
+    if( !Number.isInteger( parseInt(adc2,10) ) ){errors.push({text: "ADC2 necesita ser un numero"})}
+    if( !Number.isInteger( parseInt(adc3,10) ) ){errors.push({text: "ADC3 necesita ser un numero"})}
+    if( !Number.isInteger( parseInt(adc4,10) ) ){errors.push({text: "ADC4 necesita ser un numero"})}
+    
+    if( !Number.isInteger( parseInt(led_start,10) ) ){errors.push({text: "Definir inicio de led"})}
+    if( !Number.isInteger( parseInt(led_end,10) ) ){errors.push({text: "Definir fin de led"})}
+    if( !Number.isInteger( parseInt(waterOpen,10) ) ){errors.push({text: "Definir angulo de inicio de riego"})}
+    if( !Number.isInteger( parseInt(waterClose,10) ) ){errors.push({text: "Definir angulo de cierre de riego"})}
+    if( !Number.isInteger( parseInt(waterPin,10) ) ){errors.push({text: "Definir pin de riego"})}
+
     let plant = {
         update: true,
         info:{
             name: name,
             type: Type,
             index: index,
+            description: description,
             date: Date.now()
         },
         sowing:{
@@ -135,7 +131,7 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
                 led_end: parseInt(led_end,10),
                 color_red:  parseInt(color_red,10),
                 color_green:parseInt(color_green,10),
-                color_blue: parseInt(color_blue,10),
+                color_blue: parseInt(color_blue,10)
             },
             water:{
                 last_water: Math.round(new Date() / 1000),
@@ -161,7 +157,7 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
     if(errors.length >= 1){
         res.render('plants/edit', {plant ,index,Type, errors});
     }else{
-        //console.log(plant.sowing);
+        //console.log(plant.info);
         await User.findByIdAndUpdate(req.user.id, {'$push': {plants: plant } },{ new: true });
         req.flash("success_msg","Data update succefully");
         res.redirect('/my-plants');

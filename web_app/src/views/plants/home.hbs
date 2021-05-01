@@ -45,9 +45,20 @@
                 <a href="/edit-plant/{{@index}}" style="width: 45%;padding: 0px;margin-right: 5px;"class="waves-effect waves-light btn-small" >
                   Editar
                 </a>
-                <a href="/info-plant/{{@index}}" style="width: 45%;padding: 0px;" class="waves-effect waves-light btn-small" >
+                <a class="modal-trigger" href="#modal/myPlants/{{@index}}" style="width: 45%;padding: 0px;" >
                   Info
                 </a>
+              </div>
+            </div>
+            <!-- Modal Structure -->
+            <div id="modal/myPlants/{{@index}}" class="modal">
+              <div class="modal-content">
+                <h4>{{info.name}}</h4>
+                <p>Description: {{ info.description }} </p>
+                <p>Espacio {{ info.space }} </p>
+              </div>
+              <div class="modal-footer">
+                <a href="#!" class="modal-close waves-effect waves-green btn-flat">Agree</a>
               </div>
             </div>
           </div>
@@ -57,3 +68,9 @@
   </div>
 </div>
 </div>
+<script>
+
+  $(document).ready(function(){
+    $('.modal').modal();
+  });
+</script>

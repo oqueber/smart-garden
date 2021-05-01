@@ -73,7 +73,8 @@ var fillData = function(event) {
         name: document.getElementById("PlantName").textContent,
         color_red: colors[0],
         color_green: colors[1],
-        color_blue: colors[2]
+        color_blue: colors[2],
+        description: localPlant.info.description
     };
     for (const key in data) {
         if (data.hasOwnProperty(key)) {
@@ -85,6 +86,8 @@ var fillData = function(event) {
             form.appendChild(hiddenField);
         }
     }
+    console.log("Añadiedo datos:");
+    console.log(data);
 };   
 
 $( document ).ready(function() {

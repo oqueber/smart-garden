@@ -18,6 +18,7 @@ const UserSchema = new Schema({
         info: {
             name: {type: String},
             type: {type: String},
+            description: {type: String,default: ""},
             index: {type: Number},
             date: {type: Number},   //Creation Date
             status: {type: Number, default: 0},   // Ultima conexion
