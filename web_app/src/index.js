@@ -38,16 +38,26 @@ app.engine('.hbs', exphbs({
             return JSON.stringify(object);
         },
         toDate: function(date){
-            if ( date == 0){
-                return "never";
+            if ( date == 0 || date == null){
+                return "Sin datos";
             }else{
-                return (new Date(date)).toJSON().slice(0,16);
+                let date_aux = new Date(date).toJSON();
+                if( date_aux.slice(0,4) == "1970" )
+                {
+                    return "Sin datos";  
+                }
+
+                return (date_aux.slice(11,16)+" "+//Hora  
+                        date_aux.slice(8,10)+"-"+ // Dia
+                        date_aux.slice(5,7)+"-"+  //Mes 
+                        date_aux.slice(2,4)  //año
+                        );  
             }
         },
         toPercentage: function(data)
         {
             if ( data == 0){
-                return "never";
+                return "0";
             }else{
                 return Math.round( (data/4096)*100 ) ;
             }

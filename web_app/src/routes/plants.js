@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const ManualPlant = require('../flowers/Manual');
 const Aromatics = require('../flowers/Aromaticas');
 const vegetable = require('../flowers/Hortalizas');
 const { isAuthenticated } = require("../helpers/auth")
@@ -30,11 +31,16 @@ router.get('/new-plant/:Type/:index',isAuthenticated, (req,res)=>{
     const Type = req.params.Type;
     let plant;
 
-    if (Type == "aromatic"){
-        plant = Aromatics[index];
-    }else if(Type == "vegetable") {
-        plant = vegetable[index];
-    }else{
+    if (Type == "aromatic")
+    {
+       
+        plant =  JSON.parse(JSON.stringify(Aromatics[index]));
+    }
+    else if(Type == "vegetable")
+    {
+        plant =  JSON.parse(JSON.stringify(vegetable[index])) ;
+    }
+    else{
         res.render('404');
     }
 
@@ -66,13 +72,39 @@ router.get('/edit-plant/:index/',isAuthenticated, async(req,res) =>{
         info_copy = (vegetable[ plant.info.index]).info;
     }else if(plant.info.type == "aromatic"){
         info_copy = (Aromatics[ plant.info.index]).info;
+    }else if(plant.info.type == "manual")
+    {
+        info_copy = (ManualPlant[ plant.info.index]).info;
     }else{
         res.render('404');
     }
     
     res.render('plants/edit',{plant ,info:info_copy ,index, date: plant.info.date});
  });
- 
+
+router.post('/my-plants/new-plant', async(req,res) =>{
+    let {title,description} = req.body;
+    let errors = [];
+    console.log(req.body);
+    if(title == ''){errors.push({text: "Rellene el campo de titulo de planta"})}
+    if(description == ''){errors.push({text: "Rellene el campo de descripcion de planta"})}
+
+
+    if(errors.length >= 1){
+        res.render('plants/select',{errors, Aromatics, vegetable});
+    }else{
+        const index = 0;
+        const Type = "manual";
+        let plant;
+    
+        plant = JSON.parse(JSON.stringify(ManualPlant[0]));
+        plant.info.description = description;
+        plant.info.name = title;
+    
+        res.render('plants/edit', {plant ,index,Type});
+    }
+});
+
 router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
     const errors =[];
     const index = parseInt(req.params.index , 10);

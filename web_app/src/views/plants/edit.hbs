@@ -130,16 +130,18 @@
   <div style="overflow:auto;">
     <div style="text-align: center;padding: 10px;">
                  
-      <a href="/my-plants" class="btn btn-primary">Cancel</a>
+      <a href="/my-plants" class="btn btn-primary">Cancelar</a>
+
+      <button class="btn grey" type="button" id="prevBtn" onclick="nextPrev(-1)">Atras</button>
+      <button class="btn green" type="button" id="nextBtn" onclick="nextPrev(1)">Siguiente</button>
+      <button style="display:none" id="submit" type="submit" class="btn green">Guardar</button>
+    </div>
+    <div style="text-align: center;padding: 10px;">
       {{#if Type}}
       {{else}}  
-        <a href="/delete-plant/{{date}}" class="btn red">Delente</a>
-        <a href="/act/{{date}}" class="btn purple">action</a>
+        <a onclick="confirmDelete()" class="btn red">Eliminar</a>
+        <a href="/act/{{date}}" class="btn purple">Manual</a>
       {{/if}}
-
-      <button class="btn grey" type="button" id="prevBtn" onclick="nextPrev(-1)">Previous</button>
-      <button class="btn green" type="button" id="nextBtn" onclick="nextPrev(1)">Next</button>
-      <button style="display:none" id="submit" type="submit" class="btn green">Save</button>
     </div>
   </div>
 
@@ -157,6 +159,11 @@
   var currentTab = 0; // Current tab is set to be the first tab (0)
   showTab(currentTab); // Display the current tab
 
+  function confirmDelete (){
+    if (confirm("Desea eliminar la planta")) {
+      window.location.href = `/delete-plant/${ localPlant.info.date }`;
+    }
+  }
   function showTab(n) {
     // This function will display the specified tab of the form ...
     var x = document.getElementsByClassName("tab");
@@ -246,14 +253,34 @@
       document.getElementById("waterPin").value =   localPlant.sowing.water.pinout;
       document.getElementById("waterOpen").value =   localPlant.sowing.water.open;
       document.getElementById("waterClose").value =   localPlant.sowing.water.close;
+    }
 
       const red = document.getElementById("red");
       red.noUiSlider.set(localPlant.sowing.light.color_red ); 
+      red.noUiSlider.on('update', function () {
+
+        document.getElementById("scan2").style.boxShadow = `inset -5px -30px 20px rgb(${colors[0]},${colors[1]},${colors[2]})`;
+        document.getElementById("scan1").style.boxShadow = `inset -1px 10px 100px rgb(${colors[0]},${colors[1]},${colors[2]})`;
+        document.getElementById("resultados_R").innerHTML = `R: ${ Math.round((colors[0]/255)*100) }%`;
+      });
+
       const green = document.getElementById("green");
       green.noUiSlider.set(localPlant.sowing.light.color_green ); 
+      green.noUiSlider.on('update', function () {
+
+        document.getElementById("scan2").style.boxShadow = `inset -5px -30px 20px rgb(${colors[0]},${colors[1]},${colors[2]})`;
+        document.getElementById("scan1").style.boxShadow = `inset -1px 10px 100px rgb(${colors[0]},${colors[1]},${colors[2]})`;
+        document.getElementById("resultados_G").innerHTML = `G: ${ Math.round((colors[1]/255)*100) }%`;
+      });
+
       const blue = document.getElementById("blue");
       blue.noUiSlider.set( localPlant.sowing.light.color_blue ); 
-    }
+      blue.noUiSlider.on('update', function () {
+
+        document.getElementById("scan2").style.boxShadow = `inset -5px -30px 20px rgb(${colors[0]},${colors[1]},${colors[2]})`;
+        document.getElementById("scan1").style.boxShadow = `inset -1px 10px 100px rgb(${colors[0]},${colors[1]},${colors[2]})`;
+        document.getElementById("resultados_B").innerHTML = `B: ${ Math.round((colors[2]/255)*100) }%`;
+      });
 
 
     const valueSliderFreq = document.getElementById("waterF");
@@ -280,19 +307,6 @@
 
     valueSliderWater.noUiSlider.on('change.one', (values) => {
         valueSpanWater.textContent = `${umbralWater[parseInt(values[0],10)]}`;
-    });
-
-    //valueSliderLux.noUiSlider.on('change.one', (values) => {
-    //    valueSpanLux.textContent = `${parseInt(values[0],10)} horas diarias`;
-    //});
-
-    document.getElementById("colorpicker").addEventListener('click', (values) => {
-        document.getElementById("scan2").style.boxShadow = `inset -5px -30px 20px rgb(${colors[0]},${colors[1]},${colors[2]})`;
-        document.getElementById("scan1").style.boxShadow = `inset -1px 10px 100px rgb(${colors[0]},${colors[1]},${colors[2]})`;
-        
-        document.getElementById("resultados_R").innerHTML = `R: ${ Math.round((colors[0]/255)*100) }%`;
-        document.getElementById("resultados_G").innerHTML = `G: ${ Math.round((colors[1]/255)*100) }%`;
-        document.getElementById("resultados_B").innerHTML = `B: ${ Math.round((colors[2]/255)*100) }%`;
     });
 
 });
