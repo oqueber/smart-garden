@@ -67,6 +67,15 @@ bool getUserSD( bool update = false ){
         delay(100);
         serializeJson(localUser, msg); 
         writeFile(SD, SD_path_user, msg.c_str() );
+
+        for( iPlant = 0; iPlant < MAX_PLANTS; iPlant++)
+        {
+          //plantStatus[iPlant].Id = "";
+          plantStatus[iPlant].ticks_light = 0;
+          //plantStatus[iPlant].ticks_water = 0;
+        }
+
+        iPlant = 0;
       }
       else
       {
@@ -149,7 +158,7 @@ void taskWater( int pin_humCap, int pin_humEc,int limit, int pinout, int open, i
   
   Serial.printf(" humCap:%u humEc:%u \n",riegoCap ,riegoEc ); 
 
-  if ( riegoCap && riegoEc )
+  //if ( riegoCap && riegoEc )
   {
     Serial.printf("\n water time \n"); 
     Servo servo;  // create servo object to control a servo
