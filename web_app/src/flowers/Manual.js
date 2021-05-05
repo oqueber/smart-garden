@@ -4,7 +4,7 @@ ManualPlant.push({
     info:{
         name: "",
         description: "", 
-        image: "Manual_Plannt.jpg"
+        image: "Manual_Plant.jpg"
     },
     sowing: {
         light:{

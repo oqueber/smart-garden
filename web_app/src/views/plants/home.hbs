@@ -45,7 +45,7 @@
                 <a href="/edit-plant/{{@index}}" style="width: 45%;padding: 0px;margin-right: 5px;"class="waves-effect waves-light btn-small" >
                   Editar
                 </a>
-                <a class="modal-trigger" href="#modal/myPlants/{{@index}}" style="width: 45%;padding: 0px;" >
+                <a class="modal-trigger waves-effect waves-light btn-small" href="#modal/myPlants/{{@index}}" style="width: 45%;padding: 0px;" >
                   Info
                 </a>
               </div>
@@ -55,7 +55,23 @@
               <div class="modal-content">
                 <h4>{{info.name}}</h4>
                 <p>Description: {{ info.description }} </p>
-                <p>Espacio {{ info.space }} </p>
+                <p>Fecha de creación: {{toDate info.date }} </p>
+                <p>Ultima conexión: {{toDate info.status }} </p>
+
+                <h6>Luz</h6>
+                {{#if sowing.light.status}}
+                <p>Luz encendida</p>
+                {{else}}
+                <p>Luz apagada</p>
+                {{/if}}
+                <p>Ultimo suministro: {{ toDate sowing.light.last_light }} </p>
+
+                <h6>Agua</h6>
+                {{#if sowing.water.status}}
+                <p>En riego</p>
+                {{else}}
+                {{/if}}
+                <p>Ultimo suministro: {{ toDate sowing.water.last_water }} </p>
               </div>
               <div class="modal-footer">
                 <a href="#!" class="modal-close waves-effect waves-green btn-flat">Agree</a>
