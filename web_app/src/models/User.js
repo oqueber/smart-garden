@@ -33,7 +33,7 @@ const UserSchema = new Schema({
         },
         sowing:{
             light:{
-                last_light:{ type: Number }, 
+                last_light:{ type: Number, default: 0 }, 
                 time_start: {type: String},
                 time_stop: {type: String},
                 led_start: {type: Number},
@@ -44,7 +44,7 @@ const UserSchema = new Schema({
                 status: {type: Boolean, default: false }
             },
             water:{
-                last_water:{ type: Number }, 
+                last_water:{ type: Number, default: 0}, 
                 frequency:{ type:Number},
                 supply: {type: Number},
                 limit: {type: Number},
