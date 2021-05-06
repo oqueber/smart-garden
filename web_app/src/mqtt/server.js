@@ -70,7 +70,7 @@ server.on('clientConnected', async client => {
   let deviceId = (client.id).split('/')[1];
   
   await Users.findOne( {MAC: deviceId }).then(doc => { 
-    doc.device_last_connect = new Date.now();
+    doc.device_last_connect = Date.now();
     doc.save();
     debug(chalk.yellow(doc));
     debug(chalk.green("User connected update"));
