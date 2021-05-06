@@ -17,6 +17,8 @@ router.get('/my-plants',isAuthenticated, async(req,res)=>{
             plant.info.image = Aromatics[plant.info.index].info.image;
         }else if(plant.info.type  == "vegetable") {
             plant.info.image = vegetable[plant.info.index].info.image;
+        }else{
+            plant.info.image = "Manual_Plant.jpg";
         }
     });
     res.render('plants/home', {plants: user.plants});
@@ -119,6 +121,7 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
             name: name,
             type: Type,
             index: index,
+            image: "",
             description: description,
             date: Date.now()
         },
@@ -153,6 +156,7 @@ router.post('/new-plant/:type/:index/save',isAuthenticated, async (req,res)=>{
             humEC: parseInt(adc4,10)
         }
     };
+    
 
     if(errors.length >= 1){
         res.render('plants/edit', {plant ,index,Type, errors});
