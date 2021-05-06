@@ -44,8 +44,6 @@ DynamicJsonDocument localUser (2048);
 // Hora del sistema.
 struct tm systemTime;
 
-// Indice de planta a tratar
-byte iPlant;
 byte max_plants_user;
 
 // Buffer de mensajes MQTT por enviar
@@ -267,7 +265,7 @@ void init_var_system( void )
   iMsgMqtt = 0;
 
   // Reiniciamos el indice de planta a tratar
-  iPlant = 0;
+  //iPlant = 0;
   max_plants_user = 0;
 
   // Estado inicial del sistema
@@ -338,7 +336,7 @@ void taskPlantCare( void)
       iMsgMqtt++;
       buffer_mqtt_msg_send[iMsgMqtt].send = true;
       buffer_mqtt_msg_send[iMsgMqtt].topic = "Huerta/update/water"; 
-      buffer_mqtt_msg_send[iMsgMqtt].msg = "{\"plant\":\""+plantStatus[iPlantCare].Id+"}";
+      buffer_mqtt_msg_send[iMsgMqtt].msg = "{\"plant\":\""+plantStatus[iPlantCare].Id+"\"}";
     } 
 
     
@@ -347,7 +345,8 @@ void taskPlantCare( void)
 
 // Configuracion del sistema
 void setup(){
-
+  // Indice de planta a tratar
+  byte iPlant = 0;
   // Numero de intentos de conexion al servidor mqtt
   byte nServerMqtt = 0;
 
@@ -529,6 +528,7 @@ void setup(){
     esp_wifi_stop();
     delay(1000);
 
+    // Reiniciamos el indice de planta para la proxima iteracion
     iPlant = 0;
 
     //Damos electricidad a los sensores analogicos
@@ -538,7 +538,7 @@ void setup(){
     for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
     
       //Definir los datos analogicos y los datos de riego y de iluminacion para ser activados
-      taskSystem(kvp.value(), kvp.key().c_str() ); 
+      taskSystem(kvp.value(), kvp.key().c_str(), iPlant); 
 
       if ( iPlant++ > MAX_PLANTS)
         break; 
@@ -571,6 +571,8 @@ void taskCore1( void * pvParameters){
   bool finishedCore1 = false;
   //Numero de intentos en enviar un mensaje mqtt
   byte n_send_msg_mqtt = 0; 
+  // Indice de planta a tratar
+  byte iPlant = 0;
   // Reiniciamos el indice del buffer
   iMsgMqtt = 0;
 
@@ -624,7 +626,7 @@ void taskCore1( void * pvParameters){
       for (auto kvp : ( localUser["plants"].as<JsonObject>() ) ) {
       
         //Definir los datos analogicos y los datos de riego y de iluminacion para ser activados
-        taskSystem(kvp.value(), kvp.key().c_str() ); 
+        taskSystem(kvp.value(), kvp.key().c_str(), iPlant ); 
 
          // Proteccion
         if ( iPlant++ > MAX_PLANTS)

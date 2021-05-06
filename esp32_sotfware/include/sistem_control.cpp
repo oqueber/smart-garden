@@ -68,14 +68,6 @@ bool getUserSD( bool update = false ){
         serializeJson(localUser, msg); 
         writeFile(SD, SD_path_user, msg.c_str() );
 
-        for( iPlant = 0; iPlant < MAX_PLANTS; iPlant++)
-        {
-          //plantStatus[iPlant].Id = "";
-          plantStatus[iPlant].ticks_light = 0;
-          //plantStatus[iPlant].ticks_water = 0;
-        }
-
-        iPlant = 0;
       }
       else
       {
@@ -213,7 +205,7 @@ void taskLight(int led_start,  int led_end, int r, int g, int b){
 
 };
 
-void taskSystem( JsonObject plant , String plant_id){
+void taskSystem( JsonObject plant , String plant_id , byte iPlant_task){
  
   if(systemTime.tm_year < (2016 - 1900)){
     Serial.println("Failed to obtain time");
@@ -240,7 +232,7 @@ void taskSystem( JsonObject plant , String plant_id){
   double diff = difftime(timeinfo_2,  plant_water_time ) ;
 
   // Proceso no inicializado
-  if ( plantStatus[iPlant].ticks_water <= 0)
+  if ( plantStatus[iPlant_task].ticks_water <= 0)
   {
     
     // Compobar si toca regar la planta
@@ -248,8 +240,8 @@ void taskSystem( JsonObject plant , String plant_id){
       
       // [TO DO] Almacenar
       Serial.print("\nRiego activo\n");
-      //plantStatus[iPlant].Id = plant_id;
-      plantStatus[iPlant].ticks_water = TICKS_WATER_DEFAULT;
+      //plantStatus[iPlant_task].Id = plant_id;
+      plantStatus[iPlant_task].ticks_water = TICKS_WATER_DEFAULT;
 
 
       Serial.print("Before: ");
@@ -265,7 +257,7 @@ void taskSystem( JsonObject plant , String plant_id){
     
   }
   
-  if (plantStatus[iPlant].ticks_light <= 0)
+  if (plantStatus[iPlant_task].ticks_light <= 0)
   {
     // De un dia para otro dia
     if( (hourStart_hour + hourStart_min) > (hourStop_hour  + hourStop_min) )
@@ -275,7 +267,7 @@ void taskSystem( JsonObject plant , String plant_id){
       {
         // Encendemos la iluminacion
         Serial.print("\nLuz activo\n");
-        plantStatus[iPlant].ticks_light = ceil( (((24*60*60)- rightNow) + (hourStop_hour  + hourStop_min)) /(TIME_SLEEP_MINUTS*TIME_SLEEP_S_TO_M_FACTOR)  ) ;
+        plantStatus[iPlant_task].ticks_light = ceil( (((24*60*60)- rightNow) + (hourStop_hour  + hourStop_min)) /(TIME_SLEEP_MINUTS*TIME_SLEEP_S_TO_M_FACTOR)  ) ;
 
         taskLight(
           localUser["plants"][plant_id]["light"]["led_start"].as<int>(),
@@ -289,7 +281,7 @@ void taskSystem( JsonObject plant , String plant_id){
       {
         // Encendemos la iluminacion
         Serial.print("\nLuz activo\n");
-        plantStatus[iPlant].ticks_light = ceil( ( (hourStop_hour  + hourStop_min) - rightNow) /(TIME_SLEEP_MINUTS*TIME_SLEEP_S_TO_M_FACTOR)  ) ;
+        plantStatus[iPlant_task].ticks_light = ceil( ( (hourStop_hour  + hourStop_min) - rightNow) /(TIME_SLEEP_MINUTS*TIME_SLEEP_S_TO_M_FACTOR)  ) ;
 
         taskLight(
           localUser["plants"][plant_id]["light"]["led_start"].as<int>(),
@@ -313,8 +305,8 @@ void taskSystem( JsonObject plant , String plant_id){
 
         // Encendemos la iluminacion
         Serial.print("\nLuz activo\n");
-        //plantStatus[iPlant].Id = plant_id;
-        plantStatus[iPlant].ticks_light = ceil( ((hourStop_hour  + hourStop_min) - (rightNow))/(TIME_SLEEP_MINUTS*TIME_SLEEP_S_TO_M_FACTOR)  ) ;
+        //plantStatus[iPlant_task].Id = plant_id;
+        plantStatus[iPlant_task].ticks_light = ceil( ((hourStop_hour  + hourStop_min) - (rightNow))/(TIME_SLEEP_MINUTS*TIME_SLEEP_S_TO_M_FACTOR)  ) ;
 
         taskLight(
           localUser["plants"][plant_id]["light"]["led_start"].as<int>(),
@@ -332,11 +324,11 @@ void taskSystem( JsonObject plant , String plant_id){
     Serial.println("------------------  taskSystem   ---------------------------------");
     
     Serial.print("ID plant: "); Serial.println( plant_id );
-    Serial.print("ID statusPlant: "); Serial.println( plantStatus[iPlant].Id );
+    Serial.print("ID statusPlant: "); Serial.println( plantStatus[iPlant_task].Id );
     Serial.print("Time_hour_min_now: "); Serial.println( rightNow);
-    Serial.print("iPlant: "); Serial.println( iPlant );
-    Serial.print("ticks_water: "); Serial.println( plantStatus[iPlant].ticks_water );
-    Serial.print("ticks_light: "); Serial.println( plantStatus[iPlant].ticks_light);    
+    Serial.print("iPlant_task: "); Serial.println( iPlant_task );
+    Serial.print("ticks_water: "); Serial.println( plantStatus[iPlant_task].ticks_water );
+    Serial.print("ticks_light: "); Serial.println( plantStatus[iPlant_task].ticks_light);    
 
     Serial.print("[light][time_start]: "); Serial.println( plant["light"]["time_start"].as<String>() );
     Serial.print("[light][time_start][seg]: "); Serial.println( (hourStart_hour + hourStart_min) );
@@ -372,6 +364,9 @@ void tasksControl(){
 }
 
 bool userUpdateData (String newData){
+  // Indice de planta a tratar
+  byte iPlant = 0;
+
   String userLocalData;
   String userDataUpdated;
   bool userUpdate = false;
@@ -430,6 +425,13 @@ bool userUpdateData (String newData){
             userUpdate = true;
           } 
         }
+      }
+      // Actualizacion del sistema.
+      for( iPlant = 0; iPlant < MAX_PLANTS; iPlant++)
+      {
+        //plantStatus[iPlant].Id = "";
+        plantStatus[iPlant].ticks_light = 0;
+        //plantStatus[iPlant].ticks_water = 0;
       }
 
     }
