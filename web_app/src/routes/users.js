@@ -47,6 +47,22 @@ router.post('/users/login-user', passport.authenticate('local', {
     failureRedirect: '/users/Login',
     failureFlash: true
 }));
+router.get('/Users/delete-user', async(req,res) =>{ 
+
+    await User.findByIdAndDelete(req.user.id,  function (err, docs) {
+        if (err)
+        {
+            console.log(err)
+        }
+        else
+        {
+            console.log("Deleted : ", docs);
+        }
+    });
+
+    req.logout();
+    res.redirect('/');
+});
 router.post('/Users/update-user', async(req,res) =>{
     let {name,password, email,emailRepeat, city,state,zip,MAC0,MAC1,MAC2,MAC3,MAC4,MAC5,BME280, CCS811, Si7021, TCS34725, indoor} = req.body;
     const errors = [];

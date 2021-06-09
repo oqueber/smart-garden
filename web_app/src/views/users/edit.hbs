@@ -102,14 +102,39 @@
           <span>TCS34725</span>        
         </label>
       </div>
-      </div>      
-        <button class="col s12 btn waves-effect waves-light" type="submit">
-        Save changes 
-          <i class="material-icons">send</i>
-        </button>
+      </div> 
+      <div class="row" style="text-align: center;" >
+        <div style="padding: 5px;" class="col s12" >
+          <button class="btn waves-effect waves-light" type="submit">
+          Guardar cambios 
+            <i class="material-icons">send</i>
+          </button>
+        </div>
+        <div style="padding: 5px;" class="col s12">
+          <button id="DeleteUser" class="btn red waves-effect waves-light">
+            Eliminar cuenta
+            <i class="material-icons">delete</i>
+          </button>
+        </div>
 
+      </div>     
       </div>
 
     </form>
   </div>
 </div>
+
+<script>
+  function confirmDelete (e){
+    e.preventDefault();
+    if (confirm("¿Desea eliminar el usuario?")) {
+      if (confirm("Confirmar")) {
+        window.location.href = `/Users/delete-user`;
+      }
+    }
+  }
+ $( document ).ready(function() {
+    // attach event listener
+    document.getElementById("DeleteUser").addEventListener('click', confirmDelete);
+  });
+</script>

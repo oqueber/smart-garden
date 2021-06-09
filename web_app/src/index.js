@@ -22,7 +22,7 @@ require('./config/passport');
 //-----------------------------------------
 //------------ Settings  ------------------
 //-----------------------------------------
-const port =process.env.PORT || 3000;
+const port =process.env.PORT || 80;
 app.set('views',path.join(__dirname,'views'));
 require('./config/passport')
 
