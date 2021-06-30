@@ -10,9 +10,7 @@ const methodOverride= require('method-override');
 const session = require('express-session');
 const debug = require('debug')("SG:Server-Main");
 const chalk = require('chalk');
-//const ip = "35.223.193.24";
-const ip = "127.0.0.1";
-//const ip = '0.0.0.0';
+const ip = "34.132.72.212";
 
 //Initializations
 process.title = 'myApp';
@@ -24,7 +22,7 @@ require('./config/passport');
 //-----------------------------------------
 //------------ Settings  ------------------
 //-----------------------------------------
-const port =process.env.PORT || 3000;
+const port =process.env.PORT || 80;
 app.set('views',path.join(__dirname,'views'));
 require('./config/passport')
 
