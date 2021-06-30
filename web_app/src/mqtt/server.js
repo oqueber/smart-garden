@@ -255,6 +255,9 @@ server.on('published', async (packet, client) => {
 
       await Users.findOne( {MAC: json_data.device }).then(doc => {
 
+	if (doc == null)
+		return;
+	      
         //debug(chalk.yellow(`User found: `));
         // Guardar los valores actualizados de las plantas del huerto para mostrar en la pantalla de inicio
         for( const element in doc.plants){
