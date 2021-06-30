@@ -172,6 +172,9 @@ server.on('published', async (packet, client) => {
 
       await Users.findOne( {MAC: json_data.device }).then(doc => {
 
+	 if (doc == null)
+		 return;
+	      
         //debug(chalk.yellow(`User found: `));
         for( const element in doc.plants){
           if (doc.plants[element].info.date == Number(json_data.plant) ){
