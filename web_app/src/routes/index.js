@@ -45,6 +45,9 @@ router.get("/Users/GetData/:Mac",async (req,res)=>{
 
     await User.findOne( {"MAC":_mac} ).then( _user => {
         
+        if( _user == null)
+            return;
+        
         //Update the flag to false
         if ( _user.update == true) {
             console.log("Habia datos por actualizar");
