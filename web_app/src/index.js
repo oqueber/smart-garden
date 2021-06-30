@@ -8,8 +8,8 @@ const path = require('path');
 const exphbs = require('express-handlebars');
 const methodOverride= require('method-override');
 const session = require('express-session');
-const ip = "35.223.193.24";
-//const ip = "127.0.0.1";
+//const ip = "35.223.193.24";
+const ip = "127.0.0.1";
 //const ip = '0.0.0.0';
 
 //Initializations
@@ -22,7 +22,7 @@ require('./config/passport');
 //-----------------------------------------
 //------------ Settings  ------------------
 //-----------------------------------------
-const port =process.env.PORT || 80;
+const port =process.env.PORT || 3000;
 app.set('views',path.join(__dirname,'views'));
 require('./config/passport')
 

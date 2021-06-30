@@ -7,7 +7,7 @@
       </div>
       <div class="input-field col s6">
         <input type="password" class="validate" name="password"/>
-        <label style="z-index: -1;" for="password" >Contrseña</label>
+        <label style="z-index: -1;" for="password" >Contraseña</label>
       </div>
 
       <div class="input-field col s6">
@@ -17,19 +17,6 @@
       <div class="input-field col s6">
         <label style="z-index: -1;" for="repit_email">Repetir el correo</label>
         <input type="email" class="validate" value="{{emailRepeat}}" name="emailRepeat" />
-      </div>
-
-      <div class="input-field col s4">
-        <label style="z-index: -1;" for="city">Pais</label>
-        <input type="text" class="validate" value="{{city}}" name="city" />
-      </div>
-      <div class="input-field col s4">
-        <label style="z-index: -1;" for="state">Ciudad</label>
-        <input type="text" class="validate" value="{{state}}" name="state" />
-      </div>
-      <div class="input-field col s4">
-        <label style="z-index: -1;" for="zip">Codigo postal</label>
-        <input onkeypress="return (event.charCode == 8 || event.charCode == 0 || event.charCode == 13) ? null : event.charCode >= 48 && event.charCode <= 57" type="text" class="validate" value="{{zip}}" name="zip" />
       </div>
 
       <div class="input-field col s2">
@@ -114,5 +101,36 @@
         <i class="material-icons">send</i>
       </button>
     </div>
+    <!-- Modal Structure -->
+    <div id="signupInfo" class="modal">
+      <div class="modal-content">
+        <h4>Información</h4>
+        <ol style="list-style-type:disc" >
+          <li><strong> Nombre de usuario (Obligatorio):</strong> Nombre del usuario que se desea registrar.</li>
+          <li><strong>Correo electrónico del usuario (Obligatorio):</strong> Correo electrónico del usuario que se desea registrar. El correo electrónico debe de ser único por usuario y no podrá coincidir con el correo electrónico de otros usuarios previamente registrados en la plataforma web.</li>
+          <li><strong>Contraseña:</strong> Se debe de memorizar la contraseña para acceder a la zona de usuarios registrados.</li>
+          <li><strong>MAC (Obligatorio):</strong> La dirección MAC (Media Access Control) es única por cada dispositivo que cuente con conectividad a internet. Se debe de conocer previamente la dirección MAC del huerto para introducirla en la plataforma web.</li>
+          <li><strong>Interior o Exterior (Opcional):</strong> Informar al huerto sobre la ubicación en la que se encuentra. </li>
+          <li><strong>BME280 (Opcional):</strong> Recopilar información de la temperatura, humedad y presión atmosférica del entorno del huerto.</li>
+          <li><strong>Si7021 (Opcional):</strong> Recopilar información de la temperatura, humedad del entorno del huerto.</li>
+          <li><strong>CCS811 (Opcional):</strong> Recopilar información del CO2 y TVOC del entorno del huerto.</li>
+        </ol>
+      </div>
+      <div class="modal-footer">
+        <a href="#!" class="modal-close waves-effect waves-green btn-flat">Cerrar</a>
+      </div>
+    </div>
   </form>
+  <div class="fixed-action-btn">
+    <a href="#signupInfo" class="modal-trigger  btn-floating btn-large blue">
+      <i class="large material-icons">info</i>
+    </a>
+  </div>
 </div>
+
+<script>
+
+  $(document).ready(function(){
+    $('.modal').modal();
+  });
+</script>

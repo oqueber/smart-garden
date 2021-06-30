@@ -19,10 +19,10 @@
     {{/if}}
     <div class="col s4"  style="margin: 0px;padding: 0px 5px;">
       <button class="btn waves-effect waves-light" id="updateData" style="width: 49%;float: left;font-size: 12px;margin:7px 0px;  padding: 0px;">
-        Update
+        Actualizar
       </button>
       <button class="btn waves-effect waves-light" id="clearData" style="width: 49%;padding: 0px;margin:7px 0px;font-size: 12px;">
-        Clear
+        Limpiar
       </button>
     </div>
   </div>
@@ -58,8 +58,8 @@
 
       <a href="#!" style="padding:0px 8px" class="dropdown-trigger btn-small" data-target="Analog">Analog</a>
       <ul  class='dropdown-content' id="Analog"  >
-        <li id="Analog_photocell1" ><a href="#!" >Luz 1</a></li>
-        <li id="Analog_photocell2"><a href="#!" >Luz 2</a></li>
+        <li id="Analog_photocell1" ><a href="#!" >Luz I</a></li>
+        <li id="Analog_photocell2"><a href="#!" >Luz E</a></li>
         <li id="Analog_humcap"><a href="#!">Hum. Cap.</a></li>
         <li id="Analog_humec"><a href="#!">Hum. Ec.</a></li>
       </ul>
@@ -73,5 +73,58 @@
     <progress id="animationProgress" max="1" value="0" style="width: 100%"></progress>
   </div>
 </div>
+
+    <div id="boxInfo" class="modal">
+      <div class="modal-content">
+        <h4>Información</h4>
+        <ol style="list-style-type:disc" >
+          <li><strong>TCS34725:</strong> Información sobre el espectro luminoso que reciben las plantas del suministro de la luz artificial.</li>
+          <ol style="list-style-type:circle" >
+            <li><strong>RGB:</strong> Espectro luminoso separado por los colores RGB (Red, Green and Blue).</li>
+            <li><strong>LÚMENES:</strong> La medida total transformada a la unidad de lúmenes.</li>
+            <li><strong>TOTAL:</strong> Espectro luminoso antes de ser filtrado por color.</li>
+          </ol>
+          <li><strong>Si7021:</strong> Información de la temperatura, humedad del entorno del huerto.</li>
+          <ol style="list-style-type:circle" >
+            <li><strong>Temperatura:</strong> Temperatura que se encuentra en el huerto.</li>
+            <li><strong>Humedad:</strong> Humedad relativa que se encuentra en el huerto.</li>
+          </ol>
+          <li><strong>CCS811:</strong> Recopilar información del CO2 y TVOC del entorno del huerto.</li>
+          <ol style="list-style-type:circle" >
+            <li><strong>CO2:</strong>  Proporciona medidas del monóxido de carbono.</li>
+            <li><strong>TVOC:</strong> Proporciona medidas de compuestos volátiles.</li>
+          </ol>
+          <li><strong>BME280:</strong> Recopilar información de la temperatura, humedad y presión atmosférica del entorno del huerto.</li>
+          <ol style="list-style-type:circle" >
+            <li><strong>Altitud:</strong>  Proporciona medidas de la altitud relativa.</li>
+            <li><strong>Presión:</strong>  Proporciona medidas de presión atmosférica.</li>
+            <li><strong>Temperatura:</strong> Temperatura que se encuentra en el huerto.</li>
+          </ol>
+          <li><strong>ANALOG:</strong> Recopilar información de la temperatura, humedad y presión atmosférica del entorno del huerto.</li>
+          <ol style="list-style-type:circle" >
+            <li><strong>Luz I:</strong> Nivel de iluminación interior al huerto.</li>
+            <li><strong>Luz E:</strong> Nivel de iluminación exterior al huerto.</li>
+            <li><strong>Hum. Cap:</strong> Nivel de humedad en el sustrato en el sensor de capacitivo.</li>
+            <li><strong>Hum. Ec:</strong> Nivel de humedad en el sustrato en el sensor de conductividad eléctrica.</li>
+          </ol>
+        </ol>
+      </div>
+      <div class="modal-footer">
+        <a href="#!" class="modal-close waves-effect waves-green btn-flat">Cerrar</a>
+      </div>
+    </div>
+
+  <div class="fixed-action-btn">
+    <a href="#boxInfo" class="modal-trigger  btn-floating btn-large blue">
+      <i class="large material-icons">info</i>
+    </a>
+  </div>
+
+<script>
+
+  $(document).ready(function(){
+    $('.modal').modal();
+  });
+</script>
 
 <script src="js/chart.js"></script>
