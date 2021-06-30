@@ -11,7 +11,7 @@ const {io, eventEmitter, devicesConnected,userConnected} = require('../utils/soc
 //
 
 io.on('connection',   (socket)=>{
-  console.log('[Smart-Garden-Socket] connected '+ socket.id)
+  debug( chalk.yellow( `Connected  ${socket.id }` ));
   
   // Usuario conectado a la plataforma web
   socket.on('user/connect', (data)=>{
@@ -20,12 +20,12 @@ io.on('connection',   (socket)=>{
     if ( !userConnected.has(data.MAC))
     {
       let fl_status =  userConnected.set( data.MAC , { socket: socket, socketId:socket.id} );
-      chalk.yellow( `new web connection with ${socket.id} and MAC ${data.MAC} status ${fl_status}`); 
+      debug( chalk.yellow( `new web connection with ${socket.id} and MAC ${data.MAC} status ${fl_status}`)); 
     }
     else
     {
       // Actualizamos el socket por nueva conexion.
-      chalk.yellow( `already exits action connection MAC ${data.MAC}`);        
+      debug(chalk.yellow( `already exits connection with MAC: ${data.MAC}`));        
       userConnected.get(data.MAC).socket = socket;
       userConnected.get(data.MAC).socketId = socket.id;
     }
@@ -33,7 +33,7 @@ io.on('connection',   (socket)=>{
     // Comprobar si el dispositivo ya esta conectado al servidor,
     if ( devicesConnected.has(data.MAC) )
     {
-      debug("Enviando al socket user online"); 
+      debug(`The garden its already online ${data.MAC}`); 
       socket.emit('action/user',"online");
     }
 
@@ -49,7 +49,7 @@ io.on('connection',   (socket)=>{
         if( i_value.esp32 == false )
         {
           let fl_status = userConnected.delete(i_MAC);
-          debug( chalk.yellow( `delete web connection of ${i_value.socketId} and MAC ${ i_MAC } status ${ fl_status }`) );
+          debug( chalk.yellow( `delete web connection ${i_value.socketId} and MAC ${ i_MAC } status ${ fl_status }`) );
         }
       }
     }
@@ -57,17 +57,17 @@ io.on('connection',   (socket)=>{
 
   // Cuando el usuario y el dispositivo estan conectado a la plataforma web
   socket.on('action/setData', (Data)=>{
-    console.log('Recibido al Servidor: ', Data);
-    console.log('Del Usuario: ', socket.id);
+    debug('Recibido al Servidor: ', Data);
+    debug('Del Usuario: ', socket.id);
         
     if ( devicesConnected.has(Data.MAC) )
     {
-      console.log("enviando al eventEmitter ");
+      debug("enviando al eventEmitter ");
       eventEmitter.emit('action/setData',{ MAC: Data.MAC, payload: JSON.stringify(Data.payload) } );
     }
     else
     {
-      socket.emit('action/response',{text: "Error user dont connected"});
+      socket.emit('action/response',{text: "Huerto no conectado"});
     }
 
   }); 
@@ -115,7 +115,7 @@ io.on('connection',   (socket)=>{
           }else{
             plant_select = 0
           }
-          console.log("We find this: ", dataUser.length);
+          debug("Datos almacenados del usuario: ", dataUser.length);
           if(dataUser.length != 0){ 
             //console.log(dataUser);
             //console.log("plant_select: ", plant_select);
@@ -141,4 +141,4 @@ io.on('connection',   (socket)=>{
 
 });
 
-console.log(`[Smart-Garden-Socketio]: connected`);
+debug( chalk.blue(` SocketIO is running`));

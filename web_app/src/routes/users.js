@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const passport = require('passport');
+const debug = require('debug')("SG:Server-User ");
+const chalk = require('chalk');
 const { isAuthenticated } = require("../helpers/auth");
 
 router.get('/users/Edit',isAuthenticated, async (req,res)=>{
@@ -52,11 +54,12 @@ router.get('/Users/delete-user', async(req,res) =>{
     await User.findByIdAndDelete(req.user.id,  function (err, docs) {
         if (err)
         {
-            console.log(err)
+            console.log(`Try to delete ` + err);
         }
         else
         {
-            console.log("Deleted : ", docs);
+            debug( chalk.yellow( `Delete user`));
+            debug( chalk.red(docs ));
         }
     });
 
@@ -101,22 +104,28 @@ router.post('/Users/update-user', async(req,res) =>{
 router.post('/Users/new-user', async(req,res) =>{
     let {name,password, email,emailRepeat, city,state,zip,MAC0,MAC1,MAC2,MAC3,MAC4,MAC5, BME280, CCS811, Si7021, TCS34725,indoor} = req.body;
     let errors = [];
-    //console.log(req.body);
-    if(email != emailRepeat){errors.push({text: "Please both emails have the same"})}
-    if(email == '' || emailRepeat == ''){errors.push({text: "Please enter a email"})}
-    if(TCS34725 == 'on'){ TCS34725 = 'checked' };
-    if(BME280 == 'on'){ BME280 = 'checked' };
-    if(Si7021 == 'on'){ Si7021 = 'checked' };
-    if(CCS811 == 'on'){ CCS811 = 'checked' };
-    if(indoor == 'on'){ indoor = 'checked' };
+    console.log(req.body);
+    if(email != emailRepeat){errors.push({text: "Ambos correos deben de ser iguales"})}
+    if(email == '' || emailRepeat == ''){errors.push({text: "Introducir un correo electronico"})}
+    
 
 
     if(errors.length >= 1){
+        if(TCS34725 == 'on'){ TCS34725 = 'checked' }
+        if(BME280 == 'on'){ BME280 = 'checked' }
+        if(Si7021 == 'on'){ Si7021 = 'checked' }
+        if(CCS811 == 'on'){ CCS811 = 'checked' }
+        if(indoor == 'on'){ indoor = 'checked' }
         res.render('users/signup', {errors, name, email,emailRepeat, city,state,zip,MAC0,MAC1,MAC2,MAC3,MAC4,MAC5,TCS34725,BME280,Si7021, CCS811, indoor});
      }else{
         const emailUser = await User.findOne({ email: email });
         if (emailUser) {
-            errors.push({text: "The Email is already in use."})
+            if(TCS34725 == 'on'){ TCS34725 = 'checked' }
+            if(BME280 == 'on'){ BME280 = 'checked' }
+            if(Si7021 == 'on'){ Si7021 = 'checked' }
+            if(CCS811 == 'on'){ CCS811 = 'checked' }
+            if(indoor == 'on'){ indoor = 'checked' }
+            errors.push({text: "Usuario ya registrado con ese correo."})
             res.render('users/signup', {errors, name, email,emailRepeat, city,state,zip,MAC0,MAC1,MAC2,MAC3,MAC4,MAC5,TCS34725,BME280,Si7021, CCS811, indoor});
         }else{
             let devices = "";   
@@ -127,11 +136,14 @@ router.post('/Users/new-user', async(req,res) =>{
             if(Si7021 == 'on'){ devices += '1'}else{ devices += '0'};
             if(indoor == 'on'){ indoor = true }else{ indoor = false};
 
+            console.log("Updated...:"+ devices);
+
             const MAC = `${MAC0}:${MAC1}:${MAC2}:${MAC3}:${MAC4}:${MAC5}`;
             const newUser = new User({name, password, email,city,state,zip,MAC,devices:devices,indoor});
             newUser.password = await newUser.encryptPassword(password);
             await newUser.save();
-            //console.log(newUser);
+            debug( chalk.yellow( `New user`));
+            debug( chalk.yellow( newUser));
             req.flash("success_msg","yoou are registered");
             res.redirect('/');
         }

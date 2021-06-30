@@ -41,7 +41,7 @@ eventEmitter.on('action/setData', async function( data ){
     }
     else
     {
-      console.log(`ESP32 dont connected${data.MAC}`);
+      debug( console.log(`ESP32 dont connected${data.MAC}`) );
     }
   } catch (error) {
     debug( chalk.red('Error mqtt eventEmmiter ('+error+').') );
@@ -51,25 +51,16 @@ eventEmitter.on('action/setData', async function( data ){
 });
 
 
-/*
-eventEmitter.on('user/update/water', async function(UserMac,plantIndex){  
-  const index = parseInt(plantIndex,10);
-  await Users.findOne( {MAC: UserMac }).then(doc => {
-
-      let plant = doc.plants[index];
-      plant.sowing.water.last_water = Date.now();
-      doc.save();
-      debug(chalk.green(`Update plant water ${plantIndex} in the user ${UserMac}`));
-      userTask.delete(UserMac);
-  });
-});
-*/
 server.on('clientConnected', async client => {
   debug(`Client connected ${client.id}`);
 
   let deviceId = (client.id).split('/')[1];
   
   await Users.findOne( {MAC: deviceId }).then(doc => { 
+    
+    if (doc == null)
+      return
+
     doc.device_last_connect = Date.now();
     doc.save();
     debug(chalk.yellow(doc));
@@ -128,38 +119,11 @@ server.on('subscribed', (topic,client) => {
     }  
   }
   
-
-
-  /*
-  if( topic == "device/update/user"){
-    if ( userTask.has(deviceId) ){
-        debug( chalk.yellow( `searching update for ${deviceId}`) );
-        userTask.get(deviceId).forEach(function(value, key, map){
-          server.publish(value,client, () => debug("Message sent"));
-        });
-      userTask.delete(deviceId);
-    }else{
-      debug( chalk.yellow( `there are not updated for the user ${deviceId}`) );
-      eventEmitter.emit('client/set/connection',deviceId );
-    }
-  }else{
-    debug(chalk.yellow("It's don't the topic") );
-  }
-  */
 })
 server.on('published', async (packet, client) => {
   debug(`Received published with topic: ${packet.topic}`)
 
-  /*
-  if(packet.topic == "device/update/task"){
-    let deviceMAC = (client.id).split('/')[1]; 
-    let devicePayload = packet.payload.toString('utf-8').split('/');
 
-    if (devicePayload[0] = "water"){
-      eventEmitter.emit('user/update/water', deviceMAC, devicePayload[1] );
-    }
-  }
-  */
   if(packet.topic == "Huerta/update/water"){
     debug( chalk.yellow('Msg water: '));
     debug( packet.payload.toString('utf-8') );
@@ -289,6 +253,7 @@ server.on('published', async (packet, client) => {
       await Users.findOne( {MAC: json_data.device }).then(doc => {
 
         //debug(chalk.yellow(`User found: `));
+        // Guardar los valores actualizados de las plantas del huerto para mostrar en la pantalla de inicio
         for( const element in doc.plants){
           if (doc.plants[element].info.date == Number(json_data.plantId) ){
             
@@ -331,7 +296,7 @@ server.on('published', async (packet, client) => {
 });
 
 server.on('ready', async () => {
-  debug( chalk.blue(` Server is running`));
+  debug( chalk.blue(`Broker MQTT is running`));
 })
 
 server.on('error', handleFatalError)
@@ -340,8 +305,8 @@ module.exports = server
 
 
 function handleFatalError (err) {
-  debug( chalk.red(`[Fatal eror] ${err.message}`) );
-  debug( chalk.red(err.stack));
+  console.log( chalk.red(`[Fatal error] ${err.message}`) );
+  console.log( chalk.red(err.stack));
   process.exit(1)
 }
 
