@@ -70,8 +70,8 @@ router.post('/Users/update-user', async(req,res) =>{
     let {name,password, email,emailRepeat, city,state,zip,MAC0,MAC1,MAC2,MAC3,MAC4,MAC5,BME280, CCS811, Si7021, TCS34725, indoor} = req.body;
     const errors = [];
     //console.log(req.body);
-    if(email != emailRepeat){errors.push({text: "Please both emails have the same"})}
-    if(password.length <=2 ){errors.push({text: "Please introduce a password"})}
+    if(email != emailRepeat){errors.push({text: "Ambos correos deben de ser iguales"})}
+    if(password.length <=2 ){errors.push({text: "Introducir contraseña"})}
 
     if(errors.length >= 1){
         if(TCS34725 == 'on'){ TCS34725 = 'checked' };
@@ -94,7 +94,7 @@ router.post('/Users/update-user', async(req,res) =>{
         //console.log("Updated...:"+ devices);
         password = await req.user.encryptPassword(password);
         await User.findByIdAndUpdate(req.user.id, { name, email,MAC,city,state, zip,password, devices:devices,indoor, update:true});
-        req.flash("success_msg","Data update succefully");
+        req.flash("success_msg","Datos actualizados");
         res.redirect('/');
         
          
@@ -144,7 +144,7 @@ router.post('/Users/new-user', async(req,res) =>{
             await newUser.save();
             debug( chalk.yellow( `New user`));
             debug( chalk.yellow( newUser));
-            req.flash("success_msg","yoou are registered");
+            req.flash("success_msg","Registrado/a correctamente");
             res.redirect('/');
         }
          

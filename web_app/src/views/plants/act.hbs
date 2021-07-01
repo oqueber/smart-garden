@@ -6,6 +6,23 @@
   <p>  Estatus :  <span id="PlantOn" style="padding: 5px;background: red;border-radius: 100px;color: white;"> Offline </span> </p>
   
     <div class="row">
+       <div class="col m6 s12">
+        <div class="row">
+            <div class="input-field col s12">
+                <div id="colorpicker">
+                  <div class="sliders" id="red"></div>
+                  <div class="sliders" id="green"></div>
+                  <div class="sliders" id="blue"></div>
+                  <div id="result"></div>
+                  
+                  <p style="width: 150px; float: right;margin-top: -40px;">
+                    R:<span id="rValue"></span>% G:<span id="gValue"></span>% B:<span id="bValue"></span>%
+                  </p> 
+                </div> 
+            </div>
+        </div>
+      </div>
+
       <div class="col m6 s12">
 
         <div class="row">
@@ -27,7 +44,7 @@
             <p>
               <label>
                 <input type="checkbox" id="checkbox"/>
-                <span>Usar esta configuracion</span>
+                <span>Usar la configuracion creada.</span>
               </label>
             </p> 
           </div>
@@ -44,23 +61,7 @@
           </div>
         </div>
       </div>
-      <div class="col m6 s12">
-        <div class="row">
-            <div class="input-field col s12">
-                <div id="colorpicker">
-                  <div class="sliders" id="red"></div>
-                  <div class="sliders" id="green"></div>
-                  <div class="sliders" id="blue"></div>
-                  <div id="result"></div>
-                  
-                  <p style="width: 150px; float: right;margin-top: -40px;">
-                    R:<span id="rValue"></span>% G:<span id="gValue"></span>% B:<span id="bValue"></span>%
-                  </p> 
-                </div> 
-            </div>
-        </div>
 
-      </div>
     </div>
   </div>
   <div class="row" style="text-align: center;">
